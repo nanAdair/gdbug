@@ -127,9 +127,9 @@ void SectionVec::init(const File& f)
     report(RL_FOUR, "section vector construction completed");
 }
 
-vector<shared_ptr<Section> > SectionVec::merge_sections()
+SectionVec SectionVec::merge_sections()
 {
-    vector<shared_ptr<Section> > res;
+    SectionVec res;
 
     shared_ptr<Section> section_text = get_section_by_name(".text");
     vector<shared_ptr<Section> >::iterator it;
@@ -137,13 +137,13 @@ vector<shared_ptr<Section> > SectionVec::merge_sections()
     for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
         if ((*it)->flags_ & SHF_MERGE && (*it)->name_ != ".comment") {
             (*(it-1))->_merge_section(*it);
-            res.push_back(*it);
+            res.sec_vec_.push_back(*it);
             sec_vec_.erase(it);
             it--;
         }
         else if ((*it)->flags_ & SHF_EXECINSTR && !_skip_Xsec((*it)->name_)) {
             section_text->_merge_section(*it);
-            res.push_back(*it);
+            res.sec_vec_.push_back(*it);
             sec_vec_.erase(it);
             it--;
         }

@@ -37,5 +37,6 @@ void binaryAbstraction(SectionVec &obj_sec_vec, int argc, char *argv[])
     FileRel objfile(objfile_name);
 
     obj_sec_vec.init(objfile);
-    vector<shared_ptr<Section> > merged_sections = obj_sec_vec.merge_sections();
+    SectionVec merged_sections = obj_sec_vec.merge_sections();
+    cout << merged_sections << endl;
 }

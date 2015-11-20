@@ -81,7 +81,8 @@ public:
     SectionVec() {}
 
     void init(const File&);
-    vector<shared_ptr<Section> > merge_sections();
+    //vector<shared_ptr<Section> > merge_sections();
+    SectionVec merge_sections();
     shared_ptr<Section> get_section_by_name(const string&);
     shared_ptr<Section> get_section_by_index(UINT16);
 
@@ -94,7 +95,5 @@ private:
     vector<shared_ptr<Section> > sec_vec_;
 
     bool _skip_Xsec(const string&);
-    SectionVec(const SectionVec&);
-    SectionVec &operator=(const SectionVec&);
 };
 #endif
