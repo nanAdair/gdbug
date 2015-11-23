@@ -25,6 +25,7 @@
 
 #include "file.h"
 #include "log.h"
+using namespace std;
 
 Section::Section(Elf32_Shdr *cur_sec_dr, UINT16 index, UINT8 *file_data, UINT8 *strn_table):
     name_offset_(cur_sec_dr->sh_name),
@@ -48,37 +49,23 @@ Section::Section(Elf32_Shdr *cur_sec_dr, UINT16 index, UINT8 *file_data, UINT8 *
     memcpy(data_, file_data + file_offset_, size_);
 }
 
-Section::Section(Section *s):
-    name_offset_(s->name_offset_),
-    type_(s->type_),
-    flags_(s->flags_),
-    address_(s->address_),
-    file_offset_(s->file_offset_),
-    size_(s->size_),
-    link_(s->link_),
-    info_(s->info_),
-    addralign_(s->addralign_),
-    entsize_(s->entsize_),
-    origin_index_(s->origin_index_),
-    final_index_(s->final_index_),
-    delta_(s->delta_),
-    misc_(s->misc_),
-    name_(s->name_),
-    data_(s->data_) 
-{
-    merge_to_ = s->merge_to_;
-    //if (auto spt = s->merge_to_.lock())
-        //merge_to_ = spt;
-    //else
-        //merge_to_ = weak_ptr<Section> ();
-}
-
 Section::~Section()
 {
     if (data_) {
         delete[] data_;
         data_ = NULL;
     }
+}
+
+int SectionDynamic::get_dynamic_attribute(int tag) const 
+{
+    for (int i = 0; i < size_ / entsize_; i++) {
+        Elf32_Dyn *cur_dyn;
+        cur_dyn = reinterpret_cast<Elf32_Dyn*>(data_ + entsize_*i);
+        if (cur_dyn->d_tag == tag)
+            return cur_dyn->d_un.d_val;
+    }
+    report(RL_ONE, "wrong tag for dynamic section");
 }
 
 /* Merge sec to the tail of the calling section without changing sec content */
@@ -106,7 +93,7 @@ void Section::_merge_section(shared_ptr<Section> &sec)
     size_ = t_newdatasize;
     addralign_ = addralign_ > s_align ? addralign_ : s_align;
 
-    sec->merge_to_ = this;
+    sec->merge_to_ = shared_from_this();
     sec->delta_ = t_datasize + addition;
 }
 
@@ -120,7 +107,14 @@ void SectionVec::init(const File& f)
 
     for (int i = 0; i < f.get_section_number(); i++) {
         cur_sec_dr = f.get_section_table() + i;
-        shared_ptr<Section> sec = make_shared<Section>(cur_sec_dr, i, file_data, sec_strn_table);
+        string sec_name = string(reinterpret_cast<char *>(sec_strn_table + cur_sec_dr->sh_name));
+        shared_ptr<Section> sec;
+        if (sec_name == ".dynamic")
+            sec = make_shared<SectionDynamic>(cur_sec_dr, i, file_data, sec_strn_table);
+        else if (sec_name == ".gnu.version") 
+            sec = make_shared<SectionGnuVersion>(cur_sec_dr, i, file_data, sec_strn_table);
+        else
+            sec = make_shared<Section>(cur_sec_dr, i, file_data, sec_strn_table);
         sec_vec_.push_back(sec);
     }
 
@@ -153,9 +147,9 @@ SectionVec SectionVec::merge_sections()
     return res;
 }
 
-shared_ptr<Section> SectionVec::get_section_by_name(const string &s)
+shared_ptr<Section> SectionVec::get_section_by_name(const string &s) const 
 {
-    vector<shared_ptr<Section> >::iterator it;
+    vector<shared_ptr<Section> >::const_iterator it;
     shared_ptr<Section> res;
     for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
         if ((*it)->name_ == s)
@@ -165,9 +159,9 @@ shared_ptr<Section> SectionVec::get_section_by_name(const string &s)
     return res;
 }
 
-shared_ptr<Section> SectionVec::get_section_by_index(UINT16 index)
+shared_ptr<Section> SectionVec::get_section_by_index(UINT16 index) const
 {
-    vector<shared_ptr<Section> >::iterator it;
+    vector<shared_ptr<Section> >::const_iterator it;
     shared_ptr<Section> res;
     for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
         if ((*it)->get_section_index() == index)
@@ -205,7 +199,9 @@ ostream& operator<<(ostream &os, const SectionVec &s)
 
 ostream& operator<<(ostream &os, Section &sec)
 {
-    os << sec.name_ << std::endl;
+    os << hex;
+    os << sec.name_ << " ";
+    os << sec.size_ << " " << sec.entsize_ << std::endl;
     string temp("temp");
     std::ofstream of;
     of.open(temp+sec.name_, std::ofstream::binary);
