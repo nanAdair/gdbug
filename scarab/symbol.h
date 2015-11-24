@@ -74,6 +74,9 @@ public:
     bool get_symbol_handle() const 
     { return handled_; }
 
+    void set_symbol_name_offset(UINT32 offset) 
+    { name_offset_ = offset; }
+
     void set_symbol_type(UINT8 type)
     { type_ = type; }
 
@@ -170,6 +173,7 @@ public:
     shared_ptr<SymbolDyn> get_dynsym_by_name(string name) const;
     shared_ptr<SymbolDyn> get_dynsym_by_index(UINT32 index) const;
     void addFromSDVec(const SymbolVec&, const SymbolDynVec&);
+    string accumulate_names(UINT32) const;
 
 private:
     vector<shared_ptr<SymbolDyn> > dynsym_vec_;

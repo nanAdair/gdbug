@@ -68,5 +68,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
         dyn_sym_vec.addFromSDVec(obj_sym_vec, cur_dynsym_vec);
     }
 
-    obj_sec_vec.add_sections(ld_file, so_files, dyn_sym_vec);
+    obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
+    //cout << obj_sec_vec << endl;
+    cout << dyn_sym_vec << endl;
 }

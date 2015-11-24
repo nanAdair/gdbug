@@ -18,6 +18,9 @@
 
 #include "symbol.h"
 
+#include <set>
+using std::set;
+
 #include "file.h"
 #include "section.h"
 #include "version.h"
@@ -217,6 +220,34 @@ void SymbolDynVec::_markDynSymbol(const SymbolVec &obj_sym_vec, const SymbolDynV
     }
 }
 
+// usr ; as the delimiter to get names together
+string SymbolDynVec::accumulate_names(UINT32 offset) const
+{
+    string res = "";
+    vector<shared_ptr<SymbolDyn> >::const_iterator it;
+    set<string> versions;
+    
+    for (it = dynsym_vec_.begin(); it != dynsym_vec_.end(); it++) {
+        string name = (*it)->get_symbol_name();
+        if (res == "")
+            res = name;
+        else
+            res = res + ";" + name;
+        (*it)->set_symbol_name_offset(offset);
+        offset += name.size() + 1;
+
+        string version_name = (*it)->get_dynsym_version_name();
+        if (version_name != "" && (versions.find(version_name) == versions.end()))
+            versions.insert(version_name);
+    }
+
+    for (set<string>::iterator vit = versions.begin(); vit != versions.end(); vit++) {
+        res = res + ";" + *vit;
+    }
+
+    return res;
+}
+
 /*-----------------------------------------------------------------------------
  *  helper printer functions
  *-----------------------------------------------------------------------------*/
@@ -243,7 +274,7 @@ ostream& operator<<(ostream & os, const SymbolDyn &sym)
         os << sym.sec_->get_section_name();
     else
         os << "\t";
-    os << " " << sym.index_ << " " << sym.name_;
+    os << " " << sym.name_offset_ << " " << sym.name_;
     os << " " << sym.version_name_ << std::endl;
     return os;
 }

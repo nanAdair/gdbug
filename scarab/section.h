@@ -68,6 +68,7 @@ using std::ostream;
 #define DYNAMIC_ENTSIZE 8
 
 class File;
+class SymbolDynVec;
 
 class Section: public std::enable_shared_from_this<Section>
 {
@@ -76,6 +77,8 @@ public:
     friend ostream &operator<<(ostream &, Section&);
     friend class SectionVec;
     Section() {}
+    Section(Elf32_Shdr*, UINT16);
+    Section(Elf32_Shdr*, UINT16, const string&);
     Section(Elf32_Shdr*, UINT16, UINT8*, UINT8*);
     virtual ~Section();
 
@@ -106,6 +109,8 @@ public:
     void set_section_addralign(UINT32 a)
     { addralign_ = a; }
 
+    void expand_section_data(const UINT8 *, UINT32, bool);
+
 protected:
     UINT32 name_offset_;
     UINT32 type_;
@@ -132,23 +137,97 @@ private:
     Section &operator=(const Section&);
 };
 
-class SectionDynamic : public Section
+class SectionInterp : public Section 
 {
 public:
-    SectionDynamic(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
-        Section(cur_sec_dr, index, file_data, strn_table) {}
-    int get_dynamic_attribute(int) const;
+    SectionInterp(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionHash : public Section 
+{
+public:
+    SectionHash(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionDynsym : public Section 
+{
+public:
+    SectionDynsym(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionDynstr : public Section 
+{
+public:
+    SectionDynstr(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+    void set_dynstr_data(const SymbolDynVec&, const vector<string>&);
 };
 
 class SectionGnuVersion : public Section 
 {
 public:
+    SectionGnuVersion(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
     SectionGnuVersion(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
         Section(cur_sec_dr, index, file_data, strn_table) {}
     UINT16 get_version_number(int offset) const 
     { return data_[entsize_ * offset]; }
 };
 
+class SectionGnuVersionR : public Section 
+{
+public:
+    SectionGnuVersionR(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionRelDyn : public Section 
+{
+public:
+    SectionRelDyn(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionRelPlt : public Section 
+{
+public:
+    SectionRelPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionPlt : public Section 
+{
+public:
+    SectionPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionDynamic : public Section
+{
+public:
+    SectionDynamic(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+    SectionDynamic(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
+        Section(cur_sec_dr, index, file_data, strn_table) {}
+    int get_dynamic_attribute(int) const;
+};
+
+class SectionGot : public Section 
+{
+public:
+    SectionGot(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
+
+class SectionGotPlt : public Section 
+{
+public:
+    SectionGotPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+};
 
 class SectionVec
 {
@@ -158,6 +237,8 @@ public:
 
     void init(const File&);
     SectionVec merge_sections();
+    void fill_sections_content(const string&, const vector<string>&, const SymbolDynVec&);
+
     shared_ptr<Section> get_section_by_name(const string&) const;
     shared_ptr<Section> get_section_by_index(UINT16) const;
 
@@ -169,6 +250,8 @@ public:
 private:
     vector<shared_ptr<Section> > sec_vec_;
 
-    bool _skip_Xsec(const string&);
+    bool _skip_Xsec(const string&) const;
+
+    void _create_sections();
 };
 #endif

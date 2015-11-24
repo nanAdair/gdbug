@@ -11,7 +11,7 @@ main.o: main.cc type.h
 file.o: file.cc file.h type.h
 	$(CC) $(CFLAGS) file.cc
 
-section.o: section.cc section.h type.h
+section.o: section.cc section.h type.h sectionGD.h
 	$(CC) $(CFLAGS) section.cc
 
 symbol.o: symbol.cc symbol.h type.h
