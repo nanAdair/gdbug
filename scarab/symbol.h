@@ -52,6 +52,7 @@ class Symbol
 public:
     friend ostream& operator<<(ostream & os, const Symbol &sym);
     friend class SymbolVec;
+    friend class SymbolDynVec;
     Symbol() {}
     Symbol(Elf32_Sym*, UINT32);
     Symbol(Elf32_Sym*, UINT32, UINT8*, const SectionVec&, const SectionVec&);
@@ -92,6 +93,8 @@ public:
     void del_symbol_sd_type(int sd)
     { sd_type_ &= ~sd; }
 
+    Elf32_Sym symbol_to_elfsym() const;
+    
 protected:
     UINT32 name_offset_;
     UINT32 value_;
@@ -114,6 +117,7 @@ class SymbolDyn : public Symbol
 {
 public:
     friend ostream& operator<<(ostream &os, const SymbolDyn &s);
+    friend class SymbolDynVec;
     SymbolDyn() {}
     SymbolDyn(Symbol *sym):
         Symbol(*sym),
@@ -139,7 +143,7 @@ public:
 
     void set_dynsym_file(string n)
     { file_ = n; }
-    
+
 private:
     UINT16 version_;
     string version_name_;
@@ -172,8 +176,10 @@ public:
 
     shared_ptr<SymbolDyn> get_dynsym_by_name(string name) const;
     shared_ptr<SymbolDyn> get_dynsym_by_index(UINT32 index) const;
+    UINT32 get_dynsym_vec_size() const;
     void addFromSDVec(const SymbolVec&, const SymbolDynVec&);
     string accumulate_names(UINT32) const;
+    shared_ptr<SymbolDyn> get_ith_dynsym(UINT32) const;
 
 private:
     vector<shared_ptr<SymbolDyn> > dynsym_vec_;

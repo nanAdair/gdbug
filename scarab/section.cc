@@ -20,14 +20,18 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <map>
 
 #include "sectionGD.h"
 #include "file.h"
 #include "symbol.h"
 #include "log.h"
 using namespace std;
+
+UINT32 _calculate_hash(const string &name);
 
 Section::Section(Elf32_Shdr *cur_sec_dr, UINT16 index):
     name_offset_(cur_sec_dr->sh_name),
@@ -141,6 +145,144 @@ void SectionDynstr::set_dynstr_data(const SymbolDynVec &dsl, const vector<string
     for (int i = 0; i < size_; i++)
         if (data_[i] == ';')
             data_[i] = 0;
+}
+
+int SectionDynstr::find_offset(const string &name)
+{
+    UINT32 offset = 1;
+    while (offset < size_) {
+        string tmp(reinterpret_cast<char*>(data_ + offset));
+        if (tmp == name)
+            break;
+        offset += tmp.size() + 1;
+    }
+    return offset < size_ ? offset : -1;
+}
+
+void SectionInterp::set_interp_data(const string &ld_file)
+{
+    expand_section_data(reinterpret_cast<const UINT8*>(ld_file.c_str()), ld_file.size()+1, 1);
+}
+
+void SectionHash::set_hash_data(const SymbolDynVec &dsl)
+{
+    /* dsl size plus one empty symbol */
+    int number = dsl.get_dynsym_vec_size() + 1;
+    
+    int nbuckets, nchains;
+    nchains = number;
+    nbuckets = (int)log2(number) + 1;
+    int datasize = (1 + 1 + nbuckets + nchains) * 4;
+
+    UINT8 *buffer;
+    buffer = new UINT8[datasize];
+    memset(buffer, 0x0, datasize);
+    memcpy(buffer, &nbuckets, sizeof(int));
+    memcpy(buffer + 4, &nchains, sizeof(int));
+
+    for (int i = number-2; i >= 0; i--) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        int hash_value = _calculate_hash(dynsym->get_symbol_name());
+        int order, index, symbol_index;
+        order = hash_value % nbuckets;
+        index = *(int *)((buffer + 8 + order * 4));
+        // add 1 for the empty dynamic symbol
+        symbol_index = dynsym->get_symbol_index() + 1;
+        if (index == 0)
+            memcpy(buffer + 8 + order * 4, &symbol_index, sizeof(int));
+        else {
+            order = index;
+            index = *(int *)((buffer + 8 + nbuckets * 4 + order * 4));
+            while (index) {
+                order = index;
+                index = *(int *)((buffer + 8 + nbuckets * 4 + order * 4));
+            }
+            memcpy(buffer + 8 + nbuckets * 4 + order * 4, &symbol_index, 4);
+        }
+    }
+    
+    expand_section_data(buffer, datasize, 1);
+    delete [] buffer;
+}
+
+void SectionGnuVersion::set_gnuversion_data(const SymbolDynVec &dsl)
+{
+    UINT16 version;
+    expand_section_data(reinterpret_cast<UINT8*>(&version), sizeof(version), 1);
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        version = dynsym->get_dynsym_version();
+        expand_section_data(reinterpret_cast<UINT8*>(&version), sizeof(version), 1);
+    }
+}
+
+void SectionGnuVersionR::set_gnuversionr_data(const SymbolDynVec& dsl, const vector<string> &so_files, shared_ptr<Section> &dynstr)
+{
+    for (int i = 0; i < so_files.size(); i++) {
+        int ver_number = 0;
+        map<string, UINT16> ver;
+        map<string, UINT16>::iterator vit;
+
+        for (UINT32 j = 0; j < dsl.get_dynsym_vec_size(); j++) {
+            shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(j);
+            UINT16 version = dynsym->get_dynsym_version();  
+            string version_name = dynsym->get_dynsym_version_name(); 
+            string file_name = dynsym->get_dynsym_file();
+            if (version == 0 || 
+                    version_name == "" ||
+                    file_name!= so_files[i])
+                continue;
+
+            vit = ver.find(version_name);
+            if (vit == ver.end()) {
+                ver[version_name] = version;
+                ver_number++;
+            }
+        } 
+
+        //TODO: if ver_number == 0 what to do
+        Elf32_Verneed verneed;
+        verneed.vn_version = 1;
+        verneed.vn_cnt = ver_number;
+        verneed.vn_file = std::dynamic_pointer_cast<SectionDynstr>(dynstr)->find_offset(so_files[i]);
+        verneed.vn_aux = 0x10;
+        /* Add the size of the Elf32_Verneed itself */
+        verneed.vn_next = (i == so_files.size() - 1) ? 0 : sizeof(Elf32_Vernaux) * ver_number + 0x10;
+        expand_section_data(reinterpret_cast<UINT8*>(&verneed), sizeof(Elf32_Verneed), 1);
+
+        for (vit = ver.begin(); vit != ver.end(); ++vit) {
+            Elf32_Vernaux vernaux;
+            string version_name;
+            UINT16 version_number;
+            version_name = vit->first;
+            version_number = vit->second;
+            
+            vernaux.vna_hash = _calculate_hash(version_name);
+            vernaux.vna_flags = 0;
+            vernaux.vna_other = version_number;
+            vernaux.vna_name = std::dynamic_pointer_cast<SectionDynstr>(dynstr)->find_offset(version_name);
+            
+            if ((++vit) == ver.end())
+                vernaux.vna_next = 0;
+            else
+                vernaux.vna_next = 0x10;
+            --vit;
+            expand_section_data(reinterpret_cast<UINT8*>(&vernaux), sizeof(Elf32_Vernaux), 1);
+        }
+    }
+}
+
+void SectionDynsym::set_dynsym_data(const SymbolDynVec &dsl)
+{
+    UINT32 size = dsl.get_dynsym_vec_size();
+    Elf32_Sym empty;
+    memset(&empty, 0x0, sizeof(empty));
+    expand_section_data(reinterpret_cast<UINT8*>(&empty), sizeof(empty), 1);
+    for (UINT32 i = 0; i < size; i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        Elf32_Sym temp = dynsym->symbol_to_elfsym();
+        expand_section_data(reinterpret_cast<UINT8*>(&temp), sizeof(temp), 1);
+    }
 }
 
 void SectionVec::init(const File& f)
@@ -277,7 +419,48 @@ void SectionVec::fill_sections_content(const string &ld_file, const vector<strin
     init = get_section_by_name(INIT_SECTION_NAME);
 
     std::dynamic_pointer_cast<SectionDynstr>(dynstr)->set_dynstr_data(dsl, so_files);
+    
+    vector<shared_ptr<Section> >::iterator it;
+    for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
+        string name = (*it)->get_section_name();
+        if (name == INTERP_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionInterp>(*it)->set_interp_data(ld_file);
+        else if (name == DYNSYM_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionDynsym>(*it)->set_dynsym_data(dsl);
+        else if (name == HASH_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionHash>(*it)->set_hash_data(dsl);
+        else if (name == GV_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionGnuVersion>(*it)->set_gnuversion_data(dsl);
+        else if (name == GNR_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionGnuVersionR>(*it)->set_gnuversionr_data(dsl, so_files, dynstr);
+        else if (name == REL_DYN_SECTION_NAME)
+            ;
+        else if (name == REL_PLT_SECTION_NAME)
+            ;
+        else if (name == PLT_SECTION_NAME)
+            ;
+        else if (name == DYNAMIC_SECTION_NAME)
+            ;
+        else if (name == GOT_SECTION_NAME)
+            ;
+        else if (name == GOT_PLT_SECTION_NAME)
+            ;
+    }
 }
+
+UINT32 _calculate_hash(const string &name)
+{
+    UINT32 h = 0, g;
+    
+    for (int i = 0; i < name.size(); i++){
+        h = (h << 4) + static_cast<UINT32>(name[i]);
+        if (g = h & 0xf0000000)
+            h ^= g >> 24;
+        h &= ~g;
+    }
+    return h;
+}
+
 
 /*-----------------------------------------------------------------------------
  *  helper printer functions below

@@ -142,6 +142,7 @@ class SectionInterp : public Section
 public:
     SectionInterp(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_interp_data(const string&);
 };
 
 class SectionHash : public Section 
@@ -149,6 +150,8 @@ class SectionHash : public Section
 public:
     SectionHash(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_hash_data(const SymbolDynVec&);
+private:
 };
 
 class SectionDynsym : public Section 
@@ -156,6 +159,7 @@ class SectionDynsym : public Section
 public:
     SectionDynsym(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_dynsym_data(const SymbolDynVec&);
 };
 
 class SectionDynstr : public Section 
@@ -164,6 +168,7 @@ public:
     SectionDynstr(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
     void set_dynstr_data(const SymbolDynVec&, const vector<string>&);
+    int find_offset(const string &name);
 };
 
 class SectionGnuVersion : public Section 
@@ -175,6 +180,7 @@ public:
         Section(cur_sec_dr, index, file_data, strn_table) {}
     UINT16 get_version_number(int offset) const 
     { return data_[entsize_ * offset]; }
+    void set_gnuversion_data(const SymbolDynVec&);
 };
 
 class SectionGnuVersionR : public Section 
@@ -182,6 +188,7 @@ class SectionGnuVersionR : public Section
 public:
     SectionGnuVersionR(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_gnuversionr_data(const SymbolDynVec&, const vector<string> &so_files, shared_ptr<Section> &dynstr);
 };
 
 class SectionRelDyn : public Section 

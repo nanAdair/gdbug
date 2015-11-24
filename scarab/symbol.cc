@@ -53,6 +53,7 @@ Symbol::Symbol(Elf32_Sym *sym, UINT32 index, UINT8 *sym_strn_table, const Sectio
                 report(RL_ONE, "symbol %s related section %d not found", name_, shndx_);
             sec_ = target->get_merged_section();
             value_ += target->get_section_delta();
+            shndx_ = sec_->get_section_index();
         }
     }
 }
@@ -76,6 +77,19 @@ void Symbol::_handleCOMMON(const SectionVec &obj_sec_vec)
 
     value_ = datasize + addition;
     sec_ = bss;
+}
+
+Elf32_Sym Symbol::symbol_to_elfsym() const
+{
+    Elf32_Sym res;
+    res.st_name = name_offset_;
+    res.st_value = value_;
+    res.st_size = size_;
+    res.st_info = (binding_ << 4) + (type_ & 0xf);
+    res.st_other = other_;
+    res.st_shndx = shndx_;
+
+    return res;
 }
 
 void SymbolVec::init(const FileRel &f, const SectionVec &obj_sec_vec, const SectionVec &ms)
@@ -248,6 +262,16 @@ string SymbolDynVec::accumulate_names(UINT32 offset) const
     return res;
 }
 
+UINT32 SymbolDynVec::get_dynsym_vec_size() const 
+{
+    return dynsym_vec_.size();
+}
+
+shared_ptr<SymbolDyn> SymbolDynVec::get_ith_dynsym(UINT32 i) const
+{
+    return dynsym_vec_[i];
+}
+
 /*-----------------------------------------------------------------------------
  *  helper printer functions
  *-----------------------------------------------------------------------------*/
@@ -274,7 +298,7 @@ ostream& operator<<(ostream & os, const SymbolDyn &sym)
         os << sym.sec_->get_section_name();
     else
         os << "\t";
-    os << " " << sym.name_offset_ << " " << sym.name_;
+    os << sym.index_ << " " << sym.name_offset_ << " " << sym.name_;
     os << " " << sym.version_name_ << std::endl;
     return os;
 }
