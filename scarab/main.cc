@@ -42,14 +42,18 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     string objfile_name(argv[1]);
     FileRel objfile(objfile_name);
 
+    /* Construct section, symbol, relocation list from obj file */
     obj_sec_vec.init(objfile);
     SectionVec merged_sections = obj_sec_vec.merge_sections();
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
 
+    /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
+    // DEFAULT: the last parameter is ld path
     vector<string> so_files;
-    for (int i = 0; i < argc-2; i++) {
+    string ld_file(argv[argc-1]);
+    for (int i = 0; i < argc-3; i++) {
         string dynfile_name(argv[i+2]);
         report(RL_FOUR, "handle so file");
         so_files.push_back(dynfile_name);
@@ -64,5 +68,5 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
         dyn_sym_vec.addFromSDVec(obj_sym_vec, cur_dynsym_vec);
     }
 
-    //cout << dyn_sym_vec << endl;
+    obj_sec_vec.add_sections(ld_file, so_files, dyn_sym_vec);
 }

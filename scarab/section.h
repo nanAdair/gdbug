@@ -32,6 +32,41 @@ using std::ostream;
 
 #include "type.h"
 
+// Sections to be added
+#define INTERP_SECTION_NAME     ".interp"
+#define HASH_SECTION_NAME       ".hash"
+#define DYNSYM_SECTION_NAME     ".dynsym"
+#define DYNSTR_SECTION_NAME     ".dynstr"
+#define GV_SECTION_NAME         ".gnu.version"
+#define GNR_SECTION_NAME        ".gnu.version_r"
+#define REL_DYN_SECTION_NAME    ".rel.dyn"
+#define REL_PLT_SECTION_NAME    ".rel.plt"
+#define PLT_SECTION_NAME        ".plt"
+#define DYNAMIC_SECTION_NAME    ".dynamic"
+#define GOT_SECTION_NAME        ".got"
+#define GOT_PLT_SECTION_NAME    ".got.plt"
+
+#define TEXT_SECTION_NAME       ".text"
+#define INIT_SECTION_NAME       ".init"
+#define FINI_SECTION_NAME       ".fini"
+#define INIT_ARRAY_SECTION_NAME ".init_array"
+#define FINI_ARRAY_SECTION_NAME ".fini_array"
+
+#define BSS_SECTION_NAME        ".bss"
+#define RODATA_SECION_NAME      ".rodata"
+#define EH_FRAME_SECTION_NAME   ".eh_frame"
+#define JCR_SECTION_NAME        ".jcr"
+#define DATA_SECTION_NAME       ".data"
+#define COMMENT_SECTION_NAME    ".comment"
+#define SYMTAB_SECTION_NAME     ".symtab"
+#define STRTAB_SECTION_NAME     ".strtab"
+
+#define SHSTRTAB_SECTION_NAME   ".shstrtab"
+#define NOTE_SECTION_NAME       ".note.ABI-tag"
+
+#define DYNAMIC_NUMBER 28
+#define DYNAMIC_ENTSIZE 8
+
 class File;
 
 class Section: public std::enable_shared_from_this<Section>

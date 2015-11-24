@@ -46,6 +46,21 @@ Relocation::Relocation(Elf32_Rel *rel, const FileRel &f, const SectionVec &obj_s
     if (!symbol)
         report(RL_ONE, "relocation related symbol %d not found", (rel->r_info >> 8));
     sym_ = symbol;
+    _markGOTPLTSymbol();
+}
+
+void Relocation::_markGOTPLTSymbol()
+{
+    if (sym_->get_symbol_shndx() != SHN_UNDEF)
+        return;
+    if (type_ == R_386_GOT32) {
+        if (!(sym_->get_symbol_sd_type() & SYM_GOT))
+            sym_->add_symbol_sd_type(SYM_GOT);
+    }
+    else if (type_ == R_386_PLT32) {
+        if (!(sym_->get_symbol_sd_type() & SYM_PLT))
+            sym_->add_symbol_sd_type(SYM_PLT);
+    }
 }
 
 void RelocationVec::init(const FileRel &f, const SectionVec &obj_sec_vec, const SectionVec &ms, const SymbolVec &obj_sym_vec)

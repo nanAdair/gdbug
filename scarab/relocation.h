@@ -42,6 +42,7 @@ public:
     friend ostream &operator<<(ostream &os, const Relocation &rel);
     Relocation() {}
     Relocation(Elf32_Rel*, const FileRel&, const SectionVec&, const SectionVec&, UINT32, const SymbolVec&);
+
 private:
     UINT32 offset_;
     UINT8 type_;
@@ -49,6 +50,8 @@ private:
     INT32 addend_;
     shared_ptr<Section> sec_;
     shared_ptr<Symbol> sym_;
+
+    void _markGOTPLTSymbol();
 };
 
 class RelocationVec
