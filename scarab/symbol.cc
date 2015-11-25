@@ -216,10 +216,15 @@ void SymbolDynVec::_markDynSymbol(const SymbolVec &obj_sym_vec, const SymbolDynV
                 if (objsym_type == STT_SECTION)
                     break;
 
+                /* Special case: NOTYPE symbols except __gmon_start__ */
                 if (dynsym_type == STT_NOTYPE &&
-                        (*it)->get_symbol_name() == "__gmon_start__") 
+                        (*it)->get_symbol_name() != "__gmon_start__") {
                     (*it)->add_symbol_sd_type(SYM_OUT);
-                else if ((*it)->get_symbol_shndx() != SHN_UNDEF) 
+                    (*it)->del_symbol_sd_type(SYM_LOCAL);
+                    break;
+                }
+
+                if ((*it)->get_symbol_shndx() != SHN_UNDEF) 
                     (*it)->add_symbol_sd_type(SYM_OUT);
                 else if (dynsym_type == STT_FUNC || dynsym_type == STT_GNU_IFUNC) {
                     (*it)->add_symbol_sd_type(SYM_PLT);
@@ -299,7 +304,7 @@ ostream& operator<<(ostream & os, const SymbolDyn &sym)
     else
         os << "\t";
     os << sym.index_ << " " << sym.name_offset_ << " " << sym.name_;
-    os << " " << sym.version_name_ << std::endl;
+    os << " " << sym.version_name_ << " " << sym.sd_type_ << std::endl;
     return os;
 }
 

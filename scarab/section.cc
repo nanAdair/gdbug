@@ -207,7 +207,7 @@ void SectionHash::set_hash_data(const SymbolDynVec &dsl)
 
 void SectionGnuVersion::set_gnuversion_data(const SymbolDynVec &dsl)
 {
-    UINT16 version;
+    UINT16 version = 0;
     expand_section_data(reinterpret_cast<UINT8*>(&version), sizeof(version), 1);
     for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
         shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
@@ -285,6 +285,174 @@ void SectionDynsym::set_dynsym_data(const SymbolDynVec &dsl)
     }
 }
 
+void SectionPlt::_add_plt_head()
+{
+    PLT_Instr instr[2];
+    int i, offset;
+    
+    UINT8 *buffer = new UINT8 [plt_item_size];
+    memset(buffer, 0x0, plt_item_size);
+    
+    instr[0].opcode = 0x35ff;
+    instr[0].oprand = 0x0;
+    instr[1].opcode = 0x25ff;
+    instr[1].oprand = 0x0;
+    
+    offset = 0;
+    for (i = 0; i < 2; i++) {
+        memcpy(buffer + offset, &(instr[i].opcode), 0x2);
+        offset += 2;
+        memcpy(buffer + offset, &(instr[i].oprand), 0x4);
+        offset += 4;
+    }
+
+    expand_section_data(buffer, plt_item_size, 1);
+    delete [] buffer;
+}
+
+void SectionPlt::set_plt_data(const SymbolDynVec &dsl)
+{
+    _add_plt_head();
+    int n = 0;
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        if (!(dynsym->get_symbol_sd_type() & SYM_PLT))
+            continue;
+
+        PLT_Instr instr[3];
+        int offset = 0;
+        
+        instr[0].opcode = 0x25ff;
+        instr[0].oprand = 0x0;
+        instr[1].opcode = 0x68;
+        instr[1].oprand = n * 0x8;
+        instr[2].opcode = 0xe9;
+        instr[2].oprand = 0x0;
+        
+        UINT8 *buffer = new UINT8 [plt_item_size];
+        memset(buffer, 0x0, plt_item_size);
+
+        memcpy(buffer + offset, &(instr[0].opcode), 2);
+        offset += 2;
+        memcpy(buffer + offset, &(instr[0].oprand), 4);
+        offset += 4;
+        
+        for (int i = 1; i < 3; i++) {
+            memcpy(buffer + offset, &(instr[i].opcode), 1);
+            offset += 1;
+            memcpy(buffer + offset, &(instr[i].oprand), 4);
+            offset += 4;
+        }
+        expand_section_data(buffer, plt_item_size, 1);
+        delete [] buffer;
+        n++;
+    }
+}
+
+void SectionGotPlt::set_got_plt_data(const SymbolDynVec &dsl)
+{
+    int number = 0;
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        if (dynsym->get_symbol_sd_type() & SYM_PLT)
+            number++;
+    }
+
+    // size plus 0xc for the head addresses
+    int size = 0x4 * (number + 3);
+    UINT8 *buffer = new UINT8 [size];
+    memset(buffer, 0x0, size);
+    expand_section_data(buffer, size, 1);
+    delete [] buffer;
+}
+
+void SectionRelPlt::set_rel_plt_data(const SymbolDynVec &dsl)
+{
+    int index = 0;
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        if (!(dynsym->get_symbol_sd_type() & SYM_PLT))
+            continue;
+
+        Elf32_Rel rel;
+        rel.r_offset = 0xc + 0x4 * index;
+        rel.r_info = ((dynsym->get_symbol_index() + 1) << 8) + R_386_JMP_SLOT;
+
+        expand_section_data(reinterpret_cast<UINT8*>(&rel), sizeof(Elf32_Rel), 1);
+        index++;
+    }
+}
+
+void SectionGot::set_got_data(const SymbolDynVec &dsl)
+{
+    int number = 0;
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        if (dynsym->get_symbol_sd_type() & SYM_GOT) 
+            number++;
+    }
+
+    int size = 0x4 * number;
+    UINT8 *buffer = new UINT8 [size];
+    memset(buffer, 0x0, size);
+    expand_section_data(buffer, size, 1);
+    delete [] buffer;
+}
+
+void SectionRelDyn::set_rel_dyn_data(const SymbolDynVec &dsl)
+{
+    int index = 0;
+    for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
+        shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
+        if (!(dynsym->get_symbol_sd_type() & SYM_GOT))
+            continue;
+
+        Elf32_Rel rel;
+        rel.r_offset = 0x4 * index;
+        rel.r_info = ((dynsym->get_symbol_index() + 1) << 8) + R_386_GLOB_DAT;
+
+        expand_section_data(reinterpret_cast<UINT8*>(&rel), sizeof(Elf32_Rel), 1);
+        index++;
+    }
+}
+
+void SectionDynamic::set_dynamic_data(int num)
+{
+    UINT32 datasize = DYNAMIC_ENTSIZE * (DYNAMIC_NUMBER + num);
+    UINT8 *buffer = new UINT8 [datasize];
+    memset(buffer, 0x0, datasize);
+    expand_section_data(buffer, datasize, 1);
+    delete [] buffer;
+}
+
+void SectionShstr::set_shstr_data(const string &data)
+{
+    /* destroy original data */
+    delete [] data_;
+    data_ = NULL;
+    size_ = 0;
+
+    expand_section_data(reinterpret_cast<const UINT8*>(data.c_str()), data.size()+1, 1);
+    for (int i = 0; i < size_; i++)
+        if (data_[i] == ';')
+            data_[i] = 0;
+}
+
+int SectionShstr::find_section_name_offset(const string &name)
+{
+    int res = -1;
+    UINT32 offset = 1;
+    while (offset < size_) {
+        string cur_name = string(reinterpret_cast<char*>(data_+offset));
+        if (cur_name == name) {
+            res = offset;
+            break;
+        }
+        offset = offset + cur_name.size() + 1;
+    }
+    return res;
+}
+
 void SectionVec::init(const File& f)
 {
     Elf32_Shdr *cur_sec_dr;
@@ -301,6 +469,8 @@ void SectionVec::init(const File& f)
             sec = make_shared<SectionDynamic>(cur_sec_dr, i, file_data, sec_strn_table);
         else if (sec_name == ".gnu.version") 
             sec = make_shared<SectionGnuVersion>(cur_sec_dr, i, file_data, sec_strn_table);
+        else if (sec_name == ".shstrtab")
+            sec = make_shared<SectionShstr>(cur_sec_dr, i, file_data, sec_strn_table);
         else
             sec = make_shared<Section>(cur_sec_dr, i, file_data, sec_strn_table);
         sec_vec_.push_back(sec);
@@ -414,15 +584,26 @@ void SectionVec::_create_sections()
 void SectionVec::fill_sections_content(const string &ld_file, const vector<string> &so_files, const SymbolDynVec &dsl)
 {
     _create_sections();
-    shared_ptr<Section> dynstr, init;
+    shared_ptr<Section> dynstr, init, shstr;
     dynstr = get_section_by_name(DYNSTR_SECTION_NAME);
     init = get_section_by_name(INIT_SECTION_NAME);
+    shstr = get_section_by_name(SHSTRTAB_SECTION_NAME);
 
     std::dynamic_pointer_cast<SectionDynstr>(dynstr)->set_dynstr_data(dsl, so_files);
+
+    string section_names = _accumulate_names();
+
+    std::dynamic_pointer_cast<SectionShstr>(shstr)->set_shstr_data(section_names);
+    cout << *shstr;
     
     vector<shared_ptr<Section> >::iterator it;
-    for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
+    for (it = sec_vec_.begin()+1; it != sec_vec_.end(); it++) {
         string name = (*it)->get_section_name();
+        int offset = std::dynamic_pointer_cast<SectionShstr>(shstr)->find_section_name_offset(name);
+        if (offset == -1)
+            report(RL_ONE, "section name can't be found");
+        (*it)->set_section_name_offset(offset);
+
         if (name == INTERP_SECTION_NAME) 
             std::dynamic_pointer_cast<SectionInterp>(*it)->set_interp_data(ld_file);
         else if (name == DYNSYM_SECTION_NAME) 
@@ -433,19 +614,33 @@ void SectionVec::fill_sections_content(const string &ld_file, const vector<strin
             std::dynamic_pointer_cast<SectionGnuVersion>(*it)->set_gnuversion_data(dsl);
         else if (name == GNR_SECTION_NAME) 
             std::dynamic_pointer_cast<SectionGnuVersionR>(*it)->set_gnuversionr_data(dsl, so_files, dynstr);
-        else if (name == REL_DYN_SECTION_NAME)
-            ;
-        else if (name == REL_PLT_SECTION_NAME)
-            ;
-        else if (name == PLT_SECTION_NAME)
-            ;
-        else if (name == DYNAMIC_SECTION_NAME)
-            ;
-        else if (name == GOT_SECTION_NAME)
-            ;
-        else if (name == GOT_PLT_SECTION_NAME)
-            ;
+        else if (name == PLT_SECTION_NAME) {
+            std::dynamic_pointer_cast<SectionPlt>(*it)->set_plt_data(dsl);
+            (*it)->misc_ = init->misc_;
+            (*it)->origin_index_ = init->get_section_index();
+        }
+        else if (name == GOT_PLT_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionGotPlt>(*it)->set_got_plt_data(dsl);
+        else if (name == REL_PLT_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionRelPlt>(*it)->set_rel_plt_data(dsl);
+        else if (name == GOT_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionGot>(*it)->set_got_data(dsl);
+        else if (name == REL_DYN_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionRelDyn>(*it)->set_rel_dyn_data(dsl);
+        else if (name == DYNAMIC_SECTION_NAME) 
+            std::dynamic_pointer_cast<SectionDynamic>(*it)->set_dynamic_data(so_files.size());
     }
+}
+
+string SectionVec::_accumulate_names() const
+{
+    string res = "";
+    vector<shared_ptr<Section> >::const_iterator it;
+    for (it = sec_vec_.begin()+1; it != sec_vec_.end(); it++) {
+        string name = (*it)->name_;
+        res = res + ";" + name;
+    }
+    return res;
 }
 
 UINT32 _calculate_hash(const string &name)

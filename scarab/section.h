@@ -103,6 +103,9 @@ public:
     UINT8 *get_section_data() const 
     { return data_; }
 
+    void set_section_name_offset(int offset)
+    { name_offset_ = offset; }
+
     void set_section_size(UINT32 s)
     { size_ = s; }
 
@@ -191,25 +194,52 @@ public:
     void set_gnuversionr_data(const SymbolDynVec&, const vector<string> &so_files, shared_ptr<Section> &dynstr);
 };
 
-class SectionRelDyn : public Section 
+class SectionPlt : public Section 
 {
 public:
-    SectionRelDyn(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+    SectionPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_plt_data(const SymbolDynVec&);
+private:
+    typedef struct PLT_Instr {
+        UINT16 opcode;
+        UINT32 oprand;
+    } PLT_Instr;
+    const UINT32 plt_item_size = 0x10;
+    void _add_plt_head();
 };
+
+class SectionGotPlt : public Section 
+{
+public:
+    SectionGotPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+    void set_got_plt_data(const SymbolDynVec&);
+};
+
 
 class SectionRelPlt : public Section 
 {
 public:
     SectionRelPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_rel_plt_data(const SymbolDynVec&);
 };
 
-class SectionPlt : public Section 
+class SectionGot : public Section 
 {
 public:
-    SectionPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+    SectionGot(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
+    void set_got_data(const SymbolDynVec&);
+};
+
+class SectionRelDyn : public Section 
+{
+public:
+    SectionRelDyn(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
+        Section(cur_sec_dr, index, name) {}
+    void set_rel_dyn_data(const SymbolDynVec&);
 };
 
 class SectionDynamic : public Section
@@ -220,20 +250,16 @@ public:
     SectionDynamic(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
         Section(cur_sec_dr, index, file_data, strn_table) {}
     int get_dynamic_attribute(int) const;
+    void set_dynamic_data(int num);
 };
 
-class SectionGot : public Section 
+class SectionShstr : public Section
 {
 public:
-    SectionGot(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
-        Section(cur_sec_dr, index, name) {}
-};
-
-class SectionGotPlt : public Section 
-{
-public:
-    SectionGotPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
-        Section(cur_sec_dr, index, name) {}
+    SectionShstr(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
+        Section(cur_sec_dr, index, file_data, strn_table) {}
+    void set_shstr_data(const string&);
+    int find_section_name_offset(const string&);
 };
 
 class SectionVec
@@ -260,5 +286,6 @@ private:
     bool _skip_Xsec(const string&) const;
 
     void _create_sections();
+    string _accumulate_names() const;
 };
 #endif
