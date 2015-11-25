@@ -529,6 +529,16 @@ shared_ptr<Section> SectionVec::get_section_by_index(UINT16 index) const
     return res;
 }
 
+void SectionVec::delete_section_by_index(UINT16 index)
+{
+    vector<shared_ptr<Section> >::iterator it;
+    shared_ptr<Section> res;
+    for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
+        if ((*it)->get_section_index() == index)
+            sec_vec_.erase(it);
+    }
+}
+
 bool SectionVec::_skip_Xsec(const string &s) const
 {
     string to_skip[] = {
@@ -663,7 +673,7 @@ UINT32 _calculate_hash(const string &name)
 ostream& operator<<(ostream &os, const SectionVec &s)
 {
     for (int i = 0; i < s.sec_vec_.size(); i++)
-        os << *(s.sec_vec_[i]);
+        os << i << std::endl << *(s.sec_vec_[i]);
 
     return os;
 }
@@ -671,6 +681,7 @@ ostream& operator<<(ostream &os, const SectionVec &s)
 ostream& operator<<(ostream &os, Section &sec)
 {
     os << hex;
+    os << sec.get_section_index() << " ";
     os << sec.name_ << " ";
     os << sec.size_ << " " << sec.entsize_ << std::endl;
     string temp("temp");

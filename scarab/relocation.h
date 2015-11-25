@@ -60,7 +60,7 @@ public:
     friend ostream &operator<<(ostream &os, const RelocationVec &r);
     RelocationVec() {}
 
-    void init(const FileRel&, const SectionVec&, const SectionVec&, const SymbolVec&);
+    void init(const FileRel&, SectionVec&, const SectionVec&, const SymbolVec&);
 private:
     vector<shared_ptr<Relocation> > rel_vec_;
 

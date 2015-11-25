@@ -63,7 +63,7 @@ void Relocation::_markGOTPLTSymbol()
     }
 }
 
-void RelocationVec::init(const FileRel &f, const SectionVec &obj_sec_vec, const SectionVec &ms, const SymbolVec &obj_sym_vec)
+void RelocationVec::init(const FileRel &f, SectionVec &obj_sec_vec, const SectionVec &ms, const SymbolVec &obj_sym_vec)
 {
     const vector<UINT32> rel_indexes = f.get_relocation_index();
     for (int i = 0; i < rel_indexes.size(); i++) {
@@ -75,6 +75,8 @@ void RelocationVec::init(const FileRel &f, const SectionVec &obj_sec_vec, const 
             shared_ptr<Relocation> rel = make_shared<Relocation>(rel_table + j, f, obj_sec_vec, ms, rel_sec_dr->sh_info, obj_sym_vec);
             rel_vec_.push_back(rel);
         }
+
+        obj_sec_vec.delete_section_by_index(rel_indexes[i]);
     }
 
     report(RL_FOUR, "complete relocation list construction");

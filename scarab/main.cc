@@ -48,6 +48,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
 
+    cout << obj_sec_vec << endl;
     /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
     // DEFAULT: the last parameter is ld path

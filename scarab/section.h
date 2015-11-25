@@ -274,6 +274,7 @@ public:
 
     shared_ptr<Section> get_section_by_name(const string&) const;
     shared_ptr<Section> get_section_by_index(UINT16) const;
+    void delete_section_by_index(UINT16);
 
     //shared_ptr<const Section> get_section_by_name(const string& s) const 
     //{ return const_cast<SectionVec*>(this)->get_section_by_name(s); }
