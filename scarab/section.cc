@@ -148,6 +148,11 @@ void Section::_merge_section(shared_ptr<Section> &sec)
     sec->delta_ = t_datasize + addition;
 }
 
+void Section::update_section_data(UINT32 offset, UINT8 *content, UINT32 size)
+{
+    memcpy(data_+offset, content, size);
+}
+
 void Section::expand_section_data(const UINT8 *to_add, UINT32 to_add_size, bool update_size)
 {
     UINT32 new_datasize = size_ + to_add_size;
@@ -358,7 +363,7 @@ void SectionPlt::_add_plt_head()
 void SectionPlt::set_plt_data(const SymbolDynVec &dsl)
 {
     _add_plt_head();
-    int n = 0;
+    UINT32 n = 0;
     for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
         shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
         if (!(dynsym->get_symbol_sd_type() & SYM_PLT))
@@ -391,6 +396,7 @@ void SectionPlt::set_plt_data(const SymbolDynVec &dsl)
         expand_section_data(buffer, plt_item_size, 1);
         delete [] buffer;
         n++;
+        dynsym->set_dynsym_plt_index(n);
     }
 }
 
@@ -433,8 +439,10 @@ void SectionGot::set_got_data(const SymbolDynVec &dsl)
     int number = 0;
     for (UINT32 i = 0; i < dsl.get_dynsym_vec_size(); i++) {
         shared_ptr<SymbolDyn> dynsym = dsl.get_ith_dynsym(i);
-        if (dynsym->get_symbol_sd_type() & SYM_GOT) 
+        if (dynsym->get_symbol_sd_type() & SYM_GOT) {
             number++;
+            dynsym->set_dynsym_got_index(number);
+        }
     }
 
     int size = 0x4 * number;
@@ -647,9 +655,7 @@ void SectionVec::fill_sections_content(const string &ld_file, const vector<strin
     std::dynamic_pointer_cast<SectionDynstr>(dynstr)->set_dynstr_data(dsl, so_files);
 
     string section_names = _accumulate_names();
-
     std::dynamic_pointer_cast<SectionShstr>(shstr)->set_shstr_data(section_names);
-    cout << *shstr;
     
     vector<shared_ptr<Section> >::iterator it;
     for (it = sec_vec_.begin()+1; it != sec_vec_.end(); it++) {
@@ -722,6 +728,8 @@ void SectionVec::allocate_address()
         if ((*it)->get_section_name() != BSS_SECTION_NAME)
             offset += (*it)->get_section_size();
     }
+
+    report(RL_FOUR, "complete allocating address for sections");
 }
 
 void SectionVec::_sort_sections()

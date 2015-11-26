@@ -35,13 +35,25 @@ class Section;
 class SectionVec;
 class Symbol;
 class SymbolVec;
+class SymbolDynVec;
 
 class Relocation
 {
 public:
     friend ostream &operator<<(ostream &os, const Relocation &rel);
+    friend class RelocationVec;
     Relocation() {}
     Relocation(Elf32_Rel*, const FileRel&, const SectionVec&, const SectionVec&, UINT32, const SymbolVec&);
+
+    UINT8 get_relocation_type() const 
+    { return type_; }
+
+    void apply_relocation_32();
+    void apply_relocation_pc32(const SectionVec&, const SymbolDynVec&);
+    void apply_relocation_gotpc();
+    void apply_relocation_gotoff(const SectionVec&);
+    void apply_relocation_got32(const SectionVec&, const SymbolDynVec&);
+    void apply_relocation_plt32(const SectionVec&, const SymbolDynVec&);
 
 private:
     UINT32 offset_;
@@ -61,6 +73,7 @@ public:
     RelocationVec() {}
 
     void init(const FileRel&, SectionVec&, const SectionVec&, const SymbolVec&);
+    void apply_relocations(const SectionVec&, const SymbolDynVec&);
 private:
     vector<shared_ptr<Relocation> > rel_vec_;
 

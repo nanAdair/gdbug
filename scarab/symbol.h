@@ -34,7 +34,7 @@ using std::make_shared;
 
 #define INIT_ARRAY_START "__init_array_start"
 #define INIT_ARRAY_END "__init_array_end"
-#define GOT_SYMBOL_NAME "_GLOBAL_OFFSSET_TABLE_"
+#define GOT_SYMBOL_NAME "_GLOBAL_OFFSET_TABLE_"
 
 #define SYM_LOCAL 1
 #define SYM_GOT (1 << 1)
@@ -46,6 +46,8 @@ class SectionVec;
 class FileRel;
 class FileDyn;
 class VersionVec;
+class SymbolDyn;
+ostream& operator<<(ostream &os, const SymbolDyn &s);
 
 class Symbol
 {
@@ -59,6 +61,9 @@ public:
 
     string get_symbol_name() const 
     { return name_; }
+
+    UINT32 get_symbol_value() const 
+    { return value_; }
 
     UINT32 get_symbol_type() const 
     { return type_; }
@@ -78,11 +83,16 @@ public:
     void set_symbol_name_offset(UINT32 offset) 
     { name_offset_ = offset; }
 
+    void set_symbol_value(int);
+
     void set_symbol_type(UINT8 type)
     { type_ = type; }
 
     void set_symbol_index(UINT32 index)
     { index_ = index; }
+
+    void set_symbol_section(shared_ptr<Section> &s)
+    { sec_ = s; }
 
     void set_symbol_handle(bool h)
     { handled_ = h; }
@@ -92,6 +102,10 @@ public:
 
     void del_symbol_sd_type(int sd)
     { sd_type_ &= ~sd; }
+
+    void update_symbol_value();
+
+    void update_symbol_shndx();
 
     Elf32_Sym symbol_to_elfsym() const;
     
@@ -121,10 +135,18 @@ public:
     SymbolDyn() {}
     SymbolDyn(Symbol *sym):
         Symbol(*sym),
+        got_index_(0),
+        plt_index_(0),
         version_(0),
         version_name_(""),
         file_("") {}
     SymbolDyn(Elf32_Sym*, UINT32, UINT8*, const SectionVec&, string, const VersionVec&);
+
+    UINT32 get_dynsym_got_index() const 
+    { return got_index_; }
+
+    UINT32 get_dynsym_plt_index() const 
+    { return plt_index_; }
 
     UINT16 get_dynsym_version() const 
     { return version_; }
@@ -134,6 +156,12 @@ public:
 
     string get_dynsym_file() const 
     { return file_; }
+
+    void set_dynsym_got_index(UINT32 i)
+    { got_index_ = i; }
+
+    void set_dynsym_plt_index(UINT32 i)
+    { plt_index_ = i; }
 
     void set_dynsym_version(UINT16 v)
     { version_ = v; }
@@ -145,6 +173,8 @@ public:
     { file_ = n; }
 
 private:
+    UINT32 got_index_;
+    UINT32 plt_index_;
     UINT16 version_;
     string version_name_;
     string file_;
@@ -159,6 +189,7 @@ public:
 
     void init(const FileRel&, const SectionVec&, const SectionVec&);
     shared_ptr<Symbol> get_symbol_by_index(UINT32) const;
+    void update_symbols_value(const SectionVec&);
 
 private:
     vector<shared_ptr<Symbol> > sym_vec_;

@@ -56,6 +56,25 @@ Symbol::Symbol(Elf32_Sym *sym, UINT32 index, UINT8 *sym_strn_table, const Sectio
             shndx_ = sec_->get_section_index();
         }
     }
+    /* for two ^init_array symbols, manually handle here*/
+    else {
+        if (name_ == INIT_ARRAY_START || name_ == INIT_ARRAY_END) {
+            sec_ = obj_sec_vec.get_section_by_name(INIT_ARRAY_SECTION_NAME);
+            shndx_ = sec_->get_section_index();
+            if (name_ == INIT_ARRAY_END)
+                value_ += sec_->get_section_size();
+        }
+    }
+}
+
+void Symbol::update_symbol_value()
+{ 
+    value_ += sec_->get_section_address(); 
+}
+
+void Symbol::update_symbol_shndx()
+{ 
+    shndx_ = sec_->get_section_index(); 
 }
 
 void Symbol::_handleCOMMON(const SectionVec &obj_sec_vec)
@@ -127,8 +146,34 @@ shared_ptr<Symbol> SymbolVec::get_symbol_by_index(UINT32 index) const
     return res;
 }
 
+void SymbolVec::update_symbols_value(const SectionVec &obj_sec_vec)
+{
+    vector<shared_ptr<Symbol> >::iterator it;
+    for (it = sym_vec_.begin(); it != sym_vec_.end(); it++) {
+        UINT16 shndx = (*it)->get_symbol_shndx();
+        UINT16 target_shndx;
+        /* imported symbols don't have value */
+        if (shndx == SHN_ABS || shndx == SHN_UNDEF) {
+            if ((*it)->get_symbol_name() == GOT_SYMBOL_NAME) {
+                shared_ptr<Section> gotplt = obj_sec_vec.get_section_by_name(GOT_PLT_SECTION_NAME);
+                (*it)->set_symbol_section(gotplt);
+                (*it)->update_symbol_value();
+                (*it)->update_symbol_shndx();
+            }
+        }
+        else {
+            (*it)->update_symbol_value();
+            (*it)->update_symbol_shndx();
+        }
+    }
+
+    report(RL_FOUR, "add virtual address to symbols value");
+}
+
 SymbolDyn::SymbolDyn(Elf32_Sym *sym, UINT32 index, UINT8 *dynsym_strn_table, const SectionVec &dsl, string file_name, const VersionVec &version_vec):
     Symbol(sym, index),
+    got_index_(0),
+    plt_index_(0),
     file_(file_name)
 {
     name_ = string(reinterpret_cast<char *>(dynsym_strn_table + name_offset_));
@@ -178,7 +223,8 @@ void SymbolDynVec::addFromSDVec(const SymbolVec &obj_sym_vec, const SymbolDynVec
     int index = dynsym_vec_.size();
 
     for (it = obj_sym_vec.sym_vec_.begin(); it != obj_sym_vec.sym_vec_.end(); it++) {
-        if ((*it)->get_symbol_sd_type() == SYM_LOCAL || (*it)->get_symbol_handle())
+        UINT32 symbol_sd_type = (*it)->get_symbol_sd_type(); 
+        if (symbol_sd_type == SYM_LOCAL || (*it)->get_symbol_handle())
             continue;
 
         shared_ptr<SymbolDyn> new_sym = make_shared<SymbolDyn> ((*it).get());
@@ -282,18 +328,20 @@ shared_ptr<SymbolDyn> SymbolDynVec::get_ith_dynsym(UINT32 i) const
  *-----------------------------------------------------------------------------*/
 ostream& operator<<(ostream & os, const Symbol &sym)
 {
+    os << sym.index_ << " ";
     if (sym.sec_)
         os << sym.sec_->get_section_name();
     else
         os << "\t";
-    os << " " << sym.index_ << " " << sym.name_ << std::endl;
+    os << std::hex;
+    os << " " << sym.name_ << " " << sym.value_ << std::endl;
     return os;
 }
 
 ostream& operator<<(ostream &os, const SymbolVec &s)
 {
     for (int i = 0; i < s.sym_vec_.size(); i++)
-        os << i << " " << *(s.sym_vec_[i]);
+        os << *(s.sym_vec_[i]);
     return os;
 }
 
@@ -304,7 +352,7 @@ ostream& operator<<(ostream & os, const SymbolDyn &sym)
     else
         os << "\t";
     os << sym.index_ << " " << sym.name_offset_ << " " << sym.name_;
-    os << " " << sym.version_name_ << " " << sym.sd_type_ << std::endl;
+    os << " " << sym.version_name_ << " " << sym.sd_type_ << " " << std::endl;
     return os;
 }
 

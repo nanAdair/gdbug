@@ -85,11 +85,17 @@ public:
     UINT32 get_section_flags() const 
     { return flags_; }
 
+    UINT32 get_section_address() const 
+    { return address_; }
+
     UINT32 get_section_size() const 
     { return size_; }
 
     UINT32 get_section_addralign() const 
     { return addralign_; }
+
+    UINT32 get_section_entsize() const 
+    { return entsize_; }
 
     UINT32 get_section_delta() const 
     { return delta_; }
@@ -132,6 +138,7 @@ public:
     void set_section_misc(UINT32 m)
     { misc_ = m; }
 
+    void update_section_data(UINT32, UINT8 *, UINT32);
     void expand_section_data(const UINT8 *, UINT32, bool);
 
 protected:

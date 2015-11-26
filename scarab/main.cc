@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 
 void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, RelocationVec &obj_rel_vec, int argc, char *argv[])
 {
+    report(RL_THREE, "Binary Abstraction Begin");
     //TODO: parameters parser
     string objfile_name(argv[1]);
     FileRel objfile(objfile_name);
@@ -47,8 +48,8 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     SectionVec merged_sections = obj_sec_vec.merge_sections();
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
+    //cout << obj_rel_vec;
 
-    cout << obj_sec_vec << endl;
     /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
     // DEFAULT: the last parameter is ld path
@@ -71,7 +72,12 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
 
     obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
     obj_sec_vec.allocate_address();
-    cout << obj_sec_vec;
+    obj_sym_vec.update_symbols_value(obj_sec_vec);
+    //obj_rel_vec.apply_relocations(obj_sec_vec, dyn_sym_vec);
+
+    report(RL_THREE, "Binary Abstraction Done");
+    //cout << obj_sym_vec << endl;
+    //cout << obj_sec_vec;
     //cout << hex << endl;
     //cout << dyn_sym_vec << endl;
 }
