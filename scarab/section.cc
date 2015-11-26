@@ -74,6 +74,51 @@ Section::~Section()
     }
 }
 
+UINT32 Section::get_section_score() const
+{
+    UINT32 n;
+    n = misc_ ? 50 : 0;
+    n += get_section_index();
+    
+    /* NULL section: 0 */
+    if (type_ == SHT_NULL)
+        return 0;
+    
+    /* .interp 1 */
+    if (name_ == INTERP_SECTION_NAME)
+        return 1;
+    
+    /* .note.ABI-tag 2 */
+    if (name_ == NOTE_SECTION_NAME)
+        return 2;
+
+    /* A: +1000 */
+    if (flags_ == SHF_ALLOC)
+        return 1000 + n;
+    
+    /* AX: +1000*/
+    if (flags_ == (SHF_ALLOC | SHF_EXECINSTR))
+        return 1000 + n;
+    
+    /* WA: + 2000 */
+    if (flags_ == (SHF_ALLOC | SHF_WRITE))
+        return 2000 + n;
+    
+    /* STR: +3000 */
+    if (flags_ == SHF_STRINGS)
+        return 3000 + n;
+    
+    /* Symbol Table: +7000 */
+    if (type_ == SHT_SYMTAB)
+        return 7000 + n;
+    
+    /* String Table: +8000 */
+    if (type_ == SHT_STRTAB)
+        return 8000 + n;
+    
+    return 6000 + n;
+}
+
 /* Merge sec to the tail of the calling section without changing sec content */
 void Section::_merge_section(shared_ptr<Section> &sec)
 {
@@ -642,6 +687,54 @@ void SectionVec::fill_sections_content(const string &ld_file, const vector<strin
     }
 }
 
+void SectionVec::allocate_address()
+{
+    _sort_sections();
+
+    UINT32 base_addr, offset;
+    base_addr = 0x8048000;
+    offset = 0x114;
+    UINT32 addend = 0;
+
+    vector<shared_ptr<Section> >::iterator it;
+    for (it = sec_vec_.begin()+1; it != sec_vec_.end(); it++) {
+        UINT32 align = (*it)->get_section_addralign();
+        int addition = 0;
+        while ((offset + addition) % align)
+            addition++;
+
+        if (addition) {
+            UINT8 *buffer = new UINT8 [addition];
+            memset(buffer, 0x0, addition);
+            (*it)->expand_section_data(buffer, addition, 0);
+            delete [] buffer;
+            offset += addition;
+        }
+
+        if ((*it)->get_section_flags() & SHF_WRITE)
+            addend = 0x1000;
+        if ((*it)->get_section_flags() & SHF_ALLOC)
+            (*it)->set_section_address(base_addr + offset + addend);
+        else
+            (*it)->set_section_address(0);
+
+        (*it)->set_section_file_offset(offset);
+        if ((*it)->get_section_name() != BSS_SECTION_NAME)
+            offset += (*it)->get_section_size();
+    }
+}
+
+void SectionVec::_sort_sections()
+{
+    vector<shared_ptr<Section> >::iterator it;
+    for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) 
+        (*it)->set_section_misc((*it)->get_section_score());
+    
+    sort(sec_vec_.begin(), sec_vec_.end());
+    for (int i = 0; i < sec_vec_.size(); i++)
+        sec_vec_[i]->set_section_final_index(i);
+}
+
 string SectionVec::_accumulate_names() const
 {
     string res = "";
@@ -673,7 +766,7 @@ UINT32 _calculate_hash(const string &name)
 ostream& operator<<(ostream &os, const SectionVec &s)
 {
     for (int i = 0; i < s.sec_vec_.size(); i++)
-        os << i << std::endl << *(s.sec_vec_[i]);
+        os << *(s.sec_vec_[i]);
 
     return os;
 }
@@ -683,7 +776,7 @@ ostream& operator<<(ostream &os, Section &sec)
     os << hex;
     os << sec.get_section_index() << " ";
     os << sec.name_ << " ";
-    os << sec.size_ << " " << sec.entsize_ << std::endl;
+    os << sec.address_ << " " << sec.file_offset_ << " " << sec.size_ << std::endl;
     string temp("temp");
     std::ofstream of;
     of.open(temp+sec.name_, std::ofstream::binary);
@@ -691,4 +784,9 @@ ostream& operator<<(ostream &os, Section &sec)
     of.close();
 
     return os;
+}
+
+bool operator<(shared_ptr<Section> a, shared_ptr<Section> b)
+{
+    return a->get_section_misc() < b->get_section_misc();
 }

@@ -82,6 +82,9 @@ public:
     Section(Elf32_Shdr*, UINT16, UINT8*, UINT8*);
     virtual ~Section();
 
+    UINT32 get_section_flags() const 
+    { return flags_; }
+
     UINT32 get_section_size() const 
     { return size_; }
 
@@ -100,8 +103,19 @@ public:
     string get_section_name() const 
     { return name_; }
 
+    UINT32 get_section_misc() const 
+    { return misc_; }
+
     UINT8 *get_section_data() const 
     { return data_; }
+
+    UINT32 get_section_score() const;
+
+    void set_section_address(UINT32 address)
+    { address_ = address; }
+
+    void set_section_file_offset(UINT32 offset)
+    { file_offset_ = offset; }
 
     void set_section_name_offset(int offset)
     { name_offset_ = offset; }
@@ -111,6 +125,12 @@ public:
 
     void set_section_addralign(UINT32 a)
     { addralign_ = a; }
+
+    void set_section_final_index(UINT32 index)
+    { final_index_ = index; }
+
+    void set_section_misc(UINT32 m)
+    { misc_ = m; }
 
     void expand_section_data(const UINT8 *, UINT32, bool);
 
@@ -128,7 +148,7 @@ protected:
     UINT16 origin_index_;
     UINT16 final_index_;
     UINT32 delta_;
-    UINT32 misc_;
+    UINT32 misc_; // used for score section to sort
     shared_ptr<Section> merge_to_;
     string name_;
     UINT8 *data_;
@@ -266,6 +286,7 @@ class SectionVec
 {
 public:
     friend ostream &operator<<(ostream &, const SectionVec&);
+    friend bool operator<(shared_ptr<Section> a, shared_ptr<Section> b);
     SectionVec() {}
 
     void init(const File&);
@@ -275,6 +296,7 @@ public:
     shared_ptr<Section> get_section_by_name(const string&) const;
     shared_ptr<Section> get_section_by_index(UINT16) const;
     void delete_section_by_index(UINT16);
+    void allocate_address();
 
     //shared_ptr<const Section> get_section_by_name(const string& s) const 
     //{ return const_cast<SectionVec*>(this)->get_section_by_name(s); }
@@ -288,5 +310,6 @@ private:
 
     void _create_sections();
     string _accumulate_names() const;
+    void _sort_sections();
 };
 #endif

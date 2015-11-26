@@ -70,6 +70,8 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     }
 
     obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
+    obj_sec_vec.allocate_address();
+    cout << obj_sec_vec;
     //cout << hex << endl;
     //cout << dyn_sym_vec << endl;
 }
