@@ -44,7 +44,7 @@ Relocation::Relocation(Elf32_Rel *rel, const FileRel &f, const SectionVec &obj_s
         offset_ += sec_->get_section_delta();
     }
 
-    addend_ = *(reinterpret_cast<int*>(sec_->get_section_data()) + offset_);
+    addend_ = *(reinterpret_cast<int*>(sec_->get_section_data() + offset_));
 
     shared_ptr<Symbol> symbol;
     symbol = obj_sym_vec.get_symbol_by_index(rel->r_info >> 8);
