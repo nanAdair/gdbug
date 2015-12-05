@@ -62,11 +62,23 @@ public:
     string get_symbol_name() const 
     { return name_; }
 
+    UINT32 get_symbol_name_offset() const
+    { return name_offset_; }
+
     UINT32 get_symbol_value() const 
     { return value_; }
 
-    UINT32 get_symbol_type() const 
+    UINT32 get_symbol_size() const 
+    { return size_; }
+
+    UINT8 get_symbol_type() const 
     { return type_; }
+
+    UINT8 get_symbol_binding() const 
+    { return binding_; }
+
+    UINT8 get_symbol_other() const 
+    { return other_; }
 
     UINT32 get_symbol_index() const 
     { return index_; }
@@ -189,6 +201,7 @@ public:
 
     void init(const FileRel&, const SectionVec&, const SectionVec&);
     shared_ptr<Symbol> get_symbol_by_index(UINT32) const;
+    UINT32 get_sym_vec_size() const;
     void update_symbols_value(const SectionVec&);
 
 private:
@@ -208,7 +221,7 @@ public:
     shared_ptr<SymbolDyn> get_dynsym_by_name(string name) const;
     shared_ptr<SymbolDyn> get_dynsym_by_index(UINT32 index) const;
     UINT32 get_dynsym_vec_size() const;
-    void addFromSDVec(const SymbolVec&, const SymbolDynVec&);
+    void add_from_SDVec(const SymbolVec&, const SymbolDynVec&);
     string accumulate_names(UINT32) const;
     shared_ptr<SymbolDyn> get_ith_dynsym(UINT32) const;
 

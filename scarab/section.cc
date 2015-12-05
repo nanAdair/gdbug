@@ -400,6 +400,33 @@ void SectionPlt::set_plt_data(const SymbolDynVec &dsl)
     }
 }
 
+void SectionPlt::renew_plt_data(UINT32 address)
+{
+    int number = size_ / 0x10;
+    UINT32 plt_address, gotplt_address;
+    plt_address = address_;
+    gotplt_address = address;
+
+    UINT32 plt0_push_operand, plt0_jmp_operand;
+    plt0_push_operand = gotplt_address + 4;
+    plt0_jmp_operand = gotplt_address + 8;
+
+    update_section_data(2, reinterpret_cast<UINT8*>(&plt0_push_operand), sizeof(UINT32));
+    update_section_data(8, reinterpret_cast<UINT8*>(&plt0_jmp_operand), sizeof(UINT32));
+
+    for (int i = 1; i < number; i++) {
+        UINT32 offset = i * 0x10;
+        
+        UINT32 ind_jmp_operand;
+        ind_jmp_operand = gotplt_address + 0xc + (i - 1) * 4;
+        update_section_data(offset+2, reinterpret_cast<UINT8*>(&ind_jmp_operand), sizeof(UINT32));
+
+        UINT32 next_ins_address = plt_address + 0x10 * (i + 1);
+        int d_jmp_operand = plt_address - next_ins_address;
+        update_section_data(offset+0xc, reinterpret_cast<UINT8*>(&d_jmp_operand), sizeof(UINT32));
+    }
+}
+
 void SectionGotPlt::set_got_plt_data(const SymbolDynVec &dsl)
 {
     int number = 0;
@@ -417,6 +444,18 @@ void SectionGotPlt::set_got_plt_data(const SymbolDynVec &dsl)
     delete [] buffer;
 }
 
+void SectionGotPlt::renew_got_plt_data(UINT32 dynamic_addr, UINT32 plt_addr)
+{
+    update_section_data(0, reinterpret_cast<UINT8*>(&dynamic_addr), sizeof(UINT32));
+
+    int number = size_ / entsize_;
+    for (int i = 3; i < number; i++) {
+        UINT32 offset = entsize_ * i;
+        UINT32 push_addr = plt_addr + (i - 3 + 1) * 0x10 + 6; // 6 is the offset of push n ins
+        update_section_data(offset, reinterpret_cast<UINT8*>(&push_addr), sizeof(UINT32));
+    }
+}
+
 void SectionRelPlt::set_rel_plt_data(const SymbolDynVec &dsl)
 {
     int index = 0;
@@ -431,6 +470,18 @@ void SectionRelPlt::set_rel_plt_data(const SymbolDynVec &dsl)
 
         expand_section_data(reinterpret_cast<UINT8*>(&rel), sizeof(Elf32_Rel), 1);
         index++;
+    }
+}
+
+/*-----------------------------------------------------------------------------
+ *  add base address to rel offsets
+ *-----------------------------------------------------------------------------*/
+void SectionRelPlt::renew_rel_plt_data(UINT32 address)
+{
+    int number = size_ / entsize_;
+    for (int i = 0; i < number; i++) {
+        Elf32_Rel *cur_rel = reinterpret_cast<Elf32_Rel*>(data_ + entsize_ * i);
+        cur_rel->r_offset += address;
     }
 }
 
@@ -469,6 +520,19 @@ void SectionRelDyn::set_rel_dyn_data(const SymbolDynVec &dsl)
     }
 }
 
+
+/*-----------------------------------------------------------------------------
+ *  add base address to rel offsets
+ *-----------------------------------------------------------------------------*/
+void SectionRelDyn::renew_rel_dyn_data(UINT32 address)
+{
+    int number = size_ / entsize_;
+    for (int i = 0; i < number; i++) {
+        Elf32_Rel *cur_rel = reinterpret_cast<Elf32_Rel*>(data_ + entsize_ * i);
+        cur_rel->r_offset += address;
+    }
+}
+
 void SectionDynamic::set_dynamic_data(int num)
 {
     UINT32 datasize = DYNAMIC_ENTSIZE * (DYNAMIC_NUMBER + num);
@@ -476,6 +540,115 @@ void SectionDynamic::set_dynamic_data(int num)
     memset(buffer, 0x0, datasize);
     expand_section_data(buffer, datasize, 1);
     delete [] buffer;
+}
+
+void SectionDynamic::renew_dynamic_data(SectionVec &obj_sec_vec, const vector<string> &so_files)
+{
+    shared_ptr<Section> gotplt, plt, got, dynsym, dynstr, relgot, relplt, hash;
+    shared_ptr<Section> init, fini, fini_array, init_array, gv, gnr;
+    
+    gotplt = obj_sec_vec.get_section_by_name(GOT_PLT_SECTION_NAME);
+    plt = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+    got = obj_sec_vec.get_section_by_name(GOT_SECTION_NAME);
+    dynsym = obj_sec_vec.get_section_by_name(DYNSYM_SECTION_NAME);
+    relgot = obj_sec_vec.get_section_by_name(REL_DYN_SECTION_NAME);
+    relplt = obj_sec_vec.get_section_by_name(REL_PLT_SECTION_NAME);
+    dynstr = obj_sec_vec.get_section_by_name(DYNSTR_SECTION_NAME);
+    hash = obj_sec_vec.get_section_by_name(HASH_SECTION_NAME);
+    init = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+    fini = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+    fini_array = obj_sec_vec.get_section_by_name(FINI_ARRAY_SECTION_NAME);
+    init_array = obj_sec_vec.get_section_by_name(INIT_ARRAY_SECTION_NAME);
+    gv = obj_sec_vec.get_section_by_name(GV_SECTION_NAME);
+    gnr = obj_sec_vec.get_section_by_name(GNR_SECTION_NAME);
+
+    int number = sizeof(DynamicSectionInfo) / sizeof(Elf32_Dyn);
+    for (int i = 0; i < number; i++) {
+        Elf32_Dyn *cur_dyn;
+        cur_dyn = reinterpret_cast<Elf32_Dyn*>(data_ + i * sizeof(Elf32_Dyn));
+
+        int tag = DynamicSectionInfo[i].d_tag;
+        cur_dyn->d_tag = tag;
+        switch(tag) {
+            case DT_INIT:
+                cur_dyn->d_un.d_ptr = init->get_section_address();
+                break;
+            case DT_FINI:
+                cur_dyn->d_un.d_ptr = fini->get_section_address();
+                break;
+            case DT_INIT_ARRAY:
+                cur_dyn->d_un.d_ptr = init_array->get_section_address();
+                break;
+            case DT_INIT_ARRAYSZ:
+                cur_dyn->d_un.d_val = init_array->get_section_size();
+                break;
+            case DT_FINI_ARRAY:
+                cur_dyn->d_un.d_ptr = init_array->get_section_address();
+                break;
+            case DT_FINI_ARRAYSZ:
+                cur_dyn->d_un.d_val = init_array->get_section_size();
+                break;
+            case DT_HASH:
+                cur_dyn->d_un.d_ptr = hash->get_section_address();
+                break;
+            case DT_STRTAB:
+                cur_dyn->d_un.d_ptr = dynstr->get_section_address();
+                break;
+            case DT_SYMTAB:
+                cur_dyn->d_un.d_ptr = dynsym->get_section_address();
+                break;
+            case DT_STRSZ:
+                cur_dyn->d_un.d_val = dynstr->get_section_size();
+                break;
+            case DT_SYMENT:
+                cur_dyn->d_un.d_val = dynsym->get_section_entsize();
+                break;
+            case DT_DEBUG:
+                cur_dyn->d_un.d_ptr = 0;
+                break;
+            case DT_PLTGOT:
+                cur_dyn->d_un.d_ptr = gotplt->get_section_address();
+                break;
+            case DT_PLTRELSZ:
+                cur_dyn->d_un.d_val = relplt->get_section_size();
+                break;
+            case DT_PLTREL:
+                //FIXME: steal this number of reverse real exe
+                cur_dyn->d_un.d_val = 0x11;
+                break;
+            case DT_JMPREL:
+                cur_dyn->d_un.d_ptr = relplt->get_section_address();
+                break;
+            case DT_REL:
+                cur_dyn->d_un.d_ptr = relgot->get_section_address();
+                break;
+            case DT_RELSZ:
+                cur_dyn->d_un.d_val = relgot->get_section_size();
+                break;
+            case DT_RELENT:
+                cur_dyn->d_un.d_val = relgot->get_section_entsize();
+                break;
+            case DT_VERNEED:
+                cur_dyn->d_un.d_ptr = gnr->get_section_address();
+                break;
+            case DT_VERNEEDNUM:
+                cur_dyn->d_un.d_val = so_files.size();
+                break;
+            case DT_VERSYM:
+                cur_dyn->d_un.d_ptr = gv->get_section_address();
+                break;
+            default:
+                report(RL_ONE, "can't handle this dynamic tag");
+        }
+    }
+    for (int i = 0; i < so_files.size(); i++) {
+        Elf32_Dyn *cur_dyn;
+        cur_dyn = reinterpret_cast<Elf32_Dyn*>(data_ + number * sizeof(Elf32_Dyn));
+
+        cur_dyn->d_tag = DT_NEEDED;
+        cur_dyn->d_un.d_val = dynamic_pointer_cast<SectionDynstr>(dynstr)->find_offset(so_files[i]);
+        number++;
+    }
 }
 
 void SectionShstr::set_shstr_data(const string &data)
@@ -506,6 +679,27 @@ int SectionShstr::find_section_name_offset(const string &name)
     return res;
 }
 
+void SectionSymtab::renew_symtab_data(const SymbolVec &osl)
+{
+    delete [] data_;
+    data_ = NULL;
+    size_ = 0;
+
+    UINT32 number = osl.get_sym_vec_size();
+    for (UINT32 i = 0; i < number; i++) {
+        shared_ptr<Symbol> cur_sym = osl.get_symbol_by_index(i);
+        Elf32_Sym symbol;
+        symbol.st_name = cur_sym->get_symbol_name_offset();
+        symbol.st_value = cur_sym->get_symbol_value();
+        symbol.st_size = cur_sym->get_symbol_size();
+        symbol.st_info = (cur_sym->get_symbol_binding() << 4) + cur_sym->get_symbol_type();
+        symbol.st_other = cur_sym->get_symbol_other();
+        symbol.st_shndx = cur_sym->get_symbol_shndx();
+
+        expand_section_data(reinterpret_cast<const UINT8*>(&symbol), sizeof(Elf32_Sym), 1);
+    }
+}
+
 void SectionVec::init(const File& f)
 {
     Elf32_Shdr *cur_sec_dr;
@@ -524,6 +718,8 @@ void SectionVec::init(const File& f)
             sec = make_shared<SectionGnuVersion>(cur_sec_dr, i, file_data, sec_strn_table);
         else if (sec_name == ".shstrtab")
             sec = make_shared<SectionShstr>(cur_sec_dr, i, file_data, sec_strn_table);
+        else if (sec_name == ".symtab")
+            sec = make_shared<SectionSymtab>(cur_sec_dr, i, file_data, sec_strn_table);
         else
             sec = make_shared<Section>(cur_sec_dr, i, file_data, sec_strn_table);
         sec_vec_.push_back(sec);
@@ -730,6 +926,83 @@ void SectionVec::allocate_address()
     }
 
     report(RL_FOUR, "complete allocating address for sections");
+}
+
+void SectionVec::renew_sections_content(const vector<string> &so_files, const SymbolVec &obj_sym_vec) 
+{
+    shared_ptr<SectionDynamic> dynamic = std::dynamic_pointer_cast<SectionDynamic>(get_section_by_name(DYNAMIC_SECTION_NAME));
+    shared_ptr<SectionGotPlt> gotplt = std::dynamic_pointer_cast<SectionGotPlt>(get_section_by_name(GOT_PLT_SECTION_NAME));
+    shared_ptr<SectionPlt> plt = std::dynamic_pointer_cast<SectionPlt>(get_section_by_name(PLT_SECTION_NAME));
+    shared_ptr<SectionGot> got = std::dynamic_pointer_cast<SectionGot>(get_section_by_name(GOT_SECTION_NAME));
+    shared_ptr<SectionDynsym> dynsym = std::dynamic_pointer_cast<SectionDynsym>(get_section_by_name(DYNSYM_SECTION_NAME));
+    shared_ptr<SectionRelDyn> relgot = std::dynamic_pointer_cast<SectionRelDyn>(get_section_by_name(REL_DYN_SECTION_NAME));
+    shared_ptr<SectionRelPlt> relplt = std::dynamic_pointer_cast<SectionRelPlt>(get_section_by_name(REL_PLT_SECTION_NAME));
+    shared_ptr<SectionDynstr> dynstr = std::dynamic_pointer_cast<SectionDynstr>(get_section_by_name(DYNSTR_SECTION_NAME));
+    shared_ptr<SectionHash> hash = std::dynamic_pointer_cast<SectionHash>(get_section_by_name(HASH_SECTION_NAME));
+    shared_ptr<SectionGnuVersion> gv = std::dynamic_pointer_cast<SectionGnuVersion>(get_section_by_name(GV_SECTION_NAME));
+    shared_ptr<SectionGnuVersionR> gnr = std::dynamic_pointer_cast<SectionGnuVersionR>(get_section_by_name(GNR_SECTION_NAME));
+    shared_ptr<SectionSymtab> symtab = std::dynamic_pointer_cast<SectionSymtab>(get_section_by_name(SYMTAB_SECTION_NAME));
+
+    shared_ptr<Section> init, fini, fini_array, init_array, interp, strtab;
+    init = get_section_by_name(INIT_SECTION_NAME);
+    fini = get_section_by_name(FINI_SECTION_NAME);
+    fini_array = get_section_by_name(FINI_ARRAY_SECTION_NAME);
+    init_array = get_section_by_name(INIT_ARRAY_SECTION_NAME);
+    interp = get_section_by_name(INTERP_SECTION_NAME);
+    strtab = get_section_by_name(STRTAB_SECTION_NAME);
+
+    vector<shared_ptr<Section> >::iterator it;
+    for (it = sec_vec_.begin()+1; it != sec_vec_.end(); it++) {
+        string name = (*it)->get_section_name();
+
+        if (name == DYNSYM_SECTION_NAME) {
+            dynsym->set_section_info(interp->get_section_index());
+            dynsym->set_section_link(dynstr->get_section_index());
+            report(RL_FOUR, "update .dynsym done");
+        }
+        else if (name == HASH_SECTION_NAME) {
+            hash->set_section_link(dynsym->get_section_index());
+            report(RL_FOUR, "update .hash done");
+        }
+        else if (name == GV_SECTION_NAME) {
+            gv->set_section_info(interp->get_section_index());
+            gv->set_section_link(dynsym->get_section_index());
+            report(RL_FOUR, "update .gnu.version done");
+        }
+        else if (name == GNR_SECTION_NAME) {
+            gnr->set_section_link(dynstr->get_section_index());
+            report(RL_FOUR, "update .gnu.version_r done");
+        }
+        else if (name == PLT_SECTION_NAME) {
+            plt->renew_plt_data(gotplt->get_section_address());
+            report(RL_FOUR, "update .plt done");
+        }
+        else if (name == GOT_PLT_SECTION_NAME) {
+            gotplt->renew_got_plt_data(dynamic->get_section_address(), plt->get_section_address());
+            report(RL_FOUR, "update .got.plt done");
+        }
+        else if (name == REL_PLT_SECTION_NAME) {
+            relplt->set_section_info(plt->get_section_index());
+            relplt->set_section_link(dynsym->get_section_index());
+            relplt->renew_rel_plt_data(gotplt->get_section_address());
+            report(RL_FOUR, "update .rel.plt done");
+        }
+        else if (name == REL_DYN_SECTION_NAME) {
+            relgot->set_section_link(dynsym->get_section_index());
+            relgot->renew_rel_dyn_data(got->get_section_address());
+            report(RL_FOUR, "update .rel.dyn done");
+        }
+        else if (name == DYNAMIC_SECTION_NAME) {
+            dynamic->set_section_link(dynstr->get_section_index());
+            dynamic->renew_dynamic_data(*this, so_files);
+            report(RL_FOUR, "update .dynamic done");
+        }
+        else if (name == SYMTAB_SECTION_NAME) {
+            symtab->set_section_link(strtab->get_section_index());
+            symtab->renew_symtab_data(obj_sym_vec);
+            report(RL_FOUR, "update .symtab done");
+        }
+    }
 }
 
 void SectionVec::_sort_sections()

@@ -146,6 +146,11 @@ shared_ptr<Symbol> SymbolVec::get_symbol_by_index(UINT32 index) const
     return res;
 }
 
+UINT32 SymbolVec::get_sym_vec_size() const 
+{
+    return sym_vec_.size();
+}
+
 void SymbolVec::update_symbols_value(const SectionVec &obj_sec_vec)
 {
     vector<shared_ptr<Symbol> >::iterator it;
@@ -214,7 +219,7 @@ shared_ptr<SymbolDyn> SymbolDynVec::get_dynsym_by_name(string name) const
     return res;
 }
 
-void SymbolDynVec::addFromSDVec(const SymbolVec &obj_sym_vec, const SymbolDynVec &so_sym_vec)
+void SymbolDynVec::add_from_SDVec(const SymbolVec &obj_sym_vec, const SymbolDynVec &so_sym_vec)
 {
     _markDynSymbol(obj_sym_vec, so_sym_vec);
 

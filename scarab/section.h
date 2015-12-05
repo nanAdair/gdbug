@@ -68,7 +68,9 @@ using std::ostream;
 #define DYNAMIC_ENTSIZE 8
 
 class File;
+class SymbolVec;
 class SymbolDynVec;
+class SectionVec;
 
 class Section: public std::enable_shared_from_this<Section>
 {
@@ -131,6 +133,12 @@ public:
 
     void set_section_addralign(UINT32 a)
     { addralign_ = a; }
+
+    void set_section_info(UINT32 i)
+    { info_ = i; }
+
+    void set_section_link(UINT32 l)
+    { link_ = l; }
 
     void set_section_final_index(UINT32 index)
     { final_index_ = index; }
@@ -227,6 +235,7 @@ public:
     SectionPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
     void set_plt_data(const SymbolDynVec&);
+    void renew_plt_data(UINT32);
 private:
     typedef struct PLT_Instr {
         UINT16 opcode;
@@ -242,6 +251,7 @@ public:
     SectionGotPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
     void set_got_plt_data(const SymbolDynVec&);
+    void renew_got_plt_data(UINT32, UINT32);
 };
 
 
@@ -251,6 +261,7 @@ public:
     SectionRelPlt(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
     void set_rel_plt_data(const SymbolDynVec&);
+    void renew_rel_plt_data(UINT32);
 };
 
 class SectionGot : public Section 
@@ -267,6 +278,7 @@ public:
     SectionRelDyn(Elf32_Shdr *cur_sec_dr, UINT16 index, const string &name):
         Section(cur_sec_dr, index, name) {}
     void set_rel_dyn_data(const SymbolDynVec&);
+    void renew_rel_dyn_data(UINT32);
 };
 
 class SectionDynamic : public Section
@@ -278,6 +290,7 @@ public:
         Section(cur_sec_dr, index, file_data, strn_table) {}
     int get_dynamic_attribute(int) const;
     void set_dynamic_data(int num);
+    void renew_dynamic_data(SectionVec&, const vector<string>&);
 };
 
 class SectionShstr : public Section
@@ -289,7 +302,15 @@ public:
     int find_section_name_offset(const string&);
 };
 
-class SectionVec
+class SectionSymtab : public Section 
+{
+public:
+    SectionSymtab(Elf32_Shdr* cur_sec_dr, UINT16 index, UINT8* file_data, UINT8* strn_table):
+        Section(cur_sec_dr, index, file_data, strn_table) {}
+    void renew_symtab_data(const SymbolVec&);
+};
+
+class SectionVec : public std::enable_shared_from_this<SectionVec>
 {
 public:
     friend ostream &operator<<(ostream &, const SectionVec&);
@@ -304,6 +325,7 @@ public:
     shared_ptr<Section> get_section_by_index(UINT16) const;
     void delete_section_by_index(UINT16);
     void allocate_address();
+    void renew_sections_content(const vector<string>&, const SymbolVec&);
 
     //shared_ptr<const Section> get_section_by_name(const string& s) const 
     //{ return const_cast<SectionVec*>(this)->get_section_by_name(s); }

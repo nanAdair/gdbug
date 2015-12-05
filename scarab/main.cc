@@ -28,14 +28,19 @@
 using namespace std;
 
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
+void patchSectionContent(SectionVec&, const SymbolVec&, int argc, char *argv[]);
 int main(int argc, char *argv[])
 {
     SectionVec obj_sec_vec;
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
+    patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
 }
 
+/*-----------------------------------------------------------------------------
+ *  Construct all the basic info need for obfuscation
+ *-----------------------------------------------------------------------------*/
 void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, RelocationVec &obj_rel_vec, int argc, char *argv[])
 {
     report(RL_THREE, "Binary Abstraction Begin");
@@ -67,17 +72,31 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
         VersionVec ver_vec(so_sec_vec);
         SymbolDynVec cur_dynsym_vec(dynfile, so_sec_vec, ver_vec);
 
-        dyn_sym_vec.addFromSDVec(obj_sym_vec, cur_dynsym_vec);
+        dyn_sym_vec.add_from_SDVec(obj_sym_vec, cur_dynsym_vec);
     }
 
     obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
     obj_sec_vec.allocate_address();
     obj_sym_vec.update_symbols_value(obj_sec_vec);
-    //obj_rel_vec.apply_relocations(obj_sec_vec, dyn_sym_vec);
+    obj_rel_vec.apply_relocations(obj_sec_vec, dyn_sym_vec);
 
     report(RL_THREE, "Binary Abstraction Done");
-    //cout << obj_sym_vec << endl;
     //cout << obj_sec_vec;
     //cout << hex << endl;
     //cout << dyn_sym_vec << endl;
+}
+
+
+/*-----------------------------------------------------------------------------
+ *  fill other non-exec section content after obfuscation done
+ *-----------------------------------------------------------------------------*/
+void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, int argc, char *argv[])
+{
+    report(RL_THREE, "Patch Section Final Content Begin");
+    vector<string> so_files;
+    for (int i = 0; i < argc-3; i++)
+        so_files.push_back(string(argv[i+2]));
+
+    obj_sec_vec.renew_sections_content(so_files, obj_sym_vec);
+    report(RL_THREE, "Patch Section Final Content End");
 }
