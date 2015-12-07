@@ -32,6 +32,8 @@ using std::shared_ptr;
 
 #include "type.h"
 
+class SectionVec;
+
 class FileHeader
 {
 public:
@@ -175,6 +177,41 @@ private:
     Elf32_Shdr *dynsym_table_dr_;
     UINT8 *dynsym_strn_table_;
     Elf32_Sym *dynsym_table_;
+};
+
+class ProgramHeader 
+{
+private:
+    UINT8 *data_;
+    UINT32 num_;
+    UINT32 size_;
+};
+
+class SectionTable 
+{
+public:
+    friend ostream &operator<<(ostream &os, const SectionTable &st);
+    SectionTable():
+        data_(NULL), num_(0), size_(0) {}
+    SectionTable(const SectionVec &obj_sec_vec);
+    ~SectionTable();
+private:
+    UINT8 *data_;
+    UINT32 num_;
+    UINT32 size_;
+};
+
+class FileExec : public File 
+{
+public:
+    friend ostream &operator<<(ostream &os, const FileExec &f);
+    FileExec() {}
+    FileExec(const string &name):
+        File(name, BINARY_EXECUTABLE_TYPE) {}
+    void construct_section_table(const SectionVec&);
+private:
+    shared_ptr<SectionTable> sec_table_;
+    shared_ptr<ProgramHeader> prog_header_;
 };
 
 #endif

@@ -778,6 +778,11 @@ shared_ptr<Section> SectionVec::get_section_by_index(UINT16 index) const
     return res;
 }
 
+UINT32 SectionVec::get_section_vec_size() const 
+{
+    return sec_vec_.size();
+}
+
 void SectionVec::delete_section_by_index(UINT16 index)
 {
     vector<shared_ptr<Section> >::iterator it;

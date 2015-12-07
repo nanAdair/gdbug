@@ -18,10 +18,13 @@
 
 #include "file.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
-using std::endl;
+using namespace std;
 
 #include "log.h"
+#include "section.h"
 
 
 File::File(const string &file_name, const BINARY_TYPE type):
@@ -29,8 +32,10 @@ File::File(const string &file_name, const BINARY_TYPE type):
     file_type_(type),
     file_data_(NULL)
 {
-    _initPartFile();
-    _constructFileMeta();
+    if (file_type_ != BINARY_EXECUTABLE_TYPE) {
+        _initPartFile();
+        _constructFileMeta();
+    }
 }
 
 File::~File()
@@ -115,6 +120,49 @@ FileDyn::FileDyn(const string &file_name):
     }
 }
 
+UINT32 _expand_memory(UINT8 **origin, UINT32 size, const UINT8 *to_add, UINT32 to_add_size);
+
+SectionTable::~SectionTable()
+{
+    if (data_) {
+        delete[] data_;
+        data_ = NULL;
+        size_ = 0;
+    }
+}
+
+SectionTable::SectionTable(const SectionVec &obj_sec_vec):
+        data_(NULL), num_(0), size_(0)
+{
+    UINT32 number = obj_sec_vec.get_section_vec_size();
+    // all section have been created and settled down, 
+    // so use get_section_by_index to simulate traverse
+    for (int i = 0; i < number; i++) {
+        Elf32_Shdr cur_shdr;
+        shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
+        
+        cout << cur_sec->get_section_name() << endl;
+        cur_shdr.sh_name = cur_sec->get_section_name_offset();
+        cur_shdr.sh_type = cur_sec->get_section_type();
+        cur_shdr.sh_flags = cur_sec->get_section_flags();
+        cur_shdr.sh_addr = cur_sec->get_section_address();
+        cur_shdr.sh_offset = cur_sec->get_section_file_offset();
+        cur_shdr.sh_size = cur_sec->get_section_size();
+        cur_shdr.sh_link = cur_sec->get_section_link();
+        cur_shdr.sh_info = cur_sec->get_section_info();
+        cur_shdr.sh_addralign = cur_sec->get_section_addralign();
+        cur_shdr.sh_entsize = cur_sec->get_section_entsize();
+
+        size_ = _expand_memory(&data_, size_, reinterpret_cast<const UINT8*>(&cur_shdr), sizeof(Elf32_Shdr));
+    }
+    num_ = number;
+}
+
+void FileExec::construct_section_table(const SectionVec &obj_sec_vec)
+{
+    sec_table_ = make_shared<SectionTable>(obj_sec_vec);
+}
+
 /*-----------------------------------------------------------------------------
  *  helper printer functions below
  *-----------------------------------------------------------------------------*/
@@ -143,4 +191,50 @@ ostream &operator<<(ostream &os, const FileHeader &fh)
     os << std::dec;
     os << "  Start of section headers: \t\t" << fh.shoff_ << endl;
     os << "  Size of this header: \t\t\t" << fh.ehsize_ << endl;
+}
+
+ostream &operator<<(ostream &os, const SectionTable &st)
+{
+    os << "There are " << st.num_ << " section headers" << endl;
+    for (int i = 0; i < st.num_; i++) {
+        Elf32_Shdr cur_sec = *(reinterpret_cast<Elf32_Shdr*>(st.data_ + i * sizeof(Elf32_Shdr)));
+        os << dec << i << "\t";
+        os << hex;
+        os << cur_sec.sh_name << "\t";
+        os << cur_sec.sh_type << "\t";
+        os << cur_sec.sh_addr << "\t";
+        os << cur_sec.sh_offset << "\t";
+        os << cur_sec.sh_size << "\t";
+        os << cur_sec.sh_entsize << "\t";
+        os << cur_sec.sh_flags << "\t";
+        os << cur_sec.sh_link << "\t";
+        os << cur_sec.sh_info << "\t";
+        os << cur_sec.sh_addralign << endl;
+    }
+    return os;
+}
+
+ostream &operator<<(ostream &os, const FileExec &f)
+{
+    os << *(f.sec_table_);
+    return os;
+}
+
+UINT32 _expand_memory(UINT8 **origin, UINT32 size, const UINT8 *to_add, UINT32 to_add_size)
+{
+    UINT32 new_datasize = size + to_add_size;
+    UINT8 *new_data = new UINT8 [new_datasize];
+    if (!new_data)
+        report(RL_ONE, "allocate memory fail");
+    memset(new_data, 0, new_datasize);
+
+    if (*origin)
+        memcpy(new_data, *origin, size);
+    memcpy(new_data+size, to_add, to_add_size);
+
+    swap(*origin, new_data);
+    if (new_data)
+        delete [] new_data;
+
+    return new_datasize;
 }

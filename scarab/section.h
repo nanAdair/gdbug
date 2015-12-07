@@ -84,14 +84,29 @@ public:
     Section(Elf32_Shdr*, UINT16, UINT8*, UINT8*);
     virtual ~Section();
 
+    UINT32 get_section_name_offset() const 
+    { return name_offset_; }
+
+    UINT32 get_section_type() const 
+    { return type_; }
+
     UINT32 get_section_flags() const 
     { return flags_; }
 
     UINT32 get_section_address() const 
     { return address_; }
 
+    UINT32 get_section_file_offset() const 
+    { return file_offset_; }
+
     UINT32 get_section_size() const 
     { return size_; }
+
+    UINT32 get_section_link() const 
+    { return link_; }
+
+    UINT32 get_section_info() const 
+    { return info_; }
 
     UINT32 get_section_addralign() const 
     { return addralign_; }
@@ -323,6 +338,7 @@ public:
 
     shared_ptr<Section> get_section_by_name(const string&) const;
     shared_ptr<Section> get_section_by_index(UINT16) const;
+    UINT32 get_section_vec_size() const;
     void delete_section_by_index(UINT16);
     void allocate_address();
     void renew_sections_content(const vector<string>&, const SymbolVec&);

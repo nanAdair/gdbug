@@ -29,13 +29,17 @@ using namespace std;
 
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
 void patchSectionContent(SectionVec&, const SymbolVec&, int argc, char *argv[]);
+void writeOut(const SectionVec &obj_sec_vec, string name);
 int main(int argc, char *argv[])
 {
     SectionVec obj_sec_vec;
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
+    //cout << obj_sec_vec << endl;
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
+    string res("output");
+    writeOut(obj_sec_vec, res);
 }
 
 /*-----------------------------------------------------------------------------
@@ -99,4 +103,14 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
 
     obj_sec_vec.renew_sections_content(so_files, obj_sym_vec);
     report(RL_THREE, "Patch Section Final Content End");
+}
+
+void writeOut(const SectionVec &obj_sec_vec, string name)
+{
+    FileExec output(name);
+    output.construct_section_table(obj_sec_vec);
+    cout << output;
+    //output.construct_program_header(obj_sec_vec);
+    //output.construct_file_header(obj_sec_vec);
+    //output.dump(name);
 }
