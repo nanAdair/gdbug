@@ -109,8 +109,8 @@ void writeOut(const SectionVec &obj_sec_vec, string name)
 {
     FileExec output(name);
     output.construct_section_table(obj_sec_vec);
-    cout << output;
-    //output.construct_program_header(obj_sec_vec);
+    output.construct_program_header(obj_sec_vec);
     //output.construct_file_header(obj_sec_vec);
     //output.dump(name);
+    cout << output;
 }

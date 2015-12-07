@@ -181,10 +181,23 @@ private:
 
 class ProgramHeader 
 {
+public:
+    friend ostream &operator<<(ostream &os, const ProgramHeader &phdr);
+    ProgramHeader():
+        data_(NULL), num_(0), size_(0) {}
+    ProgramHeader(const SectionVec &);
+    ~ProgramHeader();
+
 private:
     UINT8 *data_;
     UINT32 num_;
     UINT32 size_;
+
+    void _add_prog_phdr(Elf32_Phdr &phdr);
+    void _add_prog_interp(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec);
+    void _add_prog_load(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec);
+    void _add_prog_dynamic(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec);
+    void _add_prog_note(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec);
 };
 
 class SectionTable 
@@ -209,6 +222,7 @@ public:
     FileExec(const string &name):
         File(name, BINARY_EXECUTABLE_TYPE) {}
     void construct_section_table(const SectionVec&);
+    void construct_program_header(const SectionVec&);
 private:
     shared_ptr<SectionTable> sec_table_;
     shared_ptr<ProgramHeader> prog_header_;

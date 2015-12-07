@@ -23,6 +23,7 @@
 #include <fstream>
 using namespace std;
 
+#include "utilsGD.h"
 #include "log.h"
 #include "section.h"
 
@@ -122,6 +123,149 @@ FileDyn::FileDyn(const string &file_name):
 
 UINT32 _expand_memory(UINT8 **origin, UINT32 size, const UINT8 *to_add, UINT32 to_add_size);
 
+ProgramHeader::~ProgramHeader()
+{
+    if (data_) {
+        delete[] data_;
+        data_ = NULL;
+        size_ = 0;
+    }
+}
+
+ProgramHeader::ProgramHeader(const SectionVec &obj_sec_vec):
+    data_(NULL), num_(0), size_(0)
+{
+    UINT32 entsize = sizeof(Elf32_Phdr);
+    UINT32 number = sizeof(Program_HeadersGD) / entsize;
+    for (UINT32 i = 0; i < number; i++) {
+        Elf32_Phdr cur_ph = Program_HeadersGD[i];
+        UINT32 type = cur_ph.p_type;
+        switch(type) {
+            case PT_PHDR:
+                _add_prog_phdr(cur_ph);
+                break;
+            case PT_INTERP:
+                _add_prog_interp(cur_ph, obj_sec_vec);
+                break;
+            case PT_LOAD:
+                _add_prog_load(cur_ph, obj_sec_vec);
+                break;
+            case PT_DYNAMIC:
+                _add_prog_dynamic(cur_ph, obj_sec_vec);
+                break;
+            case PT_NOTE:
+                _add_prog_note(cur_ph, obj_sec_vec);
+                break;
+            case PT_GNU_STACK:
+                break;
+            default:
+                report(RL_ONE, "can't handle this program header type");
+        }
+        size_ = _expand_memory(&data_, size_, reinterpret_cast<const UINT8*>(&cur_ph), sizeof(Elf32_Phdr));
+    }
+    num_ = number;
+}
+
+void ProgramHeader::_add_prog_phdr(Elf32_Phdr &phdr)
+{
+    UINT32 offset, base_addr;
+    offset = sizeof(Elf32_Ehdr);
+    base_addr = BASE_ADDRESS;
+
+    phdr.p_offset = offset;
+    phdr.p_vaddr = phdr.p_paddr = base_addr + offset;
+    phdr.p_memsz = phdr.p_filesz = sizeof(Program_HeadersGD);
+}
+
+void ProgramHeader::_add_prog_interp(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec)
+{
+    shared_ptr<Section> interp = obj_sec_vec.get_section_by_name(INTERP_SECTION_NAME);
+    UINT32 offset, base_addr;
+    offset = interp->get_section_file_offset();
+    base_addr = BASE_ADDRESS;
+
+    phdr.p_offset = offset;
+    phdr.p_vaddr = phdr.p_paddr = base_addr + offset;
+    phdr.p_memsz = phdr.p_filesz = interp->get_section_size();
+}
+
+void ProgramHeader::_add_prog_load(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec)
+{
+    UINT32 offset, base_addr, filesize, memsize;
+    if (phdr.p_flags & PF_X) {
+        offset = 0;
+        base_addr = BASE_ADDRESS;
+        UINT32 data_begin, data_end;
+        data_begin = 0;
+
+        UINT32 number = obj_sec_vec.get_section_vec_size();
+        shared_ptr<Section> cur_sec;
+        for (UINT32 i = 0; i < number; i++) {
+            cur_sec = obj_sec_vec.get_section_by_index(i);
+            if (cur_sec->get_section_flags() & SHF_WRITE)
+                break;
+        }
+        data_end = cur_sec->get_section_file_offset();
+
+        memsize = filesize = data_end - data_begin;
+    }
+    if (phdr.p_flags & PF_W) {
+        UINT32 data_begin, data_end;
+        data_begin = 0;
+
+        UINT32 number = obj_sec_vec.get_section_vec_size();
+        shared_ptr<Section> cur_sec;
+        UINT32 i;
+        for (i = 0; i < number; i++) {
+            cur_sec = obj_sec_vec.get_section_by_index(i);
+            if (cur_sec->get_section_flags() & SHF_WRITE)
+                break;
+        }
+        data_begin = offset = cur_sec->get_section_file_offset();
+        base_addr = cur_sec->get_section_address();
+
+        UINT32 to_add = 0;
+        for (; i < number-1; i++) {
+            cur_sec = obj_sec_vec.get_section_by_index(i+1);
+            if (!(cur_sec->get_section_flags() & SHF_WRITE))
+                break;
+            if ((cur_sec->get_section_type() == SHT_NOBITS) && 
+                (cur_sec->get_section_flags() & SHF_WRITE)) 
+                to_add += cur_sec->get_section_size();
+        }
+        cur_sec = obj_sec_vec.get_section_by_index(i);
+        data_end = cur_sec->get_section_file_offset();
+        filesize = data_end - data_begin;
+        memsize = filesize + to_add;
+    }
+    phdr.p_offset = offset;
+    phdr.p_vaddr = phdr.p_paddr = base_addr;
+    phdr.p_filesz = filesize;
+    phdr.p_memsz = memsize;
+}
+
+void ProgramHeader::_add_prog_dynamic(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec)
+{
+    shared_ptr<Section> dynamic = obj_sec_vec.get_section_by_name(DYNAMIC_SECTION_NAME);
+    UINT32 offset, base_addr;
+    offset = dynamic->get_section_file_offset();
+
+    phdr.p_offset = offset;
+    phdr.p_vaddr = phdr.p_paddr = dynamic->get_section_address();
+    phdr.p_memsz = phdr.p_filesz = dynamic->get_section_size();
+}
+
+void ProgramHeader::_add_prog_note(Elf32_Phdr &phdr, const SectionVec &obj_sec_vec)
+{
+    shared_ptr<Section> note = obj_sec_vec.get_section_by_name(NOTE_SECTION_NAME);
+    UINT32 offset, base_addr;
+    offset = note->get_section_file_offset();
+
+    phdr.p_offset = offset;
+    phdr.p_vaddr = phdr.p_paddr = note->get_section_address();
+    phdr.p_memsz = phdr.p_filesz = note->get_section_size();
+}
+
 SectionTable::~SectionTable()
 {
     if (data_) {
@@ -161,6 +305,11 @@ SectionTable::SectionTable(const SectionVec &obj_sec_vec):
 void FileExec::construct_section_table(const SectionVec &obj_sec_vec)
 {
     sec_table_ = make_shared<SectionTable>(obj_sec_vec);
+}
+
+void FileExec::construct_program_header(const SectionVec &obj_sec_vec)
+{
+    prog_header_ = make_shared<ProgramHeader>(obj_sec_vec);
 }
 
 /*-----------------------------------------------------------------------------
@@ -214,9 +363,28 @@ ostream &operator<<(ostream &os, const SectionTable &st)
     return os;
 }
 
+ostream &operator<<(ostream &os, const ProgramHeader &phdr)
+{
+    os << "There are " << phdr.num_ << " program headers" << endl;
+    for (int i = 0; i < phdr.num_; i++) {
+        Elf32_Phdr cur_ph = *(reinterpret_cast<Elf32_Phdr*>(phdr.data_ + i * sizeof(Elf32_Phdr)));
+        os << i << "\t";
+        os << hex;
+        os << cur_ph.p_type << "\t";
+        os << cur_ph.p_offset << "\t";
+        os << cur_ph.p_vaddr << "\t";
+        os << cur_ph.p_paddr << "\t";
+        os << cur_ph.p_filesz << "\t";
+        os << cur_ph.p_memsz << endl;
+    }
+    return os;
+}
+
 ostream &operator<<(ostream &os, const FileExec &f)
 {
     os << *(f.sec_table_);
+    os << "-----------------------------" << endl;
+    os << *(f.prog_header_);
     return os;
 }
 
