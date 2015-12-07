@@ -123,7 +123,8 @@ void Relocation::apply_relocation_got32(const SectionVec &obj_sec_vec, const Sym
     UINT32 index = same_dynsym->get_dynsym_got_index();
     UINT32 got_num = got->get_section_size() / got->get_section_entsize();
 
-    value_ = gotplt->get_section_address() + (-4) * (got_num - index);
+    // caculate the last ith based on gotplt address
+    value_ = gotplt->get_section_address() + (-4) * (got_num - index + 1);
     int result = static_cast<int>(value_) - gotplt->get_section_address();
 
     sec_->update_section_data(offset_, reinterpret_cast<UINT8*>(&result), sizeof(int));

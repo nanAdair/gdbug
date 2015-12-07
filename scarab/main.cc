@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
-    //cout << obj_sec_vec << endl;
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
+    cout << obj_sec_vec << endl;
 }
 
 /*-----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     SectionVec merged_sections = obj_sec_vec.merge_sections();
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
-    //cout << obj_rel_vec;
+    cout << obj_rel_vec;
 
     /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
@@ -110,7 +110,7 @@ void writeOut(const SectionVec &obj_sec_vec, string name)
     FileExec output(name);
     output.construct_section_table(obj_sec_vec);
     output.construct_program_header(obj_sec_vec);
-    //output.construct_file_header(obj_sec_vec);
-    //output.dump(name);
-    cout << output;
+    output.construct_file_header(obj_sec_vec);
+    output.dump(obj_sec_vec);
+    //cout << output;
 }

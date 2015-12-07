@@ -38,6 +38,7 @@ class FileHeader
 {
 public:
     friend ostream &operator<<(ostream &, const FileHeader&);
+    friend class FileExec;
     FileHeader() {}
     FileHeader(const Elf32_Ehdr *ehdr) :
         type_(ehdr->e_type),
@@ -183,6 +184,7 @@ class ProgramHeader
 {
 public:
     friend ostream &operator<<(ostream &os, const ProgramHeader &phdr);
+    friend class FileExec;
     ProgramHeader():
         data_(NULL), num_(0), size_(0) {}
     ProgramHeader(const SectionVec &);
@@ -204,6 +206,7 @@ class SectionTable
 {
 public:
     friend ostream &operator<<(ostream &os, const SectionTable &st);
+    friend class FileExec;
     SectionTable():
         data_(NULL), num_(0), size_(0) {}
     SectionTable(const SectionVec &obj_sec_vec);
@@ -223,6 +226,8 @@ public:
         File(name, BINARY_EXECUTABLE_TYPE) {}
     void construct_section_table(const SectionVec&);
     void construct_program_header(const SectionVec&);
+    void construct_file_header(const SectionVec&);
+    void dump(const SectionVec&);
 private:
     shared_ptr<SectionTable> sec_table_;
     shared_ptr<ProgramHeader> prog_header_;

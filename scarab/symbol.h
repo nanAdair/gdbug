@@ -185,7 +185,7 @@ public:
     { file_ = n; }
 
 private:
-    UINT32 got_index_;
+    UINT32 got_index_; // start from 1
     UINT32 plt_index_;
     UINT16 version_;
     string version_name_;

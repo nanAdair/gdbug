@@ -285,7 +285,6 @@ SectionTable::SectionTable(const SectionVec &obj_sec_vec):
         Elf32_Shdr cur_shdr;
         shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
         
-        cout << cur_sec->get_section_name() << endl;
         cur_shdr.sh_name = cur_sec->get_section_name_offset();
         cur_shdr.sh_type = cur_sec->get_section_type();
         cur_shdr.sh_flags = cur_sec->get_section_flags();
@@ -310,6 +309,58 @@ void FileExec::construct_section_table(const SectionVec &obj_sec_vec)
 void FileExec::construct_program_header(const SectionVec &obj_sec_vec)
 {
     prog_header_ = make_shared<ProgramHeader>(obj_sec_vec);
+}
+
+void FileExec::construct_file_header(const SectionVec &obj_sec_vec)
+{
+    file_header_ = make_shared<FileHeader>();
+    shared_ptr<Section> text, shstr, last_sec;
+    text = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+    shstr = obj_sec_vec.get_section_by_name(SHSTRTAB_SECTION_NAME);
+    last_sec = obj_sec_vec.get_section_by_index(obj_sec_vec.get_section_vec_size()-1);
+
+    memcpy(file_header_->ident_, e_identGD, 0x16);
+    file_header_->type_ = ET_EXEC;
+    file_header_->machine_ = EM_386;
+    file_header_->version_ = 1;
+    file_header_->entry_ = text->get_section_address();
+    file_header_->phoff_ = sizeof(Elf32_Ehdr);
+    file_header_->shoff_ = last_sec->get_section_file_offset() + last_sec->get_section_size();
+    file_header_->flags_ = 0x0;
+    file_header_->ehsize_ = sizeof(Elf32_Ehdr);
+    file_header_->phentsize_ = sizeof(Elf32_Phdr);
+    file_header_->phnum_ = sizeof(Program_HeadersGD) / sizeof(Elf32_Phdr);
+    file_header_->shentsize_ = sizeof(Elf32_Shdr);
+    file_header_->shnum_ = sec_table_->num_;
+    file_header_->shstrndx_ = shstr->get_section_index();
+}
+
+void FileExec::dump(const SectionVec &obj_sec_vec)
+{
+    ofstream os(file_name_, ofstream::binary);
+    os.write(reinterpret_cast<char*>(file_header_.get()), sizeof(Elf32_Ehdr));
+    os.write(reinterpret_cast<char*>(prog_header_->data_), prog_header_->size_);
+
+    UINT32 offset = sizeof(Elf32_Ehdr) + prog_header_->size_;
+    UINT8 zero = 0;
+    UINT32 number = obj_sec_vec.get_section_vec_size();
+    for (UINT32 i = 1; i < number; i++) {
+        shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
+        UINT32 target_offset = cur_sec->get_section_file_offset();
+        if (offset != target_offset) {
+            for (int i = 0; i < target_offset - offset; i++)
+                os.write(reinterpret_cast<char*>(&zero), 1);
+            offset = target_offset;
+        }
+        if (cur_sec->get_section_type() == SHT_NOBITS)
+            continue;
+
+        os.write(reinterpret_cast<char*>(cur_sec->get_section_data()), cur_sec->get_section_size());
+        offset += cur_sec->get_section_size();
+    }
+
+    os.write(reinterpret_cast<char*>(sec_table_->data_), sec_table_->size_);
+    os.close();
 }
 
 /*-----------------------------------------------------------------------------
@@ -382,6 +433,7 @@ ostream &operator<<(ostream &os, const ProgramHeader &phdr)
 
 ostream &operator<<(ostream &os, const FileExec &f)
 {
+    os << *(f.file_header_);
     os << *(f.sec_table_);
     os << "-----------------------------" << endl;
     os << *(f.prog_header_);

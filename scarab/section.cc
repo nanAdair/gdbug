@@ -583,10 +583,10 @@ void SectionDynamic::renew_dynamic_data(SectionVec &obj_sec_vec, const vector<st
                 cur_dyn->d_un.d_val = init_array->get_section_size();
                 break;
             case DT_FINI_ARRAY:
-                cur_dyn->d_un.d_ptr = init_array->get_section_address();
+                cur_dyn->d_un.d_ptr = fini_array->get_section_address();
                 break;
             case DT_FINI_ARRAYSZ:
-                cur_dyn->d_un.d_val = init_array->get_section_size();
+                cur_dyn->d_un.d_val = fini_array->get_section_size();
                 break;
             case DT_HASH:
                 cur_dyn->d_un.d_ptr = hash->get_section_address();
