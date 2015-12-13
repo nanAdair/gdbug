@@ -93,7 +93,7 @@ UINT32 Section::get_section_score() const
         return 2;
 
     /* A: +1000 */
-    if (flags_ == SHF_ALLOC)
+    if (flags_ == SHF_ALLOC || flags_ == (SHF_ALLOC | SHF_INFO_LINK))
         return 1000 + n;
     
     /* AX: +1000*/
@@ -970,11 +970,12 @@ void SectionVec::renew_sections_content(const vector<string> &so_files, const Sy
             report(RL_FOUR, "update .hash done");
         }
         else if (name == GV_SECTION_NAME) {
-            gv->set_section_info(interp->get_section_index());
+            //gv->set_section_info(interp->get_section_index());
             gv->set_section_link(dynsym->get_section_index());
             report(RL_FOUR, "update .gnu.version done");
         }
         else if (name == GNR_SECTION_NAME) {
+            gnr->set_section_info(interp->get_section_index());
             gnr->set_section_link(dynstr->get_section_index());
             report(RL_FOUR, "update .gnu.version_r done");
         }

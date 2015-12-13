@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
-    cout << obj_sec_vec << endl;
+    //cout << obj_sec_vec << endl;
 }
 
 /*-----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     SectionVec merged_sections = obj_sec_vec.merge_sections();
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
-    cout << obj_rel_vec;
+    //cout << obj_rel_vec;
 
     /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
@@ -67,7 +67,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     for (int i = 0; i < argc-3; i++) {
         string dynfile_name(argv[i+2]);
         report(RL_FOUR, "handle so file");
-        so_files.push_back(dynfile_name);
+        so_files.push_back(dynfile_name.substr(dynfile_name.find_last_of("/")+1));
 
         FileDyn dynfile(dynfile_name);
 
@@ -98,8 +98,10 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
 {
     report(RL_THREE, "Patch Section Final Content Begin");
     vector<string> so_files;
-    for (int i = 0; i < argc-3; i++)
-        so_files.push_back(string(argv[i+2]));
+    for (int i = 0; i < argc-3; i++) {
+        string file_name = string(argv[i+2]);
+        so_files.push_back(file_name.substr(file_name.find_last_of("/")+1));
+    }
 
     obj_sec_vec.renew_sections_content(so_files, obj_sym_vec);
     report(RL_THREE, "Patch Section Final Content End");
@@ -107,10 +109,12 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
 
 void writeOut(const SectionVec &obj_sec_vec, string name)
 {
+    report(RL_THREE, "Start construct file header and tail");
     FileExec output(name);
     output.construct_section_table(obj_sec_vec);
     output.construct_program_header(obj_sec_vec);
     output.construct_file_header(obj_sec_vec);
     output.dump(obj_sec_vec);
+    report(RL_THREE, "All done!");
     //cout << output;
 }

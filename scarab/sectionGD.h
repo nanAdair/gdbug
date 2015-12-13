@@ -58,7 +58,7 @@ Elf32_Shdr AddedSectionsInfo[] = {
     /* .rel.dyn */
     {0, SHT_REL,            SHF_ALLOC,                  0, 0, 0, 0, 0, 4,    8},
     /* .rel.plt */
-    {0, SHT_REL,            SHF_ALLOC,                  0, 0, 0, 0, 0, 4,    8},
+    {0, SHT_REL,            SHF_ALLOC | SHF_INFO_LINK,                  0, 0, 0, 0, 0, 4,    8},
     /* .plt */
     {0, SHT_PROGBITS,       SHF_ALLOC | SHF_EXECINSTR,  0, 0, 0, 0, 0, 0x10, 4},
     /*  .dynamic */

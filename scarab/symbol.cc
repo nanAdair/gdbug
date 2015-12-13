@@ -19,6 +19,7 @@
 #include "symbol.h"
 
 #include <set>
+using namespace std;
 using std::set;
 
 #include "file.h"
@@ -179,7 +180,7 @@ SymbolDyn::SymbolDyn(Elf32_Sym *sym, UINT32 index, UINT8 *dynsym_strn_table, con
     Symbol(sym, index),
     got_index_(0),
     plt_index_(0),
-    file_(file_name)
+    file_(file_name.substr(file_name.find_last_of("/")+1))
 {
     name_ = string(reinterpret_cast<char *>(dynsym_strn_table + name_offset_));
     
@@ -275,8 +276,9 @@ void SymbolDynVec::_markDynSymbol(const SymbolVec &obj_sym_vec, const SymbolDynV
                     break;
                 }
 
-                if ((*it)->get_symbol_shndx() != SHN_UNDEF) 
+                if ((*it)->get_symbol_shndx() != SHN_UNDEF)  {
                     (*it)->add_symbol_sd_type(SYM_OUT);
+                }
                 else if (dynsym_type == STT_FUNC || dynsym_type == STT_GNU_IFUNC) {
                     (*it)->add_symbol_sd_type(SYM_PLT);
                     (*it)->set_symbol_type(dynsym_type);

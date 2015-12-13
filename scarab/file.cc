@@ -304,11 +304,13 @@ SectionTable::SectionTable(const SectionVec &obj_sec_vec):
 void FileExec::construct_section_table(const SectionVec &obj_sec_vec)
 {
     sec_table_ = make_shared<SectionTable>(obj_sec_vec);
+    report(RL_FOUR, "construction section table");
 }
 
 void FileExec::construct_program_header(const SectionVec &obj_sec_vec)
 {
     prog_header_ = make_shared<ProgramHeader>(obj_sec_vec);
+    report(RL_FOUR, "construction program header");
 }
 
 void FileExec::construct_file_header(const SectionVec &obj_sec_vec)
@@ -333,6 +335,7 @@ void FileExec::construct_file_header(const SectionVec &obj_sec_vec)
     file_header_->shentsize_ = sizeof(Elf32_Shdr);
     file_header_->shnum_ = sec_table_->num_;
     file_header_->shstrndx_ = shstr->get_section_index();
+    report(RL_FOUR, "construction file header");
 }
 
 void FileExec::dump(const SectionVec &obj_sec_vec)
@@ -361,6 +364,8 @@ void FileExec::dump(const SectionVec &obj_sec_vec)
 
     os.write(reinterpret_cast<char*>(sec_table_->data_), sec_table_->size_);
     os.close();
+
+    report(RL_FOUR, "write out to file");
 }
 
 /*-----------------------------------------------------------------------------

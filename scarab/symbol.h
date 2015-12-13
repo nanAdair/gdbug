@@ -95,7 +95,11 @@ public:
     void set_symbol_name_offset(UINT32 offset) 
     { name_offset_ = offset; }
 
-    void set_symbol_value(int);
+    void set_symbol_value(UINT32 value)
+    { value_ = value; }
+
+    void set_symbol_shndx(UINT16 s) 
+    { shndx_ = s; }
 
     void set_symbol_type(UINT8 type)
     { type_ = type; }
@@ -192,6 +196,7 @@ private:
     string file_;
 };
 
+class SymbolDynVec;
 class SymbolVec
 {
 public:
