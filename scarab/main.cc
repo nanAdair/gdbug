@@ -24,22 +24,31 @@
 #include "symbol.h"
 #include "relocation.h"
 #include "version.h"
+#include "instruction.h"
+#include "upm.h"
 #include "log.h"
 using namespace std;
 
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
 void patchSectionContent(SectionVec&, const SymbolVec&, int argc, char *argv[]);
 void writeOut(const SectionVec &obj_sec_vec, string name);
+void disassemble_instructions(SectionVec &);
 int main(int argc, char *argv[])
 {
     SectionVec obj_sec_vec;
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
+    
+    InstrList instr_list(obj_sec_vec);
+    //cout << instr_list;
+
+    PatchVec upm_vec;
+    obj_rel_vec.construct_upm(obj_sec_vec, instr_list, upm_vec);
+
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
-    //cout << obj_sec_vec << endl;
 }
 
 /*-----------------------------------------------------------------------------
@@ -57,13 +66,12 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     SectionVec merged_sections = obj_sec_vec.merge_sections();
     obj_sym_vec.init(objfile, obj_sec_vec, merged_sections);
     obj_rel_vec.init(objfile, obj_sec_vec, merged_sections, obj_sym_vec);
-    //cout << obj_rel_vec;
 
     /* Construct dynamic symbols list from .so files */
     SymbolDynVec dyn_sym_vec;
     // DEFAULT: the last parameter is ld path
-    vector<string> so_files;
     string ld_file(argv[argc-1]);
+    vector<string> so_files;
     for (int i = 0; i < argc-3; i++) {
         string dynfile_name(argv[i+2]);
         report(RL_FOUR, "handle so file");
@@ -85,9 +93,6 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     obj_rel_vec.apply_relocations(obj_sec_vec, dyn_sym_vec);
 
     report(RL_THREE, "Binary Abstraction Done");
-    //cout << obj_sec_vec;
-    //cout << hex << endl;
-    //cout << dyn_sym_vec << endl;
 }
 
 
@@ -107,6 +112,10 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
     report(RL_THREE, "Patch Section Final Content End");
 }
 
+
+/*-----------------------------------------------------------------------------
+ *  construct header, program table, section table of file and write out
+ *-----------------------------------------------------------------------------*/
 void writeOut(const SectionVec &obj_sec_vec, string name)
 {
     report(RL_THREE, "Start construct file header and tail");
@@ -116,5 +125,4 @@ void writeOut(const SectionVec &obj_sec_vec, string name)
     output.construct_file_header(obj_sec_vec);
     output.dump(obj_sec_vec);
     report(RL_THREE, "All done!");
-    //cout << output;
 }

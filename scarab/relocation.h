@@ -36,6 +36,8 @@ class SectionVec;
 class Symbol;
 class SymbolVec;
 class SymbolDynVec;
+class InstrList;
+class PatchVec;
 
 class Relocation
 {
@@ -74,6 +76,7 @@ public:
 
     void init(const FileRel&, SectionVec&, const SectionVec&, const SymbolVec&);
     void apply_relocations(const SectionVec&, const SymbolDynVec&);
+    void construct_upm(const SectionVec&, const InstrList&, PatchVec&);
 private:
     vector<shared_ptr<Relocation> > rel_vec_;
 

@@ -778,6 +778,26 @@ shared_ptr<Section> SectionVec::get_section_by_index(UINT16 index) const
     return res;
 }
 
+shared_ptr<Section> SectionVec::get_section_by_address(UINT32 addr) const 
+{
+    vector<shared_ptr<Section> >::const_iterator it;
+    shared_ptr<Section> res;
+    for (it = sec_vec_.begin(); it != sec_vec_.end(); it++) {
+        UINT32 sec_addr = (*it)->get_section_address();
+        UINT32 sec_datasize = (*it)->get_section_size();
+        if (sec_addr <= addr && addr < sec_addr+sec_datasize) {
+            res = *it;
+            break;
+        }
+        else if ((*it)->get_section_name() == INIT_ARRAY_SECTION_NAME &&
+                addr == sec_addr+sec_datasize) {
+            res = *it;
+            break;
+        }
+    }
+    return res;
+}
+
 UINT32 SectionVec::get_section_vec_size() const 
 {
     return sec_vec_.size();

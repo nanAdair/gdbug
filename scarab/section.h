@@ -338,6 +338,7 @@ public:
 
     shared_ptr<Section> get_section_by_name(const string&) const;
     shared_ptr<Section> get_section_by_index(UINT16) const;
+    shared_ptr<Section> get_section_by_address(UINT32) const;
     UINT32 get_section_vec_size() const;
     void delete_section_by_index(UINT16);
     void allocate_address();

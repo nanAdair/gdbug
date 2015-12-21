@@ -21,7 +21,7 @@
 
 #include <elf.h>
 
-#define BASE_ADDRESS 0x8048000
+const int BASE_ADDRESS = 0x8048000;
 
 Elf32_Phdr Program_HeadersGD[] = {
     //{PT_PHDR,       0,  0,  0,  0,  0,  PF_R | PF_X,   0x4},

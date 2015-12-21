@@ -44,7 +44,7 @@ typedef UINT16			BTYPE;
 #define InstrIterT std::list< SCInstr* >::iterator
 #define InstrRIterT std::list< SCInstr* >::reverse_iterator
 #define InstrListT std::list< SCInstr* >
-#define INSTRLIST (SCInstrList::sharedInstrList())
+//#define INSTRLIST (SCInstrList::sharedInstrList())
 
 #define INSTR_FUNCTION(ins) ((ins)->getBlock()->getFunction())
 
