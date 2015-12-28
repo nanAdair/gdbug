@@ -163,6 +163,7 @@ public:
 
     void update_section_data(UINT32, UINT8 *, UINT32);
     void expand_section_data(const UINT8 *, UINT32, bool);
+    void clear_section_data();
 
 protected:
     UINT32 name_offset_;

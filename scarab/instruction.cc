@@ -20,6 +20,8 @@
 
 #include <capstone/capstone.h>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 #include "log.h"
 #include "section.h"
@@ -35,7 +37,7 @@ Instruction::Instruction():
     data_(NULL)
 {}
 
-Instruction::Instruction(const cs_insn &instr, shared_ptr<Section> sec)
+Instruction::Instruction(const cs_insn &instr, shared_ptr<Section> sec): Instruction()
 {
     cs_x86 *x86;
     if (instr.detail == NULL)
@@ -136,12 +138,141 @@ shared_ptr<Instruction> InstrList::get_instr_by_address(UINT32 addr) const
     return res;
 }
 
+void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
+{
+    report(RL_FOUR, "update sections size");
+    list<shared_ptr<Instruction> >::const_iterator it = instr_list_.begin();
+    int datasize = 0;
+    UINT32 last_sec, cur_sec;
+    last_sec = cur_sec = (*it)->sec_type_;
+    shared_ptr<Section> sec;
+
+    for(; it != instr_list_.end(); it++) {
+        cur_sec = (*it)->sec_type_;
+        if (cur_sec != last_sec) {
+            switch(last_sec) {
+                case SECTION_INIT:
+                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    break;
+                case SECTION_TEXT:
+                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    break;
+                case SECTION_FINI:
+                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    break;
+                case SECTION_PLT:
+                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    break;
+                default:
+                    report(RL_ONE, "can't handle instr sec type for now");
+                    exit(0);
+            }
+
+            sec->set_section_size(datasize);
+            datasize = 0;
+            last_sec = cur_sec;
+        }
+        datasize += (*it)->size_;
+    }
+}
+
+void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
+{
+    report(RL_FOUR, "update sections data");
+    list<shared_ptr<Instruction> >::const_iterator it = instr_list_.begin();
+    int offset = 0;
+    int last_sec, cur_sec;
+    last_sec = -1;
+    shared_ptr<Section> sec;
+
+    for(; it != instr_list_.end(); it++) {
+        cur_sec = (*it)->sec_type_;
+        if (cur_sec != last_sec) {
+            switch(cur_sec) {
+                case SECTION_INIT:
+                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    break;
+                case SECTION_TEXT:
+                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    break;
+                case SECTION_FINI:
+                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    break;
+                case SECTION_PLT:
+                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    break;
+                default:
+                    report(RL_ONE, "can't handle instr sec type for now");
+                    exit(0);
+            }
+
+            last_sec = cur_sec;
+            sec->clear_section_data();
+        }
+
+        sec->expand_section_data((*it)->data_, (*it)->size_, 1);
+    }
+}
+
+void InstrList::update_instr_address(SectionVec &obj_sec_vec)
+{
+    report(RL_FOUR, "update instructions address");
+    list<shared_ptr<Instruction> >::iterator it = instr_list_.begin();
+    int offset = 0;
+    int last_sec, cur_sec;
+    last_sec = -1;
+    shared_ptr<Section> sec;
+
+    for(; it != instr_list_.end(); it++) {
+        cur_sec = (*it)->sec_type_;
+        if (cur_sec != last_sec) {
+            switch(cur_sec) {
+                case SECTION_INIT:
+                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    break;
+                case SECTION_TEXT:
+                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    break;
+                case SECTION_FINI:
+                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    break;
+                case SECTION_PLT:
+                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    break;
+                default:
+                    report(RL_ONE, "can't handle instr sec type for now");
+                    exit(0);
+            }
+
+            last_sec = cur_sec;
+            offset = 0;
+        }
+
+        (*it)->final_address_ = sec->get_section_address() + offset;
+        offset += (*it)->size_;
+    }
+    // no need to update addr_to_instr_map_, won't use this
+    
+    end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size_;
+}
+
 /*-----------------------------------------------------------------------------
  *  helper printer functions below
  *-----------------------------------------------------------------------------*/
+string byte_to_str(UINT8 *data, int length)
+{
+    stringstream ss;
+    ss << hex;
+    for (int i = 0; i < length; i++)
+        ss << std::setw(2) << std::setfill('0') << (int)data[i];
+    return ss.str();
+}
+
 ostream& operator<<(ostream &os, const Instruction &ins)
 {
-    os << hex << ins.origin_address_ << "\t";
+    //os << hex << ins.origin_address_ << "\t";
+    os << hex << ins.get_instruction_address() << "\t";
+    os << byte_to_str(ins.data_, ins.size_) << "\t";
     os << ins.assembly_;
     os << endl;
     return os;
@@ -155,3 +286,4 @@ ostream& operator<<(ostream &os, const InstrList &instr_list)
 
     return os;
 }
+

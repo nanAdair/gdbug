@@ -112,6 +112,10 @@ public:
     InstrList(const SectionVec&);
 
     shared_ptr<Instruction> get_instr_by_address(UINT32) const;
+    void update_sections_size(SectionVec&) const;
+    void update_sections_data(SectionVec&) const;
+    void update_instr_address(SectionVec&);
+
 private:
     list<shared_ptr<Instruction> > instr_list_;
     map<UINT32, shared_ptr<Instruction> > addr_to_instr_map_;

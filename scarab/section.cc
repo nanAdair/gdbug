@@ -74,6 +74,13 @@ Section::~Section()
     }
 }
 
+void Section::clear_section_data()
+{
+    delete[] data_;
+    data_ = NULL;
+    size_ = 0;
+}
+
 UINT32 Section::get_section_score() const
 {
     UINT32 n;

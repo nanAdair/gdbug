@@ -22,6 +22,7 @@
 
 #include "section.h"
 #include "instruction.h"
+#include "log.h"
 
 using namespace std;
 
@@ -111,6 +112,7 @@ bool PatchSectiontoSectionPC32::apply()
 
 int PatchVec::apply()
 {
+    report(RL_FOUR, "UPM apply");
     int change = 0;
     for (int i = 0; i < upm_vec.size(); i++) {
         if (upm_vec[i]->apply())

@@ -215,6 +215,7 @@ void RelocationVec::construct_upm(const SectionVec &obj_sec, const InstrList &in
         shared_ptr<Patch> upm_item;
         if (dest_instr) {
             dest_offset = dest_addr - dest_instr->get_instruction_address(); //dest_offset is changed to the offset to current instr instead of belonged section
+            //cout << hex << *dest_instr << " " << dest_offset << " " << dest_addr << " " << dest_instr->get_instruction_address() << endl;
             if (src_instr) {
                 if (rel_type == R_386_PC32 || rel_type == R_386_PLT32) 
                     upm_item = make_shared<PatchInstrtoInstrPC32>(src_instr, src_offset, dest_instr, dest_offset, addend);
@@ -233,8 +234,8 @@ void RelocationVec::construct_upm(const SectionVec &obj_sec, const InstrList &in
                     upm_item = make_shared<PatchSectiontoInstrPC32>(src_sec, src_offset, dest_instr, dest_offset, addend);
                 else if (rel_type == R_386_GOTOFF || R_386_GOT32) {
                     shared_ptr<Section> gotplt = obj_sec.get_section_by_name(GOT_PLT_SECTION_NAME);
-                    src_offset = src_addr - gotplt->get_section_address();
-                    upm_item = make_shared<PatchSectiontoInstr32>(gotplt, src_offset, dest_instr, dest_offset, addend);
+                    src_offset = src_offset - gotplt->get_section_address();
+                    upm_item = make_shared<PatchSectiontoInstr32>(src_sec, src_offset, dest_instr, dest_offset, addend);
                 }
                 else
                     report(RL_ONE, "[construct upm] relocation type can't handled for src sec and dest instr");

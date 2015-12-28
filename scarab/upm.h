@@ -24,6 +24,8 @@ using std::vector;
 #include <memory>
 using std::shared_ptr;
 
+#include <iostream>
+
 #include "type.h"
 
 typedef enum {
