@@ -68,7 +68,7 @@ class PatchInstrtoInstr32 : public PatchInstrtoInstr
 public:
     PatchInstrtoInstr32(shared_ptr<Instruction> src, UINT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
         PatchInstrtoInstr(src, s_offset, dest, d_offset, add) {}
-    bool apply() {}
+    bool apply();
 };
 
 class PatchInstrtoInstrPC32 : public PatchInstrtoInstr 
@@ -76,7 +76,7 @@ class PatchInstrtoInstrPC32 : public PatchInstrtoInstr
 public:
     PatchInstrtoInstrPC32(shared_ptr<Instruction> src, UINT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
         PatchInstrtoInstr(src, s_offset, dest, d_offset, add) {}
-    bool apply() {}
+    bool apply();
 };
 
 class PatchSectiontoInstr : public Patch
@@ -99,7 +99,7 @@ class PatchSectiontoInstr32 : public PatchSectiontoInstr
 public:
     PatchSectiontoInstr32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoInstr(src, s_offset, dest, d_offset, add) {}
-    bool apply() {}
+    bool apply();
 };
 
 class PatchSectiontoInstrPC32 : public PatchSectiontoInstr
@@ -107,7 +107,7 @@ class PatchSectiontoInstrPC32 : public PatchSectiontoInstr
 public:
     PatchSectiontoInstrPC32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoInstr(src, s_offset, dest, d_offset, add) {}
-    bool apply(){}
+    bool apply();
 };
 
 class PatchSectiontoSection : public Patch
@@ -130,7 +130,7 @@ class PatchSectiontoSection32 : public PatchSectiontoSection
 public:
     PatchSectiontoSection32(shared_ptr<Section> src, UINT32 s_offset, shared_ptr<Section> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoSection(src, s_offset, dest, d_offset, add) {}
-    bool apply(){}
+    bool apply();
 };
 
 class PatchSectiontoSectionPC32 : public PatchSectiontoSection 
@@ -138,7 +138,7 @@ class PatchSectiontoSectionPC32 : public PatchSectiontoSection
 public:
     PatchSectiontoSectionPC32(shared_ptr<Section> src, UINT32 s_offset, shared_ptr<Section> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoSection(src, s_offset, dest, d_offset, add) {}
-    bool apply(){}
+    bool apply();
 };
 
 class PatchVec

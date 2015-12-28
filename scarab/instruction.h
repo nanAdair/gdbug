@@ -48,6 +48,8 @@ public:
     ~Instruction();
 
     UINT32 get_instruction_address() const;
+    UINT8 *get_instruction_data() const 
+    { return data_; }
 private:
      //prefixes 
     //INT8 lock_and_repeat_;

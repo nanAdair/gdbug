@@ -344,11 +344,6 @@ public:
     void allocate_address();
     void renew_sections_content(const vector<string>&, const SymbolVec&);
 
-    //shared_ptr<const Section> get_section_by_name(const string& s) const 
-    //{ return const_cast<SectionVec*>(this)->get_section_by_name(s); }
-    //shared_ptr<const Section> get_section_by_index(UINT16 index) const 
-    //{ return const_cast<SectionVec*>(this)->get_section_by_index(index); }
-
 private:
     vector<shared_ptr<Section> > sec_vec_;
 
