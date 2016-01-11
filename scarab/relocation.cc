@@ -189,7 +189,7 @@ void RelocationVec::apply_relocations(const SectionVec &obj_sec_vec, const Symbo
     report(RL_FOUR, "complete apply relocations");
 }
 
-void RelocationVec::construct_upm(const SectionVec &obj_sec, const InstrList &instr_list, PatchVec &upm_vec)
+void RelocationVec::construct_upm(const SectionVec &obj_sec, PatchVec &upm_vec)
 {
     vector<shared_ptr<Relocation> >::iterator it;
     report(RL_FOUR, "begin construct upm from relocations");
@@ -206,9 +206,9 @@ void RelocationVec::construct_upm(const SectionVec &obj_sec, const InstrList &in
 
         UINT32 src_addr, dest_addr;
         dest_addr = dest_sec->get_section_address() + dest_offset;
-        dest_instr = instr_list.get_instr_by_address(dest_addr);
+        dest_instr = INSTRLIST->get_instr_by_address(dest_addr);
         src_addr = (*it)->value_;
-        src_instr = instr_list.get_instr_by_address(src_addr);
+        src_instr = INSTRLIST->get_instr_by_address(src_addr);
 
         UINT8 rel_type = (*it)->type_;
 

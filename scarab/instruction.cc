@@ -83,7 +83,18 @@ Instruction::~Instruction()
     }
 }
 
-InstrList::InstrList(const SectionVec &obj_sec_vec)
+// ===== InstrList ======
+InstrList* InstrList::shared_instr_list_ = NULL;
+
+InstrList* InstrList::sharedInstrList()
+{
+    if (shared_instr_list_ == NULL)
+        shared_instr_list_ = new InstrList();
+    return shared_instr_list_;
+}
+
+//InstrList::InstrList(const SectionVec &obj_sec_vec)
+void InstrList::disassemble(const SectionVec &obj_sec_vec)
 {
     report(RL_THREE, "disassemble binary code begin");
     UINT32 number = obj_sec_vec.get_section_vec_size();
@@ -255,6 +266,11 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
     
     end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size_;
 }
+
+//void InstrList::construct_cfg()
+//{
+    //BLOCKLIST->mark_bbl();
+//}
 
 /*-----------------------------------------------------------------------------
  *  helper printer functions below

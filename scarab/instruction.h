@@ -17,6 +17,7 @@
  */
 
 #ifndef GDBUG_SCARAB_INSTRUCTION_H
+#define GDBUG_SCARAB_INSTRUCTION_H
 
 #include <list>
 using std::list;
@@ -108,15 +109,19 @@ class InstrList
 {
 public:
     friend ostream &operator<<(ostream&, const InstrList&);
-    InstrList() {}
-    InstrList(const SectionVec&);
+    static InstrList* sharedInstrList();
+    static InstrList* shared_instr_list_;
 
+    void disassemble(const SectionVec&);
     shared_ptr<Instruction> get_instr_by_address(UINT32) const;
     void update_sections_size(SectionVec&) const;
     void update_sections_data(SectionVec&) const;
     void update_instr_address(SectionVec&);
 
+    //void construct_cfg();
+
 private:
+    InstrList() {}
     list<shared_ptr<Instruction> > instr_list_;
     map<UINT32, shared_ptr<Instruction> > addr_to_instr_map_;
     UINT32 begin_addr_;

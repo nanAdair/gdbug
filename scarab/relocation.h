@@ -76,7 +76,7 @@ public:
 
     void init(const FileRel&, SectionVec&, const SectionVec&, const SymbolVec&);
     void apply_relocations(const SectionVec&, const SymbolDynVec&);
-    void construct_upm(const SectionVec&, const InstrList&, PatchVec&);
+    void construct_upm(const SectionVec&, PatchVec&);
 private:
     vector<shared_ptr<Relocation> > rel_vec_;
 

@@ -32,8 +32,7 @@ using namespace std;
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
 void patchSectionContent(SectionVec&, const SymbolVec&, int argc, char *argv[]);
 void writeOut(const SectionVec &obj_sec_vec, string name);
-void disassemble_instructions(SectionVec &);
-void finalizeLayout(SectionVec&, InstrList&, PatchVec&);
+void finalizeLayout(SectionVec&, PatchVec&);
 
 int main(int argc, char *argv[])
 {
@@ -42,13 +41,13 @@ int main(int argc, char *argv[])
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
     
-    InstrList instr_list(obj_sec_vec);
-    //cout << instr_list;
+    INSTRLIST->disassemble(obj_sec_vec);
+    //cout << *INSTRLIST;
 
     PatchVec upm_vec;
-    obj_rel_vec.construct_upm(obj_sec_vec, instr_list, upm_vec);
+    obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
 
-    finalizeLayout(obj_sec_vec, instr_list, upm_vec);
+    finalizeLayout(obj_sec_vec, upm_vec);
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
@@ -98,20 +97,20 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     report(RL_THREE, "Binary Abstraction Done");
 }
 
-void finalizeLayout(SectionVec &obj_sec_vec, InstrList &instr_list, PatchVec &upm_vec)
+void finalizeLayout(SectionVec &obj_sec_vec, PatchVec &upm_vec)
 {
     int change = 0;
     do {
         report(RL_THREE, "finalize sections adddress");
-        instr_list.update_sections_size(obj_sec_vec);
+        INSTRLIST->update_sections_size(obj_sec_vec);
         obj_sec_vec.allocate_address();
-        instr_list.update_instr_address(obj_sec_vec);
+        INSTRLIST->update_instr_address(obj_sec_vec);
 
         change = upm_vec.apply();
         cout << "change: " << change << endl;
     } while (change);
 
-    instr_list.update_sections_data(obj_sec_vec);
+    INSTRLIST->update_sections_data(obj_sec_vec);
 }
 
 /*-----------------------------------------------------------------------------

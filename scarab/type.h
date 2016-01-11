@@ -20,6 +20,8 @@
 #define GDBUG_SCARAB_TYPE_H
 
 #include <list>
+#include <memory>
+using std::shared_ptr;
 //#include "SCLog.h"
 
 //using namespace std;
@@ -41,10 +43,13 @@ typedef INT64 			BFLAG;
 typedef UINT16			BTYPE;
 
 // ========== SCInstr & Operand ==========
-#define InstrIterT std::list< SCInstr* >::iterator
-#define InstrRIterT std::list< SCInstr* >::reverse_iterator
-#define InstrListT std::list< SCInstr* >
-//#define INSTRLIST (SCInstrList::sharedInstrList())
+#define InstrIterT std::list< shared_ptr<Instr> >::iterator
+#define InstrRIterT std::list< shared_ptr<Instr> >::reverse_iterator
+#define InstrListT std::list< shared_ptr<Instr> >
+//#define InstrIterT std::list< SCInstr* >::iterator
+//#define InstrRIterT std::list< SCInstr* >::reverse_iterator
+//#define InstrListT std::list< SCInstr* >
+#define INSTRLIST (InstrList::sharedInstrList())
 
 #define INSTR_FUNCTION(ins) ((ins)->getBlock()->getFunction())
 
@@ -302,9 +307,11 @@ enum OPERAND_SIZE{
 
 // ========== SCBlock ==========
 
-#define BlockListT std::list< SCBlock* >
-#define BlockIterT std::list< SCBlock* >::iterator
-#define BLOCKLIST (SCBlockList::sharedBlockList())
+#define BlockListT std::list< shared_ptr<Block> >
+#define BlockIterT std::list< shared_ptr<Block> >::iterator
+//#define BlockListT std::list< SCBlock* >
+//#define BlockIterT std::list< SCBlock* >::iterator
+#define BLOCKLIST (BlockList::sharedBlockList())
 
 /*
  *    Basic Block Types
@@ -326,14 +333,16 @@ enum OPERAND_SIZE{
 
 // ========== SCFunction ==========
 
-#define FunListT std::list< SCFunction* >
-#define FunIterT std::list< SCFunction* >::iterator
+#define FunListT std::list< shared_ptr<Function> >
+#define FunIterT std::list< shared_ptr<Function> >::iterator
+//#define FunListT std::list< SCFunction* >
+//#define FunIterT std::list< SCFunction* >::iterator
 #define FUNLIST (SCFunctionList::sharedFunctionList())
 
 
 // ========== SCEdge ==========
-#define EdgeListT std::list< SCEdge* >
-#define EdgeIterT std::list< SCEdge* >::iterator
+#define EdgeListT std::list< shared_ptr<Edge> >
+#define EdgeIterT std::list< shared_ptr<Edge> >::iterator
 #define EDGELIST (SCEdgeList::sharedEdgeList())
 
 #define ET_INVALID           0
