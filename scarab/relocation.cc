@@ -195,7 +195,7 @@ void RelocationVec::construct_upm(const SectionVec &obj_sec, PatchVec &upm_vec)
     report(RL_FOUR, "begin construct upm from relocations");
     for (it = rel_vec_.begin(); it != rel_vec_.end(); it++) {
         shared_ptr<Section> src_sec, dest_sec;
-        shared_ptr<Instruction> src_instr, dest_instr;
+        shared_ptr<SCInstr> src_instr, dest_instr;
         UINT32 dest_offset;
         INT32 src_offset, addend;
 

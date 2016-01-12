@@ -25,62 +25,74 @@
 
 #include "log.h"
 #include "section.h"
+#include "disasm.h"
 using namespace std;
 
-Instruction::Instruction():
-    opcode_(0),
-    sec_type_(0),
-    origin_address_(0),
-    final_address_(0),
-    type_(0),
-    size_(0),
-    data_(NULL)
-{}
+// ===== SCInstr ==========
+SCInstr::SCInstr() :
+    dest(NULL),
+    src1(NULL),
+    src2(NULL),
+    src3(NULL),
+    assembly(NULL),
+    ret_machineCode(NULL),
+    mnemonic(NULL),
+    binary(NULL) {}
 
-Instruction::Instruction(const cs_insn &instr, shared_ptr<Section> sec): Instruction()
+SCInstr::SCInstr(SCINSTR_INTERNAL_STRUCT tmp) 
 {
-    cs_x86 *x86;
-    if (instr.detail == NULL)
-        return;
-    x86 = &((instr.detail)->x86);
-    opcode_ = *(x86->opcode);
-    mnemonic_ = string(instr.mnemonic);
 
-    assembly_ = mnemonic_ + " " + string(instr.op_str);
-    origin_address_ = instr.address;
-    size_ = instr.size;
+   i_flags = 0;
+   //i_block = NULL;
+   
+   this->lockAndRepeat = tmp.lockAndRepeat;
+   this->segmentOverride = tmp.segmentOverride;
+   this->OperandSizeOverride = tmp.OperandSizeOverride;
+   this->AddressSizeOverride = tmp.AddressSizeOverride;
 
-    // ======fileds get from related section=======
-    data_ = new UINT8 [size_];
-    UINT8 *sec_data = sec->get_section_data();
-    UINT32 offset = origin_address_ - sec->get_section_address();
-    memcpy(data_, sec_data+offset, size_);
+   this->dest = tmp.dest;
+   this->src1 = tmp.src1;
+   this->src2 = tmp.src2;
+   this->src3 = tmp.src3;
 
-    string sec_name = sec->get_section_name();
-    if (sec_name == ".init")
-        sec_type_ = SECTION_INIT;
-    else if (sec_name == ".fini")
-        sec_type_ = SECTION_FINI;
-    else if (sec_name == ".text")
-        sec_type_ = SECTION_TEXT;
-    else if (sec_name == ".plt")
-        sec_type_ = SECTION_PLT;
-    else
-        sec_type_ = SECTION_OTHER;
+   this->mod = tmp.mod;
+   this->rm = tmp.rm;
+   this->regop = tmp.regop;
+
+   this->address = tmp.address;
+   this->final_address = tmp.final_address;
+
+   this->type = tmp.type;
+   this->instr_class = tmp.instr_class;
+   this->pwd_affected = tmp.pwd_affected;
+   this->pwd_used = tmp.pwd_used;
+   this->opcode = tmp.opcode;
+   this->ModRM = tmp.ModRM;
+   this->SIB = tmp.SIB;
+   this->assembly = tmp.assembly;
+   this->ret_machineCode = tmp.ret_machineCode;
+   this->mnemonic = tmp.mnemonic;
+
+   this->new_cs = tmp.new_cs;
+   this->new_eip = tmp.new_eip;
+   this->size = tmp.size;
+   this->handlerIndex = tmp.handlerIndex;
+   this->binary = tmp.binary;
+   this->next = tmp.next;
 }
 
-UINT32 Instruction::get_instruction_address() const
+SCInstr::~SCInstr()
 {
-    return final_address_ ? final_address_ : origin_address_;
 }
 
-Instruction::~Instruction()
+UINT32 INSTRUCTION::get_instruction_address() const
 {
-    if (data_) {
-        delete [] data_;
-        data_ = NULL;
-        size_ = 0;
-    }
+    return final_address ? final_address : address;
+}
+
+UINT8* INSTRUCTION::get_instruction_data() const 
+{ 
+    return binary; 
 }
 
 // ===== InstrList ======
@@ -93,53 +105,76 @@ InstrList* InstrList::sharedInstrList()
     return shared_instr_list_;
 }
 
-//InstrList::InstrList(const SectionVec &obj_sec_vec)
-void InstrList::disassemble(const SectionVec &obj_sec_vec)
+InstrListT InstrList::get_instr_list()
+{
+    return instr_list_;
+}
+
+void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 {
     report(RL_THREE, "disassemble binary code begin");
     UINT32 number = obj_sec_vec.get_section_vec_size();
-    csh handle;
-    cs_insn *insn;
-
-	if (cs_open(CS_ARCH_X86, CS_MODE_32, &handle)) 
-		report(RL_ONE, "ERROR: Failed to initialize engine!");
-    cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
+    UINT8 buffer[MAX_INSTRUCTION_SIZE + 1];
+    Disasm disasm;
+    INT8 ret = -1;
 
     for (UINT32 i = 1; i < number; i++) {
         shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
         UINT32 flags = cur_sec->get_section_flags();
         if (flags & SHF_EXECINSTR) {
-            int count = cs_disasm(handle, cur_sec->get_section_data(), cur_sec->get_section_size(), cur_sec->get_section_address(), 0, &insn);
-            if (count) {
-                for (int j = 0; j < count; j++) {
-                    shared_ptr<Instruction> cur_instr = make_shared<Instruction>(insn[j], cur_sec);
-                    if (instr_list_.size() > 0) {
-                        shared_ptr<Instruction> last = instr_list_.back();
-                        last->next_ = cur_instr;
-                    }
-                    instr_list_.push_back(cur_instr);
-                    addr_to_instr_map_.insert(pair<UINT32, shared_ptr<Instruction> >(cur_instr->origin_address_, cur_instr));
+            UINT8 *data = cur_sec->get_section_data();
+            UINT32 size = MAX_INSTRUCTION_SIZE;
+            UINT32 address = cur_sec->get_section_address();
+            UINT32 data_size = cur_sec->get_section_size();
+            UINT32 start = 0;
+
+            while (1) {
+                if (start >= data_size)
+                    break;
+                INSTRUCTION *instr = new INSTRUCTION();
+                if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
+                    size = data_size - start + 1;
+                    if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
+                        size -= 1;
                 }
-                cs_free(insn, count);
+                memcpy(buffer, data + start, size);
+                ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
+                if (ret == NOT_ENOUGH_CODE)
+                    break;
+
+                string sec_name = cur_sec->get_section_name();
+                if (sec_name == ".init")
+                    instr->secType = SECTION_INIT;
+                else if (sec_name == ".fini")
+                    instr->secType = SECTION_FINI;
+                else if (sec_name == ".text")
+                    instr->secType = SECTION_TEXT;
+                else if (sec_name == ".plt")
+                    instr->secType = SECTION_PLT;
+                else
+                    instr->secType = SECTION_OTHER;
+
+                shared_ptr<INSTRUCTION> cur_instr(instr);
+                instr_list_.push_back(cur_instr);
+                addr_to_instr_map_.insert(pair<UINT32, shared_ptr<INSTRUCTION> >(cur_instr->address, cur_instr));
+
+                address += ret;
+                start += ret;
             }
-            else 
-                report(RL_ONE, "Failed to disassemble given code!");
         }
     }
 
     begin_addr_ = instr_list_.front()->get_instruction_address();
-    end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size_;
-
-    cs_close(&handle);
+    end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size;
     report(RL_THREE, "disassemble binary code end");
 }
 
-shared_ptr<Instruction> InstrList::get_instr_by_address(UINT32 addr) const
+shared_ptr<SCInstr> InstrList::get_instr_by_address(UINT32 addr) const
 {
-    shared_ptr<Instruction> res;
+    shared_ptr<SCInstr> res;
     UINT32 start_addr = 0x8048000;
     while (addr >= begin_addr_ && addr < end_addr_) {
-        map<UINT32, shared_ptr<Instruction> >::const_iterator it = addr_to_instr_map_.find(addr);
+        map<UINT32, shared_ptr<SCInstr> >::const_iterator it = addr_to_instr_map_.find(addr);
         if (it != addr_to_instr_map_.end()) {
             res = it->second;
             break;
@@ -152,14 +187,14 @@ shared_ptr<Instruction> InstrList::get_instr_by_address(UINT32 addr) const
 void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
 {
     report(RL_FOUR, "update sections size");
-    list<shared_ptr<Instruction> >::const_iterator it = instr_list_.begin();
+    list<shared_ptr<INSTRUCTION> >::const_iterator it = instr_list_.begin();
     int datasize = 0;
     UINT32 last_sec, cur_sec;
-    last_sec = cur_sec = (*it)->sec_type_;
+    last_sec = cur_sec = (*it)->secType;
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->sec_type_;
+        cur_sec = (*it)->secType;
         if (cur_sec != last_sec) {
             switch(last_sec) {
                 case SECTION_INIT:
@@ -183,21 +218,21 @@ void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
             datasize = 0;
             last_sec = cur_sec;
         }
-        datasize += (*it)->size_;
+        datasize += (*it)->size;
     }
 }
 
 void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
 {
     report(RL_FOUR, "update sections data");
-    list<shared_ptr<Instruction> >::const_iterator it = instr_list_.begin();
+    list<shared_ptr<INSTRUCTION> >::const_iterator it = instr_list_.begin();
     int offset = 0;
     int last_sec, cur_sec;
     last_sec = -1;
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->sec_type_;
+        cur_sec = (*it)->secType;
         if (cur_sec != last_sec) {
             switch(cur_sec) {
                 case SECTION_INIT:
@@ -221,21 +256,21 @@ void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
             sec->clear_section_data();
         }
 
-        sec->expand_section_data((*it)->data_, (*it)->size_, 1);
+        sec->expand_section_data((*it)->binary, (*it)->size, 1);
     }
 }
 
 void InstrList::update_instr_address(SectionVec &obj_sec_vec)
 {
     report(RL_FOUR, "update instructions address");
-    list<shared_ptr<Instruction> >::iterator it = instr_list_.begin();
+    list<shared_ptr<INSTRUCTION> >::iterator it = instr_list_.begin();
     int offset = 0;
     int last_sec, cur_sec;
     last_sec = -1;
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->sec_type_;
+        cur_sec = (*it)->secType;
         if (cur_sec != last_sec) {
             switch(cur_sec) {
                 case SECTION_INIT:
@@ -259,12 +294,12 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
             offset = 0;
         }
 
-        (*it)->final_address_ = sec->get_section_address() + offset;
-        offset += (*it)->size_;
+        (*it)->final_address = sec->get_section_address() + offset;
+        offset += (*it)->size;
     }
-    // no need to update addr_to_instr_map_, won't use this
+     //no need to update addr_to_instr_map_, won't use this
     
-    end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size_;
+    end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size;
 }
 
 //void InstrList::construct_cfg()
@@ -284,21 +319,25 @@ string byte_to_str(UINT8 *data, int length)
     return ss.str();
 }
 
-ostream& operator<<(ostream &os, const Instruction &ins)
+ostream& operator<<(ostream &os, const INSTRUCTION &ins)
 {
-    //os << hex << ins.origin_address_ << "\t";
+    os << hex << ins.address << "\t";
+    os << ins.size << "\t";
     os << hex << ins.get_instruction_address() << "\t";
-    os << byte_to_str(ins.data_, ins.size_) << "\t";
-    os << ins.assembly_;
+    os << byte_to_str(ins.binary, ins.size) << "\t";
+    os << string(ins.assembly);
     os << endl;
     return os;
 }
 
 ostream& operator<<(ostream &os, const InstrList &instr_list)
 {
-    list<shared_ptr<Instruction> >::const_iterator it;
+    //list<shared_ptr<INSTRUCTION> >::const_iterator it;
+    InstrListT::const_iterator it;
     for (it = instr_list.instr_list_.begin(); it != instr_list.instr_list_.end(); it++)
         os << **it;
+    os << "begin address is " << instr_list.begin_addr_ << endl;
+    os << "end address is " << instr_list.end_addr_ << endl;
 
     return os;
 }

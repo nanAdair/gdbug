@@ -37,72 +37,161 @@ using std::ostream;
 
 class Section;
 class SectionVec;
-//class Operand;
+class Operand;
 
-class Instruction : public std::enable_shared_from_this<Instruction>
+class SCInstr;
+typedef SCInstr INSTRUCTION;
+
+class SCInstr 
 {
 public:
     friend class InstrList;
-    friend ostream &operator<<(ostream&, const Instruction&);
-    Instruction();
-    Instruction(const cs_insn&, shared_ptr<Section>);
-    ~Instruction();
+    friend ostream &operator<<(ostream&, const INSTRUCTION&);
+    SCInstr();
+    SCInstr(struct SCINSTR_INTERNAL_STRUCT tmp);
+    ~SCInstr();
 
+    // ==== getters and setters ====
     UINT32 get_instruction_address() const;
-    UINT8 *get_instruction_data() const 
-    { return data_; }
-private:
-     //prefixes 
-    //INT8 lock_and_repeat_;
-    //INT8 segment_override_;
-    //INT8 operand_size_override_;
-    //INT8 address_size_override_;
-    /* opcode */
-    UINT32 opcode_;
+    UINT8* get_instruction_data() const;
+    //void setFlag(IFLAG flag);
+    //bool hasFlag(IFLAG flag);
+    //void removeFlag(IFLAG flag);
+    
+    //void setBlock(SCBlock* bbl);
+
+    //SCBlock* getBlock();
+    //UINT32 getAddr();
+    //Operand* getDest();
+
+    // ==== methods ====
+    //bool isPCChangingClass();
+    //bool isReturnClass();
+    //bool isCallClass();
+    //bool isJmpClass();
+    //bool isConditionalJmpClass();
+    //bool isLoopClass();
+    //bool isMovClass();
+    //bool isNOPClass();
+    //bool isPopClass();
+    //bool isPushClass();
+    //bool isSubClass();
+    
+    //bool isDataInstruction();
+
+    //bool isOnlyInstrInBBL();
+
+    /* prefixes */
+    INT8 lockAndRepeat;
+    INT8 segmentOverride;
+    INT8 OperandSizeOverride;
+    INT8 AddressSizeOverride;
     /* operands */
-    //shared_ptr<Operand> dest;
-    //shared_ptr<Operand> src1;
-    //shared_ptr<Operand> src2;
-    //shared_ptr<Operand> src3;
-    /* used for address */
-    //INT8 mod_;
-    //INT8 rm_;
-    //INT8 regop_;
+    Operand *dest;
+    Operand *src1;
+    Operand *src2;
+    Operand *src3;
+    /* used for build cfg */
+    UINT16 i_flags;
+    //SCBlock* i_block;
+    /* use for addressing */
+    INT8 mod;
+    INT8 rm;
+    INT8 regop;
     /* flags */
-    UINT32 sec_type_;
-    //INT8 s_;
+    INT32 secType;
+    INT8 s;        // sign or not
     /* address */
-    UINT32 origin_address_;
-    UINT32 final_address_;
+    INT32 address;
+    INT32 final_address;
     /* instruction type */
-    INT8 type_;
+    INT8 type;
     /* instruction class */
-    //INT8 class_;
+    int instr_class;
     /* pwd that might be affected */
-    //UINT32 pwd_affected_;
+    INT32 pwd_affected;
     /* pwd that used */
-    //UINT32 pwd_used_;
+    INT32 pwd_used;
+    /* opcode */
+    INT32 opcode;
     /* have ModR/M or not */
-    //bool ModRM_;
+    bool ModRM;
     /* SIB */
-    //INT8 SIB_;
-    /* assembly in ascii */
-    string assembly_;
+    INT8 SIB;
+    /* assembly */
+    char *assembly;
     /* return machine code */
-    //string ret_machine_code_;
-    /* opcode in ascii */
-    string mnemonic_;
+    char *ret_machineCode;
+    /* mnemonic */
+    const char *mnemonic;
     /* new CS and ESP(if existed) */
-    //UINT16 new_cs_;
-    //UINT32 new_eip_;
-    /* instruction size */
-    UINT32 size_;
+    INT16 new_cs;
+    INT32 new_eip;
+    /* size */
+    INT32 size;
     /* operand size */
-    //UINT32 handler_index_;
-    /* binary data */
-    UINT8 *data_;
-    /* next instruction in physical */
-    shared_ptr<Instruction> next_;
+    int handlerIndex;
+    /* binary */
+    UINT8 *binary;
+    /* next instruction */
+    INSTRUCTION *next;
+    //struct _INSTRUCTION *next;
+};
+
+// ==== INTERNAL ====
+struct SCINSTR_INTERNAL_STRUCT {
+    /* prefixes */
+    INT8 lockAndRepeat;
+    INT8 segmentOverride;
+    INT8 OperandSizeOverride;
+    INT8 AddressSizeOverride;
+    /* operands */
+    Operand *dest;
+    Operand *src1;
+    Operand *src2;
+    Operand *src3;
+    /* use for addressing */
+    INT8 mod;
+    INT8 rm;
+    INT8 regop;
+    /* flags */
+    INT32 secType;
+    INT8 s;        // sign or not
+    /* address */
+    INT32 address;
+    INT32 final_address;
+    /* instruction type */
+    INT8 type;
+    /* instruction class */
+    int instr_class;
+    /* pwd that might be affected */
+    INT32 pwd_affected;
+    /* pwd that used */
+    INT32 pwd_used;
+    /* opcode */
+    INT32 opcode;
+    /* have ModR/M or not */
+    bool ModRM;
+    /* SIB */
+    INT8 SIB;
+    /* assembly */
+    char *assembly;
+    /* return machine code */
+    char *ret_machineCode;
+    /* mnemonic */
+    const char *mnemonic;
+    /* new CS and ESP(if existed) */
+    INT16 new_cs;
+    INT32 new_eip;
+    /* size */
+    INT32 size;
+    /* operand size */
+    int handlerIndex;
+    /* binary */
+    UINT8 *binary;
+    /* next instruction */
+    INSTRUCTION *next;
+    //struct _INSTRUCTION *next;
 };
 
 class InstrList
@@ -112,8 +201,11 @@ public:
     static InstrList* sharedInstrList();
     static InstrList* shared_instr_list_;
 
+    InstrListT get_instr_list();
+
     void disassemble(const SectionVec&);
-    shared_ptr<Instruction> get_instr_by_address(UINT32) const;
+    void disassemble2(const SectionVec&);
+    shared_ptr<SCInstr> get_instr_by_address(UINT32) const;
     void update_sections_size(SectionVec&) const;
     void update_sections_data(SectionVec&) const;
     void update_instr_address(SectionVec&);
@@ -121,9 +213,9 @@ public:
     //void construct_cfg();
 
 private:
-    InstrList() {}
-    list<shared_ptr<Instruction> > instr_list_;
-    map<UINT32, shared_ptr<Instruction> > addr_to_instr_map_;
+    InstrList(){}
+    InstrListT instr_list_;
+    map<UINT32, shared_ptr<SCInstr> > addr_to_instr_map_;
     UINT32 begin_addr_;
     UINT32 end_addr_;
 };

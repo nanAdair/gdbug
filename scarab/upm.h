@@ -37,7 +37,7 @@ typedef enum {
     UPM_FUNCTION_MEMBER_TYPE
 } UPM_TYPE;
 
-class Instruction;
+class SCInstr;
 class Section;
 class SectionVec;
 class RelocationVec;
@@ -52,15 +52,15 @@ public:
 class PatchInstrtoInstr : public Patch 
 {
 public:
-    PatchInstrtoInstr(shared_ptr<Instruction> src, UINT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
+    PatchInstrtoInstr(shared_ptr<SCInstr> src, UINT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add) :
         src_instr(src), src_offset(s_offset),
         dest_instr(dest), dest_offset(d_offset),
         addend(add) {}
 
 protected:
-    shared_ptr<Instruction> src_instr;
+    shared_ptr<SCInstr> src_instr;
     UINT32 src_offset;
-    shared_ptr<Instruction> dest_instr;
+    shared_ptr<SCInstr> dest_instr;
     UINT32 dest_offset;
     INT32 addend;
 };
@@ -68,7 +68,7 @@ protected:
 class PatchInstrtoInstr32 : public PatchInstrtoInstr 
 {
 public:
-    PatchInstrtoInstr32(shared_ptr<Instruction> src, UINT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
+    PatchInstrtoInstr32(shared_ptr<SCInstr> src, UINT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add) :
         PatchInstrtoInstr(src, s_offset, dest, d_offset, add) {}
     bool apply();
 };
@@ -76,7 +76,7 @@ public:
 class PatchInstrtoInstrPC32 : public PatchInstrtoInstr 
 {
 public:
-    PatchInstrtoInstrPC32(shared_ptr<Instruction> src, UINT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
+    PatchInstrtoInstrPC32(shared_ptr<SCInstr> src, UINT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add) :
         PatchInstrtoInstr(src, s_offset, dest, d_offset, add) {}
     bool apply();
 };
@@ -84,14 +84,14 @@ public:
 class PatchSectiontoInstr : public Patch
 {
 public:
-    PatchSectiontoInstr(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add) :
+    PatchSectiontoInstr(shared_ptr<Section> src, INT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add) :
         src_sec(src), src_offset(s_offset),
         dest_instr(dest), dest_offset(d_offset),
         addend(add) {}
 protected:
     shared_ptr<Section> src_sec;
     INT32 src_offset;
-    shared_ptr<Instruction> dest_instr;
+    shared_ptr<SCInstr> dest_instr;
     UINT32 dest_offset;
     INT32 addend;
 };
@@ -99,7 +99,7 @@ protected:
 class PatchSectiontoInstr32 : public PatchSectiontoInstr
 {
 public:
-    PatchSectiontoInstr32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add):
+    PatchSectiontoInstr32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoInstr(src, s_offset, dest, d_offset, add) {}
     bool apply();
 };
@@ -107,7 +107,7 @@ public:
 class PatchSectiontoInstrPC32 : public PatchSectiontoInstr
 {
 public:
-    PatchSectiontoInstrPC32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Instruction> dest, UINT32 d_offset, INT32 add):
+    PatchSectiontoInstrPC32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add):
         PatchSectiontoInstr(src, s_offset, dest, d_offset, add) {}
     bool apply();
 };

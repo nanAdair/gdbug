@@ -41,8 +41,10 @@ int main(int argc, char *argv[])
     RelocationVec obj_rel_vec;
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
     
-    INSTRLIST->disassemble(obj_sec_vec);
+    INSTRLIST->disassemble2(obj_sec_vec);
+    //INSTRLIST->disassemble(obj_sec_vec);
     //cout << *INSTRLIST;
+    //cout << obj_sec_vec;
 
     PatchVec upm_vec;
     obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);

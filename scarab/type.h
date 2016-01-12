@@ -38,14 +38,14 @@ typedef long long       INT64;
 
 typedef UINT32 			ETYPE;
 typedef UINT16			EFLAG;
-typedef	UINT32			IFLAG;
+typedef	UINT16			IFLAG;
 typedef INT64 			BFLAG;
 typedef UINT16			BTYPE;
 
 // ========== SCInstr & Operand ==========
-#define InstrIterT std::list< shared_ptr<Instr> >::iterator
-#define InstrRIterT std::list< shared_ptr<Instr> >::reverse_iterator
-#define InstrListT std::list< shared_ptr<Instr> >
+//#define InstrIterT std::list< shared_ptr<Instr> >::iterator
+//#define InstrRIterT std::list< shared_ptr<Instr> >::reverse_iterator
+#define InstrListT std::list< shared_ptr<INSTRUCTION> >
 //#define InstrIterT std::list< SCInstr* >::iterator
 //#define InstrRIterT std::list< SCInstr* >::reverse_iterator
 //#define InstrListT std::list< SCInstr* >

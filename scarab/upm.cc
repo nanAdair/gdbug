@@ -28,6 +28,7 @@ using namespace std;
 
 bool PatchInstrtoInstr32::apply()
 {
+    //cout << "1" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_instr->get_instruction_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
@@ -42,6 +43,7 @@ bool PatchInstrtoInstr32::apply()
 
 bool PatchInstrtoInstrPC32::apply()
 {
+    //cout << "2" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_instr->get_instruction_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
@@ -56,6 +58,7 @@ bool PatchInstrtoInstrPC32::apply()
 
 bool PatchSectiontoInstr32::apply()
 {
+    //cout << "3" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_instr->get_instruction_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
@@ -70,6 +73,7 @@ bool PatchSectiontoInstr32::apply()
 
 bool PatchSectiontoInstrPC32::apply()
 {
+    //cout << "4" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_instr->get_instruction_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
@@ -84,6 +88,7 @@ bool PatchSectiontoInstrPC32::apply()
 
 bool PatchSectiontoSection32::apply()
 {
+    //cout << "5" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_sec->get_section_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
@@ -98,6 +103,7 @@ bool PatchSectiontoSection32::apply()
 
 bool PatchSectiontoSectionPC32::apply()
 {
+    //cout << "6" << endl;
     int old_val, new_val;
     UINT8 *target_address = dest_sec->get_section_data() + dest_offset;
     old_val = *(reinterpret_cast<int*>(target_address));
