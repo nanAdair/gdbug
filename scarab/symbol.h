@@ -206,6 +206,7 @@ public:
 
     void init(const FileRel&, const SectionVec&, const SectionVec&);
     shared_ptr<Symbol> get_symbol_by_index(UINT32) const;
+    string get_symname_by_addr(UINT32) const;
     UINT32 get_sym_vec_size() const;
     void update_symbols_value(const SectionVec&);
 

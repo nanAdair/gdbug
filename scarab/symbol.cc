@@ -147,6 +147,16 @@ shared_ptr<Symbol> SymbolVec::get_symbol_by_index(UINT32 index) const
     return res;
 }
 
+string SymbolVec::get_symname_by_addr(UINT32 addr) const
+{
+    vector<shared_ptr<Symbol> >::const_iterator it;
+    for (it = sym_vec_.begin(); it != sym_vec_.end(); it++) {
+        if ((*it)->get_symbol_value() == addr)
+            return (*it)->get_symbol_name();
+    }
+    return string("");
+}
+
 UINT32 SymbolVec::get_sym_vec_size() const 
 {
     return sym_vec_.size();

@@ -22,8 +22,6 @@
 #include <list>
 #include <memory>
 using std::shared_ptr;
-//#include "SCLog.h"
-
 //using namespace std;
 
 
@@ -43,12 +41,9 @@ typedef INT64 			BFLAG;
 typedef UINT16			BTYPE;
 
 // ========== SCInstr & Operand ==========
-//#define InstrIterT std::list< shared_ptr<Instr> >::iterator
-//#define InstrRIterT std::list< shared_ptr<Instr> >::reverse_iterator
-#define InstrListT std::list< shared_ptr<INSTRUCTION> >
-//#define InstrIterT std::list< SCInstr* >::iterator
-//#define InstrRIterT std::list< SCInstr* >::reverse_iterator
-//#define InstrListT std::list< SCInstr* >
+#define InstrIterT std::list< shared_ptr<INSTRUCTION> >::iterator
+#define InstrRIterT std::list< shared_ptr<INSTRUNCTION> >::reverse_iterator
+#define InstrListT std::list< shared_ptr<SCInstr> >
 #define INSTRLIST (InstrList::sharedInstrList())
 
 #define INSTR_FUNCTION(ins) ((ins)->getBlock()->getFunction())
@@ -309,8 +304,6 @@ enum OPERAND_SIZE{
 
 #define BlockListT std::list< shared_ptr<Block> >
 #define BlockIterT std::list< shared_ptr<Block> >::iterator
-//#define BlockListT std::list< SCBlock* >
-//#define BlockIterT std::list< SCBlock* >::iterator
 #define BLOCKLIST (BlockList::sharedBlockList())
 
 /*
@@ -335,9 +328,7 @@ enum OPERAND_SIZE{
 
 #define FunListT std::list< shared_ptr<Function> >
 #define FunIterT std::list< shared_ptr<Function> >::iterator
-//#define FunListT std::list< SCFunction* >
-//#define FunIterT std::list< SCFunction* >::iterator
-#define FUNLIST (SCFunctionList::sharedFunctionList())
+#define FUNLIST (FunctionList::sharedFunctionList())
 
 
 // ========== SCEdge ==========

@@ -37,7 +37,9 @@ using std::ostream;
 
 class Section;
 class SectionVec;
+class SymbolVec;
 class Operand;
+class Block;
 
 class SCInstr;
 typedef SCInstr INSTRUCTION;
@@ -46,7 +48,7 @@ class SCInstr
 {
 public:
     friend class InstrList;
-    friend ostream &operator<<(ostream&, const INSTRUCTION&);
+    friend ostream &operator<<(ostream&, const SCInstr&);
     SCInstr();
     SCInstr(struct SCINSTR_INTERNAL_STRUCT tmp);
     ~SCInstr();
@@ -54,30 +56,28 @@ public:
     // ==== getters and setters ====
     UINT32 get_instruction_address() const;
     UINT8* get_instruction_data() const;
-    //void setFlag(IFLAG flag);
-    //bool hasFlag(IFLAG flag);
-    //void removeFlag(IFLAG flag);
+    void set_flag(IFLAG flag);
+    bool has_flag(IFLAG flag);
+    void remove_flag(IFLAG flag);
     
-    //void setBlock(SCBlock* bbl);
-
-    //SCBlock* getBlock();
-    //UINT32 getAddr();
+    void set_block(shared_ptr<Block> bbl);
+    shared_ptr<Block> get_block();
     //Operand* getDest();
 
     // ==== methods ====
-    //bool isPCChangingClass();
-    //bool isReturnClass();
-    //bool isCallClass();
-    //bool isJmpClass();
-    //bool isConditionalJmpClass();
-    //bool isLoopClass();
-    //bool isMovClass();
-    //bool isNOPClass();
-    //bool isPopClass();
-    //bool isPushClass();
-    //bool isSubClass();
+    bool isPCChangingClass();
+    bool isReturnClass();
+    bool isCallClass();
+    bool isJmpClass();
+    bool isConditionalJmpClass();
+    bool isLoopClass();
+    bool isMovClass();
+    bool isNOPClass();
+    bool isPopClass();
+    bool isPushClass();
+    bool isSubClass();
     
-    //bool isDataInstruction();
+    bool isDataInstruction();
 
     //bool isOnlyInstrInBBL();
 
@@ -93,7 +93,7 @@ public:
     Operand *src3;
     /* used for build cfg */
     UINT16 i_flags;
-    //SCBlock* i_block;
+    shared_ptr<Block> i_block;
     /* use for addressing */
     INT8 mod;
     INT8 rm;
@@ -134,7 +134,7 @@ public:
     /* binary */
     UINT8 *binary;
     /* next instruction */
-    INSTRUCTION *next;
+    SCInstr *next;
     //struct _INSTRUCTION *next;
 };
 
@@ -190,8 +190,7 @@ struct SCINSTR_INTERNAL_STRUCT {
     /* binary */
     UINT8 *binary;
     /* next instruction */
-    INSTRUCTION *next;
-    //struct _INSTRUCTION *next;
+    SCInstr *next;
 };
 
 class InstrList
@@ -203,18 +202,22 @@ public:
 
     InstrListT get_instr_list();
 
-    void disassemble(const SectionVec&);
     void disassemble2(const SectionVec&);
+
     shared_ptr<SCInstr> get_instr_by_address(UINT32) const;
+    shared_ptr<SCInstr> get_prev_instr(shared_ptr<SCInstr>);
+    shared_ptr<SCInstr> get_next_instr(shared_ptr<SCInstr>);
+
     void update_sections_size(SectionVec&) const;
     void update_sections_data(SectionVec&) const;
     void update_instr_address(SectionVec&);
 
-    //void construct_cfg();
+    void construct_cfg(const SymbolVec&);
 
 private:
     InstrList(){}
     InstrListT instr_list_;
+    //list<shared_ptr<SCInstr> > instr_list_;
     map<UINT32, shared_ptr<SCInstr> > addr_to_instr_map_;
     UINT32 begin_addr_;
     UINT32 end_addr_;

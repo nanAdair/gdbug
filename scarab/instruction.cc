@@ -22,10 +22,14 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 #include "log.h"
 #include "section.h"
+#include "symbol.h"
 #include "disasm.h"
+#include "block.h"
+#include "function.h"
 using namespace std;
 
 // ===== SCInstr ==========
@@ -43,7 +47,6 @@ SCInstr::SCInstr(SCINSTR_INTERNAL_STRUCT tmp)
 {
 
    i_flags = 0;
-   //i_block = NULL;
    
    this->lockAndRepeat = tmp.lockAndRepeat;
    this->segmentOverride = tmp.segmentOverride;
@@ -83,16 +86,123 @@ SCInstr::SCInstr(SCINSTR_INTERNAL_STRUCT tmp)
 
 SCInstr::~SCInstr()
 {
+    //if (dest) {
+        //free(dest);
+        //dest = NULL;
+    //}
+    //if (src1) {
+        //free(src1);
+        //src1 = NULL;
+    //}
+    //if (src2) {
+        //free(src2);
+        //src2 = NULL;
+    //}
+    //if (src3) {
+        //free(src3);
+        //src3 = NULL;
+    //}
+    //free(assembly);
+    //free(ret_machineCode);
+    //free(binary);
+
+    //assembly = NULL;
+    //ret_machineCode = NULL;
+    //binary = NULL;
 }
 
-UINT32 INSTRUCTION::get_instruction_address() const
+// ===== SCInstr getter and setter =========
+
+UINT32 SCInstr::get_instruction_address() const
 {
     return final_address ? final_address : address;
 }
 
-UINT8* INSTRUCTION::get_instruction_data() const 
+UINT8* SCInstr::get_instruction_data() const 
 { 
     return binary; 
+}
+
+void SCInstr::set_flag(IFLAG flag) 
+{
+    (this->i_flags) |= flag;
+}
+
+void SCInstr::remove_flag(IFLAG flag) 
+{
+    (this->i_flags) &= (~flag);
+}
+
+bool SCInstr::has_flag(IFLAG flag) 
+{
+    return (bool)((this->i_flags) & flag);
+}
+
+void SCInstr::set_block(shared_ptr<Block> bbl)
+{
+    i_block = bbl;
+}
+
+shared_ptr<Block> SCInstr::get_block() {
+    return this->i_block;
+}
+
+// ==== methods ====
+bool SCInstr::isPCChangingClass() {
+    return (type == FLOW_INSTRUCTION);
+}
+
+bool SCInstr::isCallClass() {
+    return ((type==FLOW_INSTRUCTION) && (instr_class==CLASS_CALLF || instr_class==CLASS_CALL));
+}
+
+bool SCInstr::isReturnClass() {
+    return ((type==FLOW_INSTRUCTION) && (instr_class==CLASS_RETN || instr_class==CLASS_RETF));
+}
+
+bool SCInstr::isJmpClass() {
+    return ((type==FLOW_INSTRUCTION) && (instr_class==CLASS_JMP || instr_class==CLASS_JMPF || instr_class==CLASS_JMP_SHORT));
+}
+
+bool SCInstr::isConditionalJmpClass() {
+    if (type == FLOW_INSTRUCTION) {
+        if (instr_class<=CLASS_JG || instr_class==CLASS_JEXCZ)
+            return true;
+    }
+    return false;
+}
+
+bool SCInstr::isLoopClass() {
+    if (type == FLOW_INSTRUCTION) {
+        if (instr_class==CLASS_LOOPDNE || instr_class==CLASS_LOOPDE || instr_class==CLASS_LOOPD)
+            return true;
+    }
+    return false;
+}
+
+bool SCInstr::isMovClass() {
+    return (type==NORMAL_INSTRUCTION && instr_class==CLASS_MOV);
+}
+
+bool SCInstr::isNOPClass() {
+    return (type==IRREPLACEABLE_INSTRUCTION && instr_class==CLASS_NOP);
+}
+
+bool SCInstr::isPopClass() {
+    return (type==STACK_OPERATE_INSTRUCTION && instr_class==CLASS_POP);
+}
+
+bool SCInstr::isPushClass() {
+    return (type==STACK_OPERATE_INSTRUCTION && instr_class==CLASS_PUSH);
+}
+
+bool SCInstr::isSubClass() {
+    return (type==NORMAL_INSTRUCTION && instr_class==CLASS_SUB);
+}
+
+bool SCInstr::isDataInstruction() {
+    // currently no data instr
+    return false;
 }
 
 // ===== InstrList ======
@@ -133,10 +243,13 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
                     break;
                 INSTRUCTION *instr = new INSTRUCTION();
                 if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
-                    size = data_size - start + 1;
-                    if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
-                        size -= 1;
+                    size = data_size - start;
                 }
+                //if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
+                    //size = data_size - start  + 1;
+                    //if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
+                        //size -= 1;
+                //}
                 memcpy(buffer, data + start, size);
                 ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
                 if (ret == NOT_ENOUGH_CODE)
@@ -181,6 +294,36 @@ shared_ptr<SCInstr> InstrList::get_instr_by_address(UINT32 addr) const
         }
         addr -= 1;
     }
+    return res;
+}
+
+shared_ptr<SCInstr> InstrList::get_prev_instr(shared_ptr<SCInstr> ins)
+{
+    shared_ptr<SCInstr> res;
+    //InstrIterT it = find(instr_list_.begin(), instr_list_.end(), ins);
+    InstrIterT it; 
+    for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if (*it == ins)
+            break;
+    }
+    if (it == instr_list_.begin() || it == instr_list_.end())
+        return res;
+    res = *(--it);
+    return res;
+}
+
+shared_ptr<SCInstr> InstrList::get_next_instr(shared_ptr<SCInstr> ins)
+{
+    shared_ptr<SCInstr> res;
+    //InstrIterT it = find(instr_list_.begin(), instr_list_.end(), ins);
+    InstrIterT it; 
+    for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if (*it == ins)
+            break;
+    }
+    if (it == instr_list_.end() || ++it == instr_list_.end())
+        return res;
+    res = *it;
     return res;
 }
 
@@ -302,10 +445,17 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
     end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size;
 }
 
-//void InstrList::construct_cfg()
-//{
-    //BLOCKLIST->mark_bbl();
-//}
+void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
+{
+    report(RL_THREE, "construct control flow graph begin");
+    BLOCKLIST->mark_bbl();
+    FUNLIST->mark_functions(obj_sym_vec);
+    BLOCKLIST->create_bbl();
+    //cout << *BLOCKLIST << endl;
+    FUNLIST->create_function_list(obj_sym_vec);
+    //cout << *FUNLIST;
+    report(RL_THREE, "construct control flow graph end");
+}
 
 /*-----------------------------------------------------------------------------
  *  helper printer functions below
