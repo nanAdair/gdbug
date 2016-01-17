@@ -24,12 +24,24 @@ using namespace std;
 #include "block.h"
 #include "symbol.h"
 #include "log.h"
+#include "edge.h"
 
 // ====== Function ===== 
 Function::Function():
     id_(0),
     flags_(0)
-{}
+{
+}
+
+void Function::_setup()
+{
+    entry_ = make_shared<Block>();
+    exit_ = make_shared<Block>();
+    entry_->set_type(BT_ENTRY);
+    exit_->set_type(BT_EXIT);
+    entry_->set_function(shared_from_this());
+    exit_->set_function(shared_from_this());
+}
 
 Function::Function(UINT32 i, string &s, shared_ptr<Block> one, shared_ptr<Block> two):
     Function()
@@ -43,6 +55,22 @@ Function::Function(UINT32 i, string &s, shared_ptr<Block> one, shared_ptr<Block>
 void Function::set_last_block(shared_ptr<Block> block)
 {
     last_block_ = block;
+}
+
+shared_ptr<Block> Function::get_first_block() const
+{
+    return first_block_;
+}
+
+shared_ptr<Block> Function::get_entry_block() const
+{
+    return entry_;
+}
+
+
+shared_ptr<Block> Function::get_exit_block() const
+{
+    return exit_;
 }
 
 // ==== FunctionList =====
@@ -71,7 +99,7 @@ void FunctionList::mark_functions(const SymbolVec &osl)
         shared_ptr<Symbol> cur_sym = osl.get_symbol_by_index(i);
         if (cur_sym->get_symbol_type() != STT_FUNC)
             continue;
-        shared_ptr<INSTRUCTION> instr = INSTRLIST->get_instr_by_address(cur_sym->get_symbol_value());
+        shared_ptr<INSTRUCTION> instr = INSTRLIST->get_instr_by_exact_address(cur_sym->get_symbol_value());
         if (!instr)
             continue;
         instr->set_flag(FUN_START);
@@ -98,13 +126,25 @@ void FunctionList::create_function_list(const SymbolVec &osl)
         //cout << **it;
         if (first_instr->has_flag(FUN_START)) {
             string function_name = osl.get_symname_by_addr(first_instr->get_instruction_address());
-            //cout << function_name << endl;
             fun = make_shared<Function>(fun_list_.size(), function_name, *it, *it);
+            fun->_setup();
             fun_list_.push_back(fun);
         }
         else if (last_instr->has_flag(FUN_END)) 
             fun->set_last_block(*it);
         (*it)->set_function(fun);
+    }
+}
+
+void FunctionList::resolve_entryless_function()
+{
+    report(RL_FOUR, "resolve entryless functions");
+    for (FunIterT it = fun_list_.begin(); it != fun_list_.end(); it++) {
+        if (it == fun_list_.begin())
+            continue;
+        if ((*it)->get_entry_block()->get_succ_edges().size() == 0) {
+            EDGELIST->add_bbl_edge((*it)->get_entry_block(), (*it)->get_first_block(), ET_ENTRY);
+        }
     }
 }
 

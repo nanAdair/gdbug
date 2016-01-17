@@ -28,19 +28,26 @@ using std::ostream;
 class SymbolVec;
 class Block;
 
-class Function 
+class Function : public std::enable_shared_from_this<Function>
+
 {
 public:
     friend ostream& operator<<(ostream&, const Function&);
+    friend class FunctionList;
     Function();
     Function(UINT32, string&, shared_ptr<Block>, shared_ptr<Block>);
     //~Function();
 
+    shared_ptr<Block> get_first_block() const;
+    shared_ptr<Block> get_entry_block() const;
+    shared_ptr<Block> get_exit_block() const;
     void set_last_block(shared_ptr<Block>);
 
 private:
     Function(const Function&);
     Function& operator=(const Function&);
+
+    void _setup();
 
     UINT32 id_;
     UINT32 flags_;
@@ -64,6 +71,7 @@ public:
 
     void mark_functions(const SymbolVec&);
     void create_function_list(const SymbolVec&);
+    void resolve_entryless_function();
 
 private:
     FunctionList(const FunctionList&);

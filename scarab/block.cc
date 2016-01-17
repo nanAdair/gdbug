@@ -24,6 +24,7 @@ using namespace std;
 #include "instruction.h"
 #include "log.h"
 #include "function.h"
+#include "edge.h"
 
 Block::Block():
     id_(0),
@@ -52,6 +53,16 @@ shared_ptr<INSTRUCTION> Block::get_last_instr() const
     return last_instr_;
 }
 
+shared_ptr<Function> Block::get_function() const 
+{
+    return fun_;
+}
+
+EdgeListT Block::get_succ_edges() const 
+{
+    return succ_;
+}
+
 void Block::set_last_instr(shared_ptr<INSTRUCTION> instr)
 {
     last_instr_ = instr;
@@ -65,6 +76,16 @@ void Block::set_function(shared_ptr<Function> fun)
 void Block::set_type(BTYPE type)
 {
     type_ = type;
+}
+
+void Block::add_prev_edge(shared_ptr<Edge> e)
+{
+    prev_.push_back(e);
+}
+
+void Block::add_succ_edge(shared_ptr<Edge> e)
+{
+    succ_.push_back(e);
 }
 
 // ===== BlockList ======
@@ -92,6 +113,34 @@ BlockList* BlockList::sharedBlockList()
 BlockListT BlockList::get_block_list() const
 {
     return bbl_;
+}
+
+shared_ptr<Block> BlockList::get_prev_block(shared_ptr<Block> b)
+{
+    shared_ptr<Block> res;
+    BlockIterT it; 
+    for (it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (*it == b)
+            break;
+    }
+    if (it == bbl_.begin() || it == bbl_.end())
+        return res;
+    res = *(--it);
+    return res;
+}
+
+shared_ptr<Block> BlockList::get_next_block(shared_ptr<Block> b)
+{
+    shared_ptr<Block> res;
+    BlockIterT it; 
+    for (it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (*it == b)
+            break;
+    }
+    if (it == bbl_.begin() || it == bbl_.end())
+        return res;
+    res = *it;
+    return res;
 }
 
 void BlockList::mark_bbl()

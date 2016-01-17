@@ -1,4 +1,4 @@
-objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o
+objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o
 CC = g++
 CFLAGS = -c -std=c++11
 LIBNAME = capstone
@@ -39,6 +39,9 @@ block.o: type.h block.h
 
 function.o: type.h function.h function.cc
 	$(CC) $(CFLAGS) function.cc
+
+edge.o: type.h edge.h edge.cc
+	$(CC) $(CFLAGS) edge.cc
 
 upm.o: upm.cc upm.h
 	$(CC) $(CFLAGS) upm.cc

@@ -42,9 +42,13 @@ public:
 
     shared_ptr<INSTRUCTION> get_first_instr() const;
     shared_ptr<INSTRUCTION> get_last_instr() const;
+    shared_ptr<Function> get_function() const;
+    EdgeListT get_succ_edges() const;
     void set_last_instr(shared_ptr<INSTRUCTION>);
     void set_function(shared_ptr<Function>);
     void set_type(BTYPE);
+    void add_prev_edge(shared_ptr<Edge>);
+    void add_succ_edge(shared_ptr<Edge>);
 
 private:
     UINT32 id_;
@@ -52,7 +56,7 @@ private:
     INT64 flags_;
     shared_ptr<INSTRUCTION> first_instr_;
     shared_ptr<INSTRUCTION> last_instr_;
-    EdgeListT pred_;
+    EdgeListT prev_;
     EdgeListT succ_;
     shared_ptr<Function> fun_;
 };
@@ -66,6 +70,8 @@ public:
     shared_ptr<Block> HELL;
 
     BlockListT get_block_list() const;
+    shared_ptr<Block> get_prev_block(shared_ptr<Block> b);
+    shared_ptr<Block> get_next_block(shared_ptr<Block> b);
     
     void create_bbl();
     void mark_bbl();

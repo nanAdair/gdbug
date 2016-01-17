@@ -30,6 +30,7 @@
 #include "disasm.h"
 #include "block.h"
 #include "function.h"
+#include "edge.h"
 using namespace std;
 
 // ===== SCInstr ==========
@@ -121,6 +122,11 @@ UINT32 SCInstr::get_instruction_address() const
 UINT8* SCInstr::get_instruction_data() const 
 { 
     return binary; 
+}
+
+Operand* SCInstr::get_dest() const 
+{
+    return dest;
 }
 
 void SCInstr::set_flag(IFLAG flag) 
@@ -297,6 +303,15 @@ shared_ptr<SCInstr> InstrList::get_instr_by_address(UINT32 addr) const
     return res;
 }
 
+shared_ptr<SCInstr> InstrList::get_instr_by_exact_address(UINT32 addr) const 
+{
+    shared_ptr<SCInstr> res;
+    map<UINT32, shared_ptr<SCInstr> >::const_iterator it = addr_to_instr_map_.find(addr);
+    if (it != addr_to_instr_map_.end())
+        res = it->second;
+    return res;
+}
+
 shared_ptr<SCInstr> InstrList::get_prev_instr(shared_ptr<SCInstr> ins)
 {
     shared_ptr<SCInstr> res;
@@ -445,6 +460,117 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
     end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size;
 }
 
+void InstrList::resolve_function_exit_block()
+{
+    report(RL_FOUR, "resolve ret block to exit block");
+    InstrIterT it;
+    for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if ((*it)->isReturnClass()) {
+            shared_ptr<Block> from, to;
+            from = (*it)->get_block();
+            to = INSTR_FUNCTION(*it)->get_exit_block();
+            EDGELIST->add_bbl_edge(from, to, ET_EXIT);
+        }
+    }
+}
+
+UINT32 SCInstr::get_target_address()
+{
+    UINT32 res = 0;
+    if (!isConditionalJmpClass() && !isCallClass() && !isJmpClass())
+        return res;
+    if (dest->type != OPERAND_FLOW)
+        return res;
+    // absolute call/jmp
+    if (opcode == 0x91 || opcode == 0xea)
+        return dest->getOperand();
+
+    // relative
+    INT32 rel = dest->getOperand();
+    res = get_instruction_address() + size + rel;
+    return res;
+}
+
+void InstrList::resolve_targets()
+{
+    report(RL_FOUR, "resolve cfg targets");
+    // TODO: find the right target of PC change instrs
+    for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        shared_ptr<Block> from = (*it)->get_block();
+        shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
+        // 1: Normal instr
+        if (!(*it)->isPCChangingClass()) {
+            if ((*it)->has_flag(BBL_END) && 
+                    !(EDGELIST->edge_exist_or_not(from, to))) {
+                if (!to) {
+                    // last block in the program
+                    EDGELIST->add_bbl_edge(from, BLOCKLIST->HELL, ET_HELL);
+                }
+                else {
+                    EDGELIST->add_bbl_edge(from, to, ET_NORMAL);
+                }
+                from->set_type(BT_NORMAL);
+            }
+            continue;
+        }
+        // 2. Conditional branch instr
+        if ((*it)->isConditionalJmpClass()) {
+            if (to) {
+                EDGELIST->add_bbl_edge(from, to, ET_FALSE);
+            }
+            UINT32 target_addr;
+            // target is through indirect calculation
+            if ((target_addr = (*it)->get_target_address()) == 0)
+                continue;
+            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+            //cout << **it;
+            //cout << target_addr << endl;
+            if (to_instr)
+                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_TRUE);
+            continue;
+        }
+        // 3. Jmp instr
+        if ((*it)->isJmpClass()) {
+            UINT32 target_addr;
+            // target is through indirect calculation
+            if ((target_addr = (*it)->get_target_address()) == 0)
+                continue;
+            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+            //cout << **it;
+            //cout << target_addr << endl;
+            if (to_instr) {
+                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_UNCOND);
+            }
+            continue;
+        }
+        // 4. Call instr
+        if ((*it)->isCallClass()) {
+            UINT32 target_addr;
+            // target is through indirect calculation
+            if ((target_addr = (*it)->get_target_address()) == 0)
+                continue;
+            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+            //cout << **it;
+            //cout << target_addr << endl;
+            if (to_instr) {
+                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_FUNCALL);
+                if (to) {
+                    EDGELIST->add_bbl_edge(to_instr->get_block(), to, ET_RETURN);
+                }
+            }
+            if (to) {
+                EDGELIST->add_bbl_edge(from, to, ET_FUNLINK);
+            }
+            continue;
+        }
+        // 5. Ret instr added above
+        if ((*it)->isReturnClass()) {
+            (*it)->get_block()->set_type(BT_RETURN);
+            continue;
+        }
+    }
+}
+
 void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
 {
     report(RL_THREE, "construct control flow graph begin");
@@ -454,6 +580,9 @@ void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
     //cout << *BLOCKLIST << endl;
     FUNLIST->create_function_list(obj_sym_vec);
     //cout << *FUNLIST;
+    this->resolve_function_exit_block();
+    this->resolve_targets();
+    FUNLIST->resolve_entryless_function();
     report(RL_THREE, "construct control flow graph end");
 }
 

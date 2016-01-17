@@ -1,6 +1,9 @@
 
 #include "operand.h"
 
+#include <fstream>
+using namespace std;
+
 Operand::Operand(): segment(0),operand(0),
 	operand_size(0),type(0),scale(0),
 	index(0),base(0),displacement(0),
@@ -68,4 +71,11 @@ Operand::Operand(int seg, HAVE_AUXILIARY_CODE oper, OPERAND_SIZE oper_size,
 
 INT32 Operand::getOperand() {
 	return this->operand;
+}
+
+ostream& operator<<(ostream &os, Operand o)
+{
+    os << o.type << "\t";
+    os << o.operand << "\t";
+    os << endl;
 }

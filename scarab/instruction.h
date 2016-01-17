@@ -56,6 +56,7 @@ public:
     // ==== getters and setters ====
     UINT32 get_instruction_address() const;
     UINT8* get_instruction_data() const;
+    Operand* get_dest() const;
     void set_flag(IFLAG flag);
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
@@ -78,6 +79,8 @@ public:
     bool isSubClass();
     
     bool isDataInstruction();
+
+    UINT32 get_target_address();
 
     //bool isOnlyInstrInBBL();
 
@@ -205,6 +208,7 @@ public:
     void disassemble2(const SectionVec&);
 
     shared_ptr<SCInstr> get_instr_by_address(UINT32) const;
+    shared_ptr<SCInstr> get_instr_by_exact_address(UINT32 addr) const;
     shared_ptr<SCInstr> get_prev_instr(shared_ptr<SCInstr>);
     shared_ptr<SCInstr> get_next_instr(shared_ptr<SCInstr>);
 
@@ -213,6 +217,8 @@ public:
     void update_instr_address(SectionVec&);
 
     void construct_cfg(const SymbolVec&);
+    void resolve_function_exit_block();
+    void resolve_targets();
 
 private:
     InstrList(){}

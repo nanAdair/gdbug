@@ -46,7 +46,7 @@ typedef UINT16			BTYPE;
 #define InstrListT std::list< shared_ptr<SCInstr> >
 #define INSTRLIST (InstrList::sharedInstrList())
 
-#define INSTR_FUNCTION(ins) ((ins)->getBlock()->getFunction())
+#define INSTR_FUNCTION(ins) ((ins)->get_block()->get_function())
 
 
 /*
@@ -334,7 +334,7 @@ enum OPERAND_SIZE{
 // ========== SCEdge ==========
 #define EdgeListT std::list< shared_ptr<Edge> >
 #define EdgeIterT std::list< shared_ptr<Edge> >::iterator
-#define EDGELIST (SCEdgeList::sharedEdgeList())
+#define EDGELIST (EdgeList::sharedEdgeList())
 
 #define ET_INVALID           0
 #define ET_FUNCALL           1
