@@ -3,7 +3,7 @@ CC = g++
 CFLAGS = -c -std=c++11
 
 main: $(objects)
-	$(CC) -o main $(objects) 
+	$(CC) -o main $(objects)
 
 main.o: main.cc type.h
 	$(CC) $(CFLAGS) main.cc
@@ -50,4 +50,4 @@ log.o: log.cc log.h
 
 .PHONY: clean
 clean:
-	-rm main $(objects)
+	-rm main $(objects) *.o
