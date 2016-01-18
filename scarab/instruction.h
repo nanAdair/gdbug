@@ -11,7 +11,7 @@
  *       Compiler:  gcc
  *
  *         Author:  wbn (), wangbn15@gmail.com
- *   Organization:  
+ *   Organization:
  *
  * =====================================================================================
  */
@@ -31,8 +31,6 @@ using std::make_shared;
 #include <fstream>
 using std::ostream;
 
-#include <capstone/capstone.h>
-
 #include "type.h"
 
 class Section;
@@ -44,7 +42,7 @@ class Block;
 class SCInstr;
 typedef SCInstr INSTRUCTION;
 
-class SCInstr 
+class SCInstr
 {
 public:
     friend class InstrList;
@@ -63,7 +61,7 @@ public:
     void set_flag(IFLAG flag);
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
-    
+
     void set_block(shared_ptr<Block> bbl);
     void set_jump_target(shared_ptr<SCInstr> instr);
     shared_ptr<Block> get_block();
@@ -81,7 +79,7 @@ public:
     bool isPopClass();
     bool isPushClass();
     bool isSubClass();
-    
+
     bool isDataInstruction();
 
     UINT32 get_target_address();
@@ -225,7 +223,7 @@ public:
     void resolve_function_exit_block();
     void resolve_targets();
 
-    INT32 update_pc_relative_jumps(); 
+    INT32 update_pc_relative_jumps();
 
 private:
     InstrList(){}

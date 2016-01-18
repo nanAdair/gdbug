@@ -11,7 +11,7 @@
  *       Compiler:  gcc
  *
  *         Author:  wbn (), wangbn15@gmail.com
- *   Organization:  
+ *   Organization:
  *
  * =====================================================================================
  */
@@ -45,37 +45,37 @@ Symbol::Symbol(Elf32_Sym *sym, UINT32 index, UINT8 *sym_strn_table, const Sectio
     name_ = string(reinterpret_cast<char *>(sym_strn_table + name_offset_));
 
     if (shndx_ != SHN_ABS && shndx_ != SHN_COMMON && shndx_ != SHN_UNDEF) {
-        shared_ptr<Section> target = obj_sec_vec.get_section_by_index(shndx_);
-        if (target)
-            sec_ = target;
-        else {
-            target = ms.get_section_by_index(shndx_);
-            if (!target)
-                report(RL_ONE, "symbol %s related section %d not found", name_, shndx_);
-            sec_ = target->get_merged_section();
-            value_ += target->get_section_delta();
-            shndx_ = sec_->get_section_index();
-        }
+	shared_ptr<Section> target = obj_sec_vec.get_section_by_index(shndx_);
+	if (target)
+	    sec_ = target;
+	else {
+	    target = ms.get_section_by_index(shndx_);
+	    // if (!target)
+	    //     report(RL_ONE, "symbol %s related section %d not found", name_, shndx_);
+	    sec_ = target->get_merged_section();
+	    value_ += target->get_section_delta();
+	    shndx_ = sec_->get_section_index();
+	}
     }
     /* for two ^init_array symbols, manually handle here*/
     else {
-        if (name_ == INIT_ARRAY_START || name_ == INIT_ARRAY_END) {
-            sec_ = obj_sec_vec.get_section_by_name(INIT_ARRAY_SECTION_NAME);
-            shndx_ = sec_->get_section_index();
-            if (name_ == INIT_ARRAY_END)
-                value_ += sec_->get_section_size();
-        }
+	if (name_ == INIT_ARRAY_START || name_ == INIT_ARRAY_END) {
+	    sec_ = obj_sec_vec.get_section_by_name(INIT_ARRAY_SECTION_NAME);
+	    shndx_ = sec_->get_section_index();
+	    if (name_ == INIT_ARRAY_END)
+		value_ += sec_->get_section_size();
+	}
     }
 }
 
 void Symbol::update_symbol_value()
-{ 
-    value_ += sec_->get_section_address(); 
+{
+    value_ += sec_->get_section_address();
 }
 
 void Symbol::update_symbol_shndx()
-{ 
-    shndx_ = sec_->get_section_index(); 
+{
+    shndx_ = sec_->get_section_index();
 }
 
 void Symbol::_handleCOMMON(const SectionVec &obj_sec_vec)
@@ -89,7 +89,7 @@ void Symbol::_handleCOMMON(const SectionVec &obj_sec_vec)
     addralign = bss->get_section_addralign();
     addralign = sym_size > addralign ? sym_size : addralign;
     while ((datasize + addition) % addralign)
-        addition++;
+	addition++;
     newdatasize = datasize + addition + sym_size;
 
     bss->set_section_size(newdatasize);
@@ -123,26 +123,26 @@ void SymbolVec::init(const FileRel &f, const SectionVec &obj_sec_vec, const Sect
 
     int symbol_number = sym_table_dr->sh_size / sym_table_dr->sh_entsize;
     for (int i = 0; i < symbol_number; i++) {
-        cur_sym_dr = f.get_relsym_table() + i;
-        shared_ptr<Symbol> sym = make_shared<Symbol>(cur_sym_dr, i, sym_strn_table, obj_sec_vec, ms);
-        
-        if (sym->shndx_ == SHN_COMMON)
-            sym->_handleCOMMON(obj_sec_vec);
-        sym_vec_.push_back(sym);
+	cur_sym_dr = f.get_relsym_table() + i;
+	shared_ptr<Symbol> sym = make_shared<Symbol>(cur_sym_dr, i, sym_strn_table, obj_sec_vec, ms);
+
+	if (sym->shndx_ == SHN_COMMON)
+	    sym->_handleCOMMON(obj_sec_vec);
+	sym_vec_.push_back(sym);
    }
 
     report(RL_FOUR, "complete symbol list construction");
 }
 
-shared_ptr<Symbol> SymbolVec::get_symbol_by_index(UINT32 index) const 
+shared_ptr<Symbol> SymbolVec::get_symbol_by_index(UINT32 index) const
 {
     vector<shared_ptr<Symbol> >::const_iterator it;
     shared_ptr<Symbol> res;
     for (it = sym_vec_.begin(); it != sym_vec_.end(); it++) {
-        if ((*it)->index_ == index) {
-            res = *it;
-            break;
-        }
+	if ((*it)->index_ == index) {
+	    res = *it;
+	    break;
+	}
     }
     return res;
 }
@@ -151,13 +151,13 @@ string SymbolVec::get_symname_by_addr(UINT32 addr) const
 {
     vector<shared_ptr<Symbol> >::const_iterator it;
     for (it = sym_vec_.begin(); it != sym_vec_.end(); it++) {
-        if ((*it)->get_symbol_value() == addr)
-            return (*it)->get_symbol_name();
+	if ((*it)->get_symbol_value() == addr)
+	    return (*it)->get_symbol_name();
     }
     return string("");
 }
 
-UINT32 SymbolVec::get_sym_vec_size() const 
+UINT32 SymbolVec::get_sym_vec_size() const
 {
     return sym_vec_.size();
 }
@@ -166,21 +166,21 @@ void SymbolVec::update_symbols_value(const SectionVec &obj_sec_vec)
 {
     vector<shared_ptr<Symbol> >::iterator it;
     for (it = sym_vec_.begin(); it != sym_vec_.end(); it++) {
-        UINT16 shndx = (*it)->get_symbol_shndx();
-        UINT16 target_shndx;
-        /* imported symbols don't have value */
-        if (shndx == SHN_ABS || shndx == SHN_UNDEF) {
-            if ((*it)->get_symbol_name() == GOT_SYMBOL_NAME) {
-                shared_ptr<Section> gotplt = obj_sec_vec.get_section_by_name(GOT_PLT_SECTION_NAME);
-                (*it)->set_symbol_section(gotplt);
-                (*it)->update_symbol_value();
-                (*it)->update_symbol_shndx();
-            }
-        }
-        else {
-            (*it)->update_symbol_value();
-            (*it)->update_symbol_shndx();
-        }
+	UINT16 shndx = (*it)->get_symbol_shndx();
+	UINT16 target_shndx;
+	/* imported symbols don't have value */
+	if (shndx == SHN_ABS || shndx == SHN_UNDEF) {
+	    if ((*it)->get_symbol_name() == GOT_SYMBOL_NAME) {
+		shared_ptr<Section> gotplt = obj_sec_vec.get_section_by_name(GOT_PLT_SECTION_NAME);
+		(*it)->set_symbol_section(gotplt);
+		(*it)->update_symbol_value();
+		(*it)->update_symbol_shndx();
+	    }
+	}
+	else {
+	    (*it)->update_symbol_value();
+	    (*it)->update_symbol_shndx();
+	}
     }
 
     report(RL_FOUR, "add virtual address to symbols value");
@@ -193,7 +193,7 @@ SymbolDyn::SymbolDyn(Elf32_Sym *sym, UINT32 index, UINT8 *dynsym_strn_table, con
     file_(file_name.substr(file_name.find_last_of("/")+1))
 {
     name_ = string(reinterpret_cast<char *>(dynsym_strn_table + name_offset_));
-    
+
     shared_ptr<Section> gnu_version = dsl.get_section_by_name(".gnu.version");
     version_ = std::dynamic_pointer_cast<SectionGnuVersion>(gnu_version)->get_version_number(index_);
     version_name_ = version_vec.get_version_name(version_);
@@ -211,9 +211,9 @@ SymbolDynVec::SymbolDynVec(const FileDyn &file, const SectionVec &so_sec_vec, co
     file_name = file.get_file_name();
 
     for (int i = 1; i < dynsym_table_dr->sh_size / dynsym_table_dr->sh_entsize; i++) {
-        cur_sym_dr = file.get_dynsym_table() + i;
-        shared_ptr<SymbolDyn> sym = make_shared<SymbolDyn>(cur_sym_dr, i, dynsym_strn_table, so_sec_vec, file_name, version_vec);
-        dynsym_vec_.push_back(sym);
+	cur_sym_dr = file.get_dynsym_table() + i;
+	shared_ptr<SymbolDyn> sym = make_shared<SymbolDyn>(cur_sym_dr, i, dynsym_strn_table, so_sec_vec, file_name, version_vec);
+	dynsym_vec_.push_back(sym);
     }
 }
 
@@ -222,10 +222,10 @@ shared_ptr<SymbolDyn> SymbolDynVec::get_dynsym_by_name(string name) const
     vector<shared_ptr<SymbolDyn> >::const_iterator it;
     shared_ptr<SymbolDyn> res;
     for (it = dynsym_vec_.begin(); it != dynsym_vec_.end(); it++) {
-        if ((*it)->get_symbol_name() == name) {
-            res = *it;
-            break;
-        }
+	if ((*it)->get_symbol_name() == name) {
+	    res = *it;
+	    break;
+	}
     }
     return res;
 }
@@ -239,27 +239,27 @@ void SymbolDynVec::add_from_SDVec(const SymbolVec &obj_sym_vec, const SymbolDynV
     int index = dynsym_vec_.size();
 
     for (it = obj_sym_vec.sym_vec_.begin(); it != obj_sym_vec.sym_vec_.end(); it++) {
-        UINT32 symbol_sd_type = (*it)->get_symbol_sd_type(); 
-        if (symbol_sd_type == SYM_LOCAL || (*it)->get_symbol_handle())
-            continue;
+	UINT32 symbol_sd_type = (*it)->get_symbol_sd_type();
+	if (symbol_sd_type == SYM_LOCAL || (*it)->get_symbol_handle())
+	    continue;
 
-        shared_ptr<SymbolDyn> new_sym = make_shared<SymbolDyn> ((*it).get());
-        if ((*it)->get_symbol_shndx() == SHN_UNDEF) {
-            shared_ptr<SymbolDyn> target = so_sym_vec.get_dynsym_by_name(new_sym->get_symbol_name());
-            if (target) {
-                UINT16 version = target->get_dynsym_version();
-                new_sym->set_dynsym_version(version);
-                if (version)
-                    new_sym->set_dynsym_version_name(target->get_dynsym_version_name());
-                new_sym->set_dynsym_file(target->get_dynsym_file());
-            }
-        }
-        else {
-            new_sym->set_dynsym_version(1);
-        }
-        new_sym->set_symbol_index(index++);
-        (*it)->set_symbol_handle(1);
-        dynsym_vec_.push_back(new_sym);
+	shared_ptr<SymbolDyn> new_sym = make_shared<SymbolDyn> ((*it).get());
+	if ((*it)->get_symbol_shndx() == SHN_UNDEF) {
+	    shared_ptr<SymbolDyn> target = so_sym_vec.get_dynsym_by_name(new_sym->get_symbol_name());
+	    if (target) {
+		UINT16 version = target->get_dynsym_version();
+		new_sym->set_dynsym_version(version);
+		if (version)
+		    new_sym->set_dynsym_version_name(target->get_dynsym_version_name());
+		new_sym->set_dynsym_file(target->get_dynsym_file());
+	    }
+	}
+	else {
+	    new_sym->set_dynsym_version(1);
+	}
+	new_sym->set_symbol_index(index++);
+	(*it)->set_symbol_handle(1);
+	dynsym_vec_.push_back(new_sym);
     }
 }
 
@@ -269,36 +269,36 @@ void SymbolDynVec::_markDynSymbol(const SymbolVec &obj_sym_vec, const SymbolDynV
     vector<shared_ptr<SymbolDyn> >::const_iterator dit;
 
     for (dit = so_sym_vec.dynsym_vec_.begin(); dit != so_sym_vec.dynsym_vec_.end(); dit++) {
-        for (it = obj_sym_vec.sym_vec_.begin(); it != obj_sym_vec.sym_vec_.end(); it++) {
-            UINT32 dynsym_type = (*dit)->get_symbol_type();
-            UINT32 objsym_type = (*it)->get_symbol_type();
-            if ((*dit)->get_symbol_name() == (*it)->get_symbol_name() && 
-                    (*it)->get_symbol_sd_type() == SYM_LOCAL &&
-                    !(*it)->get_symbol_handle()) {
-                if (objsym_type == STT_SECTION)
-                    break;
+	for (it = obj_sym_vec.sym_vec_.begin(); it != obj_sym_vec.sym_vec_.end(); it++) {
+	    UINT32 dynsym_type = (*dit)->get_symbol_type();
+	    UINT32 objsym_type = (*it)->get_symbol_type();
+	    if ((*dit)->get_symbol_name() == (*it)->get_symbol_name() &&
+		    (*it)->get_symbol_sd_type() == SYM_LOCAL &&
+		    !(*it)->get_symbol_handle()) {
+		if (objsym_type == STT_SECTION)
+		    break;
 
-                /* Special case: NOTYPE symbols except __gmon_start__ */
-                if (dynsym_type == STT_NOTYPE &&
-                        (*it)->get_symbol_name() != "__gmon_start__") {
-                    (*it)->add_symbol_sd_type(SYM_OUT);
-                    (*it)->del_symbol_sd_type(SYM_LOCAL);
-                    break;
-                }
+		/* Special case: NOTYPE symbols except __gmon_start__ */
+		if (dynsym_type == STT_NOTYPE &&
+			(*it)->get_symbol_name() != "__gmon_start__") {
+		    (*it)->add_symbol_sd_type(SYM_OUT);
+		    (*it)->del_symbol_sd_type(SYM_LOCAL);
+		    break;
+		}
 
-                if ((*it)->get_symbol_shndx() != SHN_UNDEF)  {
-                    (*it)->add_symbol_sd_type(SYM_OUT);
-                }
-                else if (dynsym_type == STT_FUNC || dynsym_type == STT_GNU_IFUNC) {
-                    (*it)->add_symbol_sd_type(SYM_PLT);
-                    (*it)->set_symbol_type(dynsym_type);
-                }
-                else
-                    (*it)->add_symbol_sd_type(SYM_GOT);
-                (*it)->del_symbol_sd_type(SYM_LOCAL);
-                break;
-            }
-        }
+		if ((*it)->get_symbol_shndx() != SHN_UNDEF)  {
+		    (*it)->add_symbol_sd_type(SYM_OUT);
+		}
+		else if (dynsym_type == STT_FUNC || dynsym_type == STT_GNU_IFUNC) {
+		    (*it)->add_symbol_sd_type(SYM_PLT);
+		    (*it)->set_symbol_type(dynsym_type);
+		}
+		else
+		    (*it)->add_symbol_sd_type(SYM_GOT);
+		(*it)->del_symbol_sd_type(SYM_LOCAL);
+		break;
+	    }
+	}
     }
 }
 
@@ -308,29 +308,29 @@ string SymbolDynVec::accumulate_names(UINT32 offset) const
     string res = "";
     vector<shared_ptr<SymbolDyn> >::const_iterator it;
     set<string> versions;
-    
-    for (it = dynsym_vec_.begin(); it != dynsym_vec_.end(); it++) {
-        string name = (*it)->get_symbol_name();
-        if (res == "")
-            res = name;
-        else
-            res = res + ";" + name;
-        (*it)->set_symbol_name_offset(offset);
-        offset += name.size() + 1;
 
-        string version_name = (*it)->get_dynsym_version_name();
-        if (version_name != "" && (versions.find(version_name) == versions.end()))
-            versions.insert(version_name);
+    for (it = dynsym_vec_.begin(); it != dynsym_vec_.end(); it++) {
+	string name = (*it)->get_symbol_name();
+	if (res == "")
+	    res = name;
+	else
+	    res = res + ";" + name;
+	(*it)->set_symbol_name_offset(offset);
+	offset += name.size() + 1;
+
+	string version_name = (*it)->get_dynsym_version_name();
+	if (version_name != "" && (versions.find(version_name) == versions.end()))
+	    versions.insert(version_name);
     }
 
     for (set<string>::iterator vit = versions.begin(); vit != versions.end(); vit++) {
-        res = res + ";" + *vit;
+	res = res + ";" + *vit;
     }
 
     return res;
 }
 
-UINT32 SymbolDynVec::get_dynsym_vec_size() const 
+UINT32 SymbolDynVec::get_dynsym_vec_size() const
 {
     return dynsym_vec_.size();
 }
@@ -347,9 +347,9 @@ ostream& operator<<(ostream & os, const Symbol &sym)
 {
     os << sym.index_ << " ";
     if (sym.sec_)
-        os << sym.sec_->get_section_name();
+	os << sym.sec_->get_section_name();
     else
-        os << "\t";
+	os << "\t";
     os << std::hex;
     os << " " << sym.name_ << " " << sym.value_ << std::endl;
     return os;
@@ -358,16 +358,16 @@ ostream& operator<<(ostream & os, const Symbol &sym)
 ostream& operator<<(ostream &os, const SymbolVec &s)
 {
     for (int i = 0; i < s.sym_vec_.size(); i++)
-        os << *(s.sym_vec_[i]);
+	os << *(s.sym_vec_[i]);
     return os;
 }
 
 ostream& operator<<(ostream & os, const SymbolDyn &sym)
 {
     if (sym.sec_)
-        os << sym.sec_->get_section_name();
+	os << sym.sec_->get_section_name();
     else
-        os << "\t";
+	os << "\t";
     os << sym.index_ << " " << sym.name_offset_ << " " << sym.name_;
     os << " " << sym.version_name_ << " " << sym.sd_type_ << " " << std::endl;
     return os;
@@ -376,6 +376,6 @@ ostream& operator<<(ostream & os, const SymbolDyn &sym)
 ostream& operator<<(ostream &os, const SymbolDynVec &s)
 {
     for (int i = 0; i < s.dynsym_vec_.size(); i++)
-        os << i << " " << *(s.dynsym_vec_[i]);
+	os << i << " " << *(s.dynsym_vec_[i]);
     return os;
 }
