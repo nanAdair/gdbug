@@ -18,7 +18,6 @@
 
 #include "instruction.h"
 
-#include <capstone/capstone.h>
 #include <cstring>
 #include <sstream>
 #include <iomanip>

@@ -1,10 +1,9 @@
 objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o
 CC = g++
 CFLAGS = -c -std=c++11
-LIBNAME = capstone
 
 main: $(objects)
-	$(CC) -o main $(objects) -l$(LIBNAME)
+	$(CC) -o main $(objects) 
 
 main.o: main.cc type.h
 	$(CC) $(CFLAGS) main.cc
