@@ -124,9 +124,23 @@ UINT8* SCInstr::get_instruction_data() const
     return binary; 
 }
 
+INT32 SCInstr::get_instruction_size() const 
+{
+     return size;
+}
+INT32 SCInstr::get_opcode() const
+{
+    return opcode;
+}
+
 Operand* SCInstr::get_dest() const 
 {
     return dest;
+}
+
+shared_ptr<SCInstr> SCInstr::get_jump_target() const 
+{
+    return jump_target_;
 }
 
 void SCInstr::set_flag(IFLAG flag) 
@@ -147,6 +161,11 @@ bool SCInstr::has_flag(IFLAG flag)
 void SCInstr::set_block(shared_ptr<Block> bbl)
 {
     i_block = bbl;
+}
+
+void SCInstr::set_jump_target(shared_ptr<SCInstr> instr)
+{
+    jump_target_ = instr;
 }
 
 shared_ptr<Block> SCInstr::get_block() {
@@ -491,10 +510,64 @@ UINT32 SCInstr::get_target_address()
     return res;
 }
 
+INT32 InstrList::update_pc_relative_jumps()
+{
+    report(RL_FOUR, "fix pc relative jumps instructions");
+    int change = 0;
+    // TODO: use jump_target_ to record target instr for now
+    // cause target is not the first instruction of target block
+    for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if (!(*it)->isConditionalJmpClass() && !(*it)->isCallClass() && !(*it)->isJmpClass())
+            continue;
+        if ((*it)->dest->type != OPERAND_FLOW)
+            continue;
+        if ((*it)->isConditionalJmpClass()) {
+            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+            INT32 displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+            if (displacement != (*it)->get_dest()->getOperand()) {
+                change++;
+                // TODO: how to update instruction binary
+                // (*it)->update_instruction_binary(displacement);
+            }
+            continue;
+        }
+        if ((*it)->isJmpClass()) {
+            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+            INT32 displacement;
+            if ((*it)->get_opcode() != 0xea) {
+                displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+            }
+            else 
+                displacement = target_addr;
+            if (displacement != (*it)->get_dest()->getOperand()) {
+                change++;
+                // TODO: how to update instruction binary
+                // (*it)->update_instruction_binary(displacement);
+            }
+            continue;
+        }
+        if ((*it)->isCallClass()) {
+            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+            INT32 displacement;
+            if ((*it)->get_opcode() != 0x91) {
+                displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+            }
+            else 
+                displacement = target_addr;
+            if (displacement != (*it)->get_dest()->getOperand()) {
+                change++;
+                // TODO: how to update instruction binary
+                // (*it)->update_instruction_binary(displacement);
+            }
+            continue;
+        }
+    }
+    return change;
+}
+
 void InstrList::resolve_targets()
 {
     report(RL_FOUR, "resolve cfg targets");
-    // TODO: find the right target of PC change instrs
     for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
         shared_ptr<Block> from = (*it)->get_block();
         shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
@@ -525,8 +598,9 @@ void InstrList::resolve_targets()
             shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
             //cout << **it;
             //cout << target_addr << endl;
-            if (to_instr)
+            if (to_instr) 
                 EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_TRUE);
+            (*it)->set_jump_target(to_instr);
             continue;
         }
         // 3. Jmp instr
@@ -541,6 +615,7 @@ void InstrList::resolve_targets()
             if (to_instr) {
                 EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_UNCOND);
             }
+            (*it)->set_jump_target(to_instr);
             continue;
         }
         // 4. Call instr
@@ -558,6 +633,7 @@ void InstrList::resolve_targets()
                     EDGELIST->add_bbl_edge(to_instr->get_block(), to, ET_RETURN);
                 }
             }
+            (*it)->set_jump_target(to_instr);
             if (to) {
                 EDGELIST->add_bbl_edge(from, to, ET_FUNLINK);
             }

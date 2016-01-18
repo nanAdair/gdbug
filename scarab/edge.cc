@@ -57,6 +57,20 @@ EdgeList* EdgeList::sharedEdgeList()
 EdgeList::EdgeList()
 {}
 
+shared_ptr<Edge> EdgeList::get_edge(shared_ptr<Block> from, ETYPE type)
+{
+    shared_ptr<Edge> res;
+    EdgeListT succ = from->get_succ_edges();
+    for (EdgeIterT it = succ.begin(); it != succ.end(); it++) {
+        if ((*it)->get_from_block() == from &&
+                (*it)->get_type() == type) {
+            res = *it;
+            break;
+        }
+    }
+    return res;
+}
+
 shared_ptr<Edge> EdgeList::get_edge(shared_ptr<Block> from, shared_ptr<Block> to, ETYPE type)
 {
     shared_ptr<Edge> res;

@@ -50,6 +50,7 @@ public:
     static EdgeList *shared_edge_list_;
     EdgeList();
 
+    shared_ptr<Edge> get_edge(shared_ptr<Block>, ETYPE);
     shared_ptr<Edge> get_edge(shared_ptr<Block>, shared_ptr<Block>, ETYPE);
     void add_bbl_edge(shared_ptr<Block>, shared_ptr<Block>, ETYPE);
     bool edge_exist_or_not(shared_ptr<Edge>);

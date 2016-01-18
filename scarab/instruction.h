@@ -56,12 +56,16 @@ public:
     // ==== getters and setters ====
     UINT32 get_instruction_address() const;
     UINT8* get_instruction_data() const;
+    INT32 get_instruction_size() const;
+    INT32 get_opcode() const;
     Operand* get_dest() const;
+    shared_ptr<SCInstr> get_jump_target() const;
     void set_flag(IFLAG flag);
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
     
     void set_block(shared_ptr<Block> bbl);
+    void set_jump_target(shared_ptr<SCInstr> instr);
     shared_ptr<Block> get_block();
     //Operand* getDest();
 
@@ -138,6 +142,7 @@ public:
     UINT8 *binary;
     /* next instruction */
     SCInstr *next;
+    shared_ptr<SCInstr> jump_target_;
     //struct _INSTRUCTION *next;
 };
 
@@ -219,6 +224,8 @@ public:
     void construct_cfg(const SymbolVec&);
     void resolve_function_exit_block();
     void resolve_targets();
+
+    INT32 update_pc_relative_jumps(); 
 
 private:
     InstrList(){}

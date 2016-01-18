@@ -43,7 +43,6 @@ int main(int argc, char *argv[])
     
     INSTRLIST->disassemble2(obj_sec_vec);
     INSTRLIST->construct_cfg(obj_sym_vec);
-    //INSTRLIST->disassemble(obj_sec_vec);
     //cout << *INSTRLIST;
     //cout << obj_sec_vec;
 
@@ -109,7 +108,8 @@ void finalizeLayout(SectionVec &obj_sec_vec, PatchVec &upm_vec)
         obj_sec_vec.allocate_address();
         INSTRLIST->update_instr_address(obj_sec_vec);
 
-        change = upm_vec.apply();
+        change = INSTRLIST->update_pc_relative_jumps();
+        change += upm_vec.apply();
         cout << "change: " << change << endl;
     } while (change);
 
