@@ -1,4 +1,4 @@
-objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o
+objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o utility.o
 CC = g++
 CFLAGS = -c -std=c++11
 
@@ -25,13 +25,14 @@ version.o: version.cc version.h type.h
 
 instruction.o: instruction.cc instruction.h utilsGD.h type.h
 	$(CC) $(CFLAGS) instruction.cc
-
-disasm.o: disasm.cpp disasm.h dis-table.h type.h
+disasm.o: disasm.cpp disasm.h dis-table.h type.h dis.h utility.h
 	g++ -c -std=c++11 disasm.cpp
-dis-table.o: dis-table.cpp dis-table.h instruction.h
+dis-table.o: dis-table.cpp dis-table.h instruction.h dis.h
 	g++ -c -std=c++11 dis-table.cpp
 operand.o: type.h dis-table.h
 	g++ -c -std=c++11 operand.cc
+utility.o: utility.h utility.cpp
+	g++ -c -std=c++11 utility.cpp
 
 block.o: type.h block.h
 	$(CC) $(CFLAGS) block.cc

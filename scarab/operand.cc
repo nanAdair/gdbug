@@ -1,14 +1,13 @@
-
 #include "operand.h"
 
 #include <fstream>
 using namespace std;
 
 Operand::Operand(): segment(0),operand(0),
-	operand_size(0),type(0),scale(0),
-	index(0),base(0),displacement(0),
-	displacement_size(0),addressing_size(0),
-	isDefault(false)
+		    operand_size(SIZE_UNDEFINED),type(0),scale(0),
+		    index(0),base(0),displacement(0),
+		    displacement_size(0),addressing_size(SIZE_UNDEFINED),
+		    isDefault(false)
 { }
 
 Operand::Operand(INT8 seg, INT32 oper, OPERAND_SIZE oper_size,
@@ -37,7 +36,7 @@ Operand::Operand(int seg, int oper, OPERAND_SIZE oper_size,
 	OPERAND_TYPE type, int scale, int idx, int base,
 	int disp, int disp_size, OPERAND_SIZE addr_size,
 	int isDef)
-{ 
+{
 	this->segment = (INT8)seg;
 	this->operand = (INT32)oper;
 	this->operand_size = oper_size;
@@ -55,7 +54,7 @@ Operand::Operand(int seg, HAVE_AUXILIARY_CODE oper, OPERAND_SIZE oper_size,
 	OPERAND_TYPE type, int scale, int idx, int base,
 	int disp, int disp_size, OPERAND_SIZE addr_size,
 	int isDef)
-{ 
+{
 	this->segment = (INT8)seg;
 	this->operand = (INT32)oper;
 	this->operand_size = oper_size;

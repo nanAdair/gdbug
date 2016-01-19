@@ -8,14 +8,14 @@ class Operand{
 
 	public:
 		Operand();
-		Operand(INT8, INT32, OPERAND_SIZE, OPERAND_TYPE, INT8, INT8, 
+		Operand(INT8, INT32, OPERAND_SIZE, OPERAND_TYPE, INT8, INT8,
 			INT8, INT32, int, OPERAND_SIZE, bool);
-		Operand(INT8, INT32, OPERAND_SIZE, OPERAND_TYPE, INT8, INT8, 
+		Operand(INT8, INT32, OPERAND_SIZE, OPERAND_TYPE, INT8, INT8,
 			INT8, INT32, int, OPERAND_SIZE, int);
 
-		Operand(int, int, OPERAND_SIZE, OPERAND_TYPE, int, int, int, 
+		Operand(int, int, OPERAND_SIZE, OPERAND_TYPE, int, int, int,
 			int, int, OPERAND_SIZE, int);
-		Operand(int, HAVE_AUXILIARY_CODE, OPERAND_SIZE, OPERAND_TYPE, int, int, int, 
+		Operand(int, HAVE_AUXILIARY_CODE, OPERAND_SIZE, OPERAND_TYPE, int, int, int,
 			int, int, OPERAND_SIZE, int);
 
 		INT32 getOperand();
@@ -25,7 +25,7 @@ class Operand{
 	    /* Store register number or immediate */
 	    INT32 operand;
 	    /* Store operand size */
-	    int operand_size;
+	    OPERAND_SIZE operand_size;
 	    /* Store operand type */
 	    INT8 type;
 	    /* use for addressing */
@@ -36,7 +36,7 @@ class Operand{
 	    INT32 displacement;
 	    int displacement_size;
 	    /* addressing size, if exists */
-	    INT8 addressing_size;
+	    OPERAND_SIZE addressing_size;
 	    /* whether this operand is a default register */
 	    bool isDefault;
 };
