@@ -1,4 +1,4 @@
-objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o utility.o
+objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o utility.o asm.o asm-table.o
 CC = g++
 CFLAGS = -c -std=c++11
 
@@ -27,12 +27,16 @@ instruction.o: instruction.cc instruction.h utilsGD.h type.h
 	$(CC) $(CFLAGS) instruction.cc
 disasm.o: disasm.cpp disasm.h dis-table.h type.h dis.h utility.h
 	g++ -c -std=c++11 disasm.cpp
-dis-table.o: dis-table.cpp dis-table.h instruction.h dis.h
+dis-table.o: dis-table.cpp dis-table.h
 	g++ -c -std=c++11 dis-table.cpp
 operand.o: type.h dis-table.h
 	g++ -c -std=c++11 operand.cc
 utility.o: utility.h utility.cpp
 	g++ -c -std=c++11 utility.cpp
+asm-table.o: asm-table.cpp asm-table.h asm.h asm.cpp
+	g++ -c -std=c++11 asm-table.cpp
+asm.o: asm.cpp asm.h utility.h utility.cpp dis.h type.h
+	g++ -c -std=c++11 asm.cpp
 
 block.o: type.h block.h
 	$(CC) $(CFLAGS) block.cc
@@ -51,4 +55,4 @@ log.o: log.cc log.h
 
 .PHONY: clean
 clean:
-	-rm main $(objects) *.o
+	-rm -rf main $(objects)

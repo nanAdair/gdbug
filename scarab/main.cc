@@ -43,6 +43,15 @@ int main(int argc, char *argv[])
 
     INSTRLIST->disassemble2(obj_sec_vec);
     INSTRLIST->construct_cfg(obj_sym_vec);
+
+    // =======
+    cout << "BEGIN" << endl;
+    InstrListT instrList = INSTRLIST->get_instr_list();
+    for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
+	(*itr)->instruction_to_binary();
+    }
+    cout << "END" << endl;;
+    // =======
     //cout << *INSTRLIST;
     //cout << obj_sec_vec;
 

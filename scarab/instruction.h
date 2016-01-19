@@ -31,7 +31,7 @@ using std::make_shared;
 #include <fstream>
 using std::ostream;
 
-#include "type.h"
+#include "asm.h"
 
 class Section;
 class SectionVec;
@@ -83,6 +83,8 @@ public:
     bool isDataInstruction();
 
     UINT32 get_target_address();
+
+    char* instruction_to_binary();
 
     //bool isOnlyInstrInBBL();
 

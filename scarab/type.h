@@ -22,8 +22,6 @@
 #include <list>
 #include <memory>
 using std::shared_ptr;
-//using namespace std;
-
 
 // Normalize the data type
 typedef unsigned char   UINT8;
@@ -121,17 +119,21 @@ enum {
 #define CR3                         3
 // for xlat
 #define EBX_PLUS_AL                 8
+#define BX_PLUS_AL                  8
 // for pushad/pushfd, popad/popfd
 #define ALL_32BITS_REGISTER         9
 #define ALL_EFLAGS                  10
 
-enum REGISTER_FOR_INT8{
+enum REGISTER_FOR_BYTE{
     AL, CL, DL, BL, AH, CH, DH, BH, ALL_8BITS_REGISTER
 };
-enum REGISTER_FOR_INT16{
+enum REGISTER_FOR_WORD{
     AX, CX, DX, BX, SP, BP, SI, DI, ALL_16BITS_REGISTER
 };
-enum REGISTER_FOR_INT32{
+enum REGISTER_FOR_ADDRESSING_WORD{
+    BX_PLUS_SI, BX_PLUS_DI, BP_PLUS_SI, BP_PLUS_DI, SI_, DI_, BP_, BX_
+};
+enum REGISTER_FOR_DWORD{
     EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
 };
 enum REGISTER_FOR_FLOAT{
@@ -139,6 +141,9 @@ enum REGISTER_FOR_FLOAT{
 };
 enum REGISTER_FOR_SSE{
     XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7
+};
+enum REGISTER_FOR_MMX{
+    MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7
 };
 
 /* operand type */
