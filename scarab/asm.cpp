@@ -2367,7 +2367,7 @@ void Semantic::balanceOffset(int index, int offset){
 	flowinstr_[i]->address_ -= offset;
 }
 
-void Semantic::encodeInstr(ASMINSTRUCTION *instr){
+void Semantic::encodeInstr(ASMINSTRUCTION *instr, UINT8 modrm){
     modrm_ = 0;
     sib_ = 0;
     sib_exist_ = false;
@@ -2396,7 +2396,7 @@ void Semantic::encodeInstr(ASMINSTRUCTION *instr){
 	addMachineCode(1, (UINT32)(instr->opcode_ >> (8 * i)));
 
     if (instr->ModRM_ || instr->auxiliaryOpcode_ != -1){
-	addMachineCode(1, modrm_);
+	addMachineCode(1, modrm);
 
 	if (sib_exist_)
 	    addMachineCode(1, sib_);
@@ -2425,6 +2425,10 @@ void Semantic::encodeInstr(ASMINSTRUCTION *instr){
 	else
 	    addMachineCode(4, immediate2_);
     }
+
+    instr->machineCode_ = new UINT8(machineCodeSize_);
+    memcpy(instr->machineCode_, machineCode_, machineCodeSize_);
+    instr->size_ = machineCodeSize_;
 }
 
 void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand){
@@ -2452,7 +2456,7 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand){
 	    modrm_ |= (operand->operand_ << 3);
 	else if (operand->type_ == OPERAND_MEMORY || operand->type_ == OPERAND_MEMORY_REGISTER ||
 		 operand->type_ == OPERAND_MEMORY_SSE || operand->type_ == OPERAND_MEMORY_MMX ||
-		 operand->type_ == OPERAND_MEMORY_FLOAT){
+		 operand->type_ == OPERAND_MEMORY_FLOAT || operand->type_ == OPERAND_MEMORY_MEMORY){
 	    if (operand->displacement_size_ != -1){
 		if (operand->displacement_ < 0)
 		    operand->displacement_size_ = SIZE_DWORD;
@@ -2521,7 +2525,7 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand){
 		else
 		    modrm_ |= 0x5;
 
-		if ((operand->index_ != -1 && operand->scale_ > 0) || operand->base_ == ESP){
+		if ((operand->index_ != -1 && operand->scale_ >= 0) || operand->base_ == ESP){
 		    modrm_ = (modrm_ & 0xf8) | 0x4;
 		    sib_exist_ = true;
 

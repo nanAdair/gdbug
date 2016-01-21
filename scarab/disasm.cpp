@@ -1259,7 +1259,7 @@ INT8 Disasm::decodeModRM(Operand *operand, INT8 operand_number)
 			// displacement
 			if (instruction->mod == 0){
 			    if (operand->base == 5){
-				operand->base = -1;
+				//operand->base = -1;
 				ret = getImmediateOrDisplacement(operand, IS_DISPLACEMENT, SIZE_DWORD);
 			    }
 			}
@@ -1270,10 +1270,10 @@ INT8 Disasm::decodeModRM(Operand *operand, INT8 operand_number)
 			if (ret == NOT_ENOUGH_CODE)
 			    return ret;
 
-			if (operand->index == 0x4){
-			    operand->index = -1;
-			    operand->scale = -1;
-			}
+			// if (operand->index == 0x4){
+			//     operand->index = -1;
+			//     operand->scale = -1;
+			// }
 		    }
 		}
 	    }
@@ -1618,10 +1618,10 @@ void Disasm::copyOperand(Operand *operand, INT8 operand_number)
 		else
 		    strcat(assemblyCode, Register32[operand->operand & 0xf]);
 	    }
-	    if (operand->base != -1)
+	    if (operand->base != -1 && operand->base != 0x5)
 		strcat(assemblyCode, Register32[operand->base & 7]);
-	    if (operand->index != -1 && operand->index != 4){
-		if (operand->base != -1)
+	    if (operand->index != -1 && operand->index != 0x4){
+		if (operand->base != -1 && operand->base != 0x5)
 		    strcat(assemblyCode, " + ");
 		strcat(assemblyCode, Register32[operand->index & 7]);
 		if (operand->scale != -1 && operand->scale != 0){
@@ -1632,7 +1632,8 @@ void Disasm::copyOperand(Operand *operand, INT8 operand_number)
 	    }
 	    if (operand->displacement_size != -1){
 		int noRegister = 0;
-		if (operand->operand == -1 && operand->base == -1 && operand->index == -1 && operand->scale == -1)
+		if (operand->operand == -1 && (operand->base == -1 || operand->base == 0x5)
+		    && (operand->index == -1 || operand->index == 0x4) && operand->scale == -1)
 		    noRegister = 1;
 
 		addImmediate(assemblyCode, operand, operand->displacement_size, noRegister, IS_DISPLACEMENT, IS_NOT_FIXED_SIZE, IS_NOT_ABSOLUTE);
@@ -1940,7 +1941,7 @@ void Disasm::disassembleMachineCode(char *m, char *b, bool print){
     INT8 buffer[MAX_INSTRUCTION_SIZE + 1];
     INT8 ret = -1;
     INSTRUCTION instr;
-    FILE *output = fopen("for_testdis", "w+"); // for test
+    //FILE *output = fopen("for_testdis", "w+"); // for test
     char result[200]; // for test
     UINT32 address = (b == NULL ? 0x00400000 : string2bin(b, sizeForBase));
 
@@ -1956,6 +1957,7 @@ void Disasm::disassembleMachineCode(char *m, char *b, bool print){
 
 	ret = disassembler(buffer, size, address, 0x00400000, &instr);
 	if (ret == NOT_ENOUGH_CODE){
+	    printf("%s\n", m);
 	    printf("Not enough code.\n");
 	    break;
 	}
@@ -1964,12 +1966,12 @@ void Disasm::disassembleMachineCode(char *m, char *b, bool print){
 	    printf("%-10s %-20s %s\n", int2str(&address, sizeof(UINT32), 1, 0), instr.ret_machineCode, instr.assembly);
 	//sprintf(result, "%s %s %s\n", int2str(&address, sizeof(UINT32), 1, 0), instr.ret_machineCode, instr.assembly);
 	sprintf(result, "%s\n", instr.assembly);
-	fwrite(&result, strlen(result), 1, output);
+	//fwrite(&result, strlen(result), 1, output);
 
 	address += ret;
 	start += ret;
     }
-    fclose(output);
+    //fclose(output);
 }
 
 void Disasm::disassemblePlainFile(char *p, char *b){

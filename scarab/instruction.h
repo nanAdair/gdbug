@@ -84,7 +84,10 @@ public:
 
     UINT32 get_target_address();
 
-    char* instruction_to_binary();
+    unsigned char* instruction2Binary();
+    void toASMInstruction(ASMINSTRUCTION* asmInstruction);
+    ASMOPERAND * operand2ASMOperand(Operand *operand);
+    void printInstrDetail();
 
     //bool isOnlyInstrInBBL();
 

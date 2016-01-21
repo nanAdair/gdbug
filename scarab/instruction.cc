@@ -229,8 +229,218 @@ bool SCInstr::isDataInstruction() {
     return false;
 }
 
-char* SCInstr::instruction_to_binary(){
-    cout << "HEHE" << endl;
+void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
+    asmInstruction->lockAndRepeat_ = this->lockAndRepeat;
+    asmInstruction->segmentOverride_ = this->segmentOverride;
+    asmInstruction->OperandSizeOverride_ = this->OperandSizeOverride;
+    asmInstruction->AddressSizeOverride_ = this->AddressSizeOverride;
+    asmInstruction->waitPrefix_ = -1;
+
+    asmInstruction->dest_ = operand2ASMOperand(this->dest);
+    asmInstruction->src1_ = operand2ASMOperand(this->src1);
+    asmInstruction->src2_ = operand2ASMOperand(this->src2);
+    asmInstruction->src3_ = operand2ASMOperand(this->src3);
+
+    asmInstruction->type_ = this->type;
+    asmInstruction->ModRM_ = this->ModRM;
+    asmInstruction->s_ = this->s;
+    asmInstruction->opcode_ = this->opcode;
+    asmInstruction->auxiliaryOpcode_ = -1;
+    asmInstruction->mnemonic_ = this->mnemonic;
+    asmInstruction->instrstr_index_ = 0;
+    asmInstruction->address_ = this->address;
+    asmInstruction->alternativeOpcode_ = -1;
+}
+
+ASMOPERAND* SCInstr::operand2ASMOperand(Operand *operand){
+    if (operand == NULL){
+	return NULL;
+    }
+
+    ASMOPERAND* asmOperand = new ASMOPERAND();
+
+    asmOperand->type_ = operand->type;
+    asmOperand->operand_ = operand->operand;
+    asmOperand->operand_size_ = operand->operand_size;
+    asmOperand->segment_ = operand->segment;
+    asmOperand->scale_ = operand->scale;
+    asmOperand->index_ = operand->index;
+    asmOperand->base_ = operand->base;
+    asmOperand->displacement_ = operand->displacement;
+    asmOperand->displacement_size_ = operand->displacement_size;
+    asmOperand->addressing_size_ = operand->addressing_size;
+    asmOperand->default_ = operand->isDefault;
+    asmOperand->signExtended_ = false;
+
+    return asmOperand;
+}
+
+unsigned char* SCInstr::instruction2Binary(){
+    ASMINSTRUCTION* asmInstruction = new ASMINSTRUCTION();
+    toASMInstruction(asmInstruction);
+
+    UINT8 modrm = (this->mod << 6) | (this->regop << 3) | (this->rm);
+
+    Semantic semantic;
+    semantic.encodeInstr(asmInstruction, modrm);
+
+    char* machineCode = new char[20], *singleInstrMachineCode;
+    machineCode[0] = '\0';
+
+    for (int i = 0; i < (int)asmInstruction->size_; i++){
+	singleInstrMachineCode = int2str(&asmInstruction->machineCode_[i], sizeof(UINT8), 1, 0, false);
+	strcat(machineCode, singleInstrMachineCode);
+	free(singleInstrMachineCode);
+    }
+
+    Disasm disasm;
+    char base[] = "0x00000000";
+    disasm.disassembleMachineCode(machineCode, base, false);
+
+    printInstrDetail();
+
+    // don't forget to delete
+    return asmInstruction->machineCode_;
+}
+
+void SCInstr::printInstrDetail(){
+    cout << "Address: " << int2str((void*)this->address, sizeof(UINT32), 1, 0, false) << endl;
+
+    cout << "Instruction type: ";
+    switch (this->type){
+    case UNDEFINED_INSTRUCTION:
+	cout << "UNDEFINED_INSTRUCTION" << endl;
+	break;
+    case NORMAL_INSTRUCTION:
+	cout << "NORMAL_INSTRUCTION" << endl;
+	break;
+    case STACK_OPERATE_INSTRUCTION:
+	cout << "STACK_OPERATE_INSTRUCTION" << endl;
+	break;
+    case FLOW_INSTRUCTION:
+	cout << "FLOW_INSTRUCTION" << endl;
+	break;
+    case IRREPLACEABLE_INSTRUCTION:
+	cout << "IRREPLACEABLE_INSTRUCTION" << endl;
+	break;
+    case FLOAT_INSTRUCTION:
+	cout << "FLOAT_INSTRUCTION" << endl;
+	break;
+    case PREFIX_INSTRUCTION:
+	cout << "PREFIX_INSTRUCTION" << endl;
+	break;
+    case SSE1_INSTRUCTION:
+	cout << "SSE1_INSTRUCTION" << endl;
+	break;
+    case SSE2_INSTRUCTION:
+	cout << "SSE2_INSTRUCTION" << endl;
+	break;
+    case SSE3_INSTRUCTION:
+	cout << "SSE3_INSTRUCTION" << endl;
+	break;
+    case SSSE3_INSTRUCTION:
+	cout << "SSSE3_INSTRUCTION" << endl;
+	break;
+    case SSE41_INSTRUCTION:
+	cout << "SSE41_INSTRUCTION" << endl;
+	break;
+    case SSE42_INSTRUCTION:
+	cout << "SSE42_INSTRUCTION" << endl;
+	break;
+    case MMX_INSTRUCTION:
+	cout << "MMX_INSTRUCTION" << endl;
+	break;
+    case VMX_INSTRUCTION:
+	cout << "VMX_INSTRUCTION" << endl;
+	break;
+    case SMX_INSTRUCTION:
+	cout << "SMX_INSTRUCTION" << endl;
+	break;
+    case NEED_FURTHER_PARSED:
+	cout << "NEED_FURTHER_PARSED" << endl;
+	break;
+    case SPECIAL_MNEMONIC:
+	cout << "SPECIAL_MNEMONIC" << endl;
+	break;
+    default:
+	cout << "UNKNOWN INSTRUCTION!!!!!" << endl;
+	break;
+    }
+
+    cout << "Lock And Repeat: ";
+    switch ((UINT8)this->lockAndRepeat){
+    case PREFIX_LOCK:
+	cout << "PREFIX_LOCK" << endl;
+	break;
+    case PREFIX_REPN:
+	cout << "PREFIX_REPN" << endl;
+	break;
+    case PREFIX_REP:
+	cout << "PREFIX_REP" << endl;
+	break;
+    default:
+	cout << (INT32)lockAndRepeat << endl;
+	break;
+    }
+
+    cout << "Segment override: ";
+    switch (this->segmentOverride){
+    case ES:
+	cout << "ES" << endl;
+	break;
+    case CS:
+	cout << "ES" << endl;
+	break;
+    case SS:
+	cout << "ES" << endl;
+	break;
+    case DS:
+	cout << "ES" << endl;
+	break;
+    case FS:
+	cout << "ES" << endl;
+	break;
+    case GS:
+	cout << "ES" << endl;
+	break;
+    default:
+	cout << (INT32)this->segmentOverride << endl;
+	break;
+    }
+
+    cout << "Operand size override: " << (INT32)this->OperandSizeOverride << endl;
+    cout << "Address size override: " << (INT32)this->AddressSizeOverride << endl;
+
+    cout << "Mnemonic: " << this->mnemonic << endl;
+    cout << "Opcode: " << int2str((void*)&this->opcode, sizeof(UINT32), 1, 0, false) << endl;
+
+    if (this->ModRM){
+	cout << "MOD: " << int2str((void*)&this->mod, sizeof(UINT8), 1, 0, false) << endl;
+	cout << "RM: " << int2str((void*)&this->rm, sizeof(UINT8), 1, 0, false) << endl;
+	cout << "REGOP: " << int2str((void*)&this->regop, sizeof(UINT8), 1, 0, false) << endl;
+    }
+
+    cout << endl;
+    if (this->dest){
+	cout << "Dest:" << endl;
+	this->dest->printOperandDetail();
+	cout << endl;
+    }
+    if (this->src1){
+	cout << "Src1:" << endl;
+	this->src1->printOperandDetail();
+	cout << endl;
+    }
+    if (this->src2){
+	cout << "Src2:" << endl;
+	this->src2->printOperandDetail();
+	cout << endl;
+    }
+    if (this->src3){
+	cout << "Src3:" << endl;
+	this->src3->printOperandDetail();
+	cout << endl;
+    }
 }
 
 // ===== InstrList ======
@@ -274,9 +484,9 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 		    size = data_size - start;
 		}
 		//if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
-		    //size = data_size - start  + 1;
-		    //if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
-			//size -= 1;
+		//size = data_size - start  + 1;
+		//if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
+		//size -= 1;
 		//}
 		memcpy(buffer, data + start, size);
 		ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
@@ -294,6 +504,8 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 		    instr->secType = SECTION_PLT;
 		else
 		    instr->secType = SECTION_OTHER;
+
+		//printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
 		shared_ptr<INSTRUCTION> cur_instr(instr);
 		instr_list_.push_back(cur_instr);
@@ -377,21 +589,21 @@ void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
 	cur_sec = (*it)->secType;
 	if (cur_sec != last_sec) {
 	    switch(last_sec) {
-		case SECTION_INIT:
-		    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-		    break;
-		case SECTION_TEXT:
-		    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-		    break;
-		case SECTION_FINI:
-		    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-		    break;
-		case SECTION_PLT:
-		    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-		    break;
-		default:
-		    report(RL_ONE, "can't handle instr sec type for now");
-		    exit(0);
+	    case SECTION_INIT:
+		sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		break;
+	    case SECTION_TEXT:
+		sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		break;
+	    case SECTION_FINI:
+		sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		break;
+	    case SECTION_PLT:
+		sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		break;
+	    default:
+		report(RL_ONE, "can't handle instr sec type for now");
+		exit(0);
 	    }
 
 	    sec->set_section_size(datasize);

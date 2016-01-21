@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     cout << "BEGIN" << endl;
     InstrListT instrList = INSTRLIST->get_instr_list();
     for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
-	(*itr)->instruction_to_binary();
+	(*itr)->instruction2Binary();
     }
     cout << "END" << endl;;
     // =======

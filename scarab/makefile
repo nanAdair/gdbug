@@ -29,7 +29,7 @@ disasm.o: disasm.cpp disasm.h dis-table.h type.h dis.h utility.h
 	g++ -c -std=c++11 disasm.cpp
 dis-table.o: dis-table.cpp dis-table.h
 	g++ -c -std=c++11 dis-table.cpp
-operand.o: type.h dis-table.h
+operand.o: type.h dis-table.h operand.h operand.cc
 	g++ -c -std=c++11 operand.cc
 utility.o: utility.h utility.cpp
 	g++ -c -std=c++11 utility.cpp

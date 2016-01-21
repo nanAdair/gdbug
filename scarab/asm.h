@@ -318,6 +318,7 @@ class Semantic{
     void clear();
     void sematicCheck(UINT32 base = 0x00400000);
     char *outputMachineCode();
+    void encodeInstr(ASMINSTRUCTION *instr, UINT8 modrm = 0);
  private:
     void matchInstr(ASMINSTRUCTION *asminstr);
     bool matchOperand(ASMINSTRUCTION *inputInstr, ASMINSTRUCTION *compareInstr, ASMOPERAND *inputOperand, ASMOPERAND *compareOperand);
@@ -325,7 +326,6 @@ class Semantic{
     ASMINSTRUCTION *copyAsmInstr(ASMINSTRUCTION *instr);
     void deleteAsmInstr(ASMINSTRUCTION *instr);
     void addMachineCode(int size, UINT32 code);
-    void encodeInstr(ASMINSTRUCTION *instr);
     void encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand);
     bool instrNotMatch();
     bool operandNotMatch(ASMOPERAND *op1, ASMOPERAND *op2);
