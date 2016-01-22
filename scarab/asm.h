@@ -326,7 +326,7 @@ class Semantic{
     ASMINSTRUCTION *copyAsmInstr(ASMINSTRUCTION *instr);
     void deleteAsmInstr(ASMINSTRUCTION *instr);
     void addMachineCode(int size, UINT32 code);
-    void encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand);
+    void encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 modrm);
     bool instrNotMatch();
     bool operandNotMatch(ASMOPERAND *op1, ASMOPERAND *op2);
     int hexSize(UINT32 opcode);

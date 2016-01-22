@@ -294,10 +294,9 @@ unsigned char* SCInstr::instruction2Binary(){
     }
 
     Disasm disasm;
-    char base[] = "0x00000000";
-    disasm.disassembleMachineCode(machineCode, base, false);
+    disasm.disassembleMachineCode(machineCode, int2str(&asmInstruction->address_, sizeof(UINT32), 1, 0, false));
 
-    printInstrDetail();
+    //printInstrDetail();
 
     // don't forget to delete
     return asmInstruction->machineCode_;

@@ -2376,10 +2376,10 @@ void Semantic::encodeInstr(ASMINSTRUCTION *instr, UINT8 modrm){
     immediate_size2_ = -1;
     signExtended_ = false;
 
-    encodeOperand(instr, instr->dest_);
-    encodeOperand(instr, instr->src1_);
-    encodeOperand(instr, instr->src2_);
-    encodeOperand(instr, instr->src3_);
+    encodeOperand(instr, instr->dest_, modrm);
+    encodeOperand(instr, instr->src1_, modrm);
+    encodeOperand(instr, instr->src2_, modrm);
+    encodeOperand(instr, instr->src3_, modrm);
 
     if (instr->lockAndRepeat_ != -1)
 	addMachineCode(1, (UINT8)instr->lockAndRepeat_);
@@ -2431,7 +2431,7 @@ void Semantic::encodeInstr(ASMINSTRUCTION *instr, UINT8 modrm){
     instr->size_ = machineCodeSize_;
 }
 
-void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand){
+void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 modrm){
     if (operand == NULL || operand->default_)
 	return;
 
@@ -2511,6 +2511,9 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand){
 		    if (operand->displacement_size_ == -1)
 			operand->displacement_ = 0;
 		    operand->displacement_size_ = SIZE_DWORD;
+		}
+		else if (((modrm >> 6) & 0x3) == 0x1 && operand->displacement_size_ == SIZE_DWORD){
+		    operand->displacement_size_ = SIZE_BYTE;
 		}
 
 		if (operand->displacement_size_ == SIZE_BYTE)
