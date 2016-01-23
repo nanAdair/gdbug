@@ -2578,17 +2578,17 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 m
 	    immediate_size1_ = SIZE_DWORD;
 	    immediate1_ = operand->operand_ - instr->address_ - mnemonic_size - 4;
 
-	    if ((operand->operand_ & 0xffff0000) == 0){
-		instr->OperandSizeOverride_ = 1;
-		immediate_size1_ = SIZE_WORD;
-		immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 2;
-	    }
+	    // if ((operand->operand_ & 0xffff0000) == 0){
+	    //	instr->OperandSizeOverride_ = 1;
+	    //	immediate_size1_ = SIZE_WORD;
+	    //	immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 2;
+	    // }
 	}
 	else if (operand->operand_size_ == ABSOLUTE_ADDRESS_FAR_DWORD){
-	    if ((operand->operand_ & 0xffff0000) == 0)
-		immediate_size1_ = SIZE_WORD;
-	    else
-		immediate_size1_ = SIZE_DWORD;
+	    // if ((operand->operand_ & 0xffff0000) == 0)
+	    //	immediate_size1_ = SIZE_WORD;
+	    // else
+	    immediate_size1_ = SIZE_DWORD;
 	    immediate1_ = operand->operand_;
 	    immediate_size2_ = SIZE_WORD;
 	    immediate2_ = operand->displacement_;
@@ -2599,17 +2599,17 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 m
 	if (operand->operand_size_ == SIZE_DWORD){
 	    immediate1_ = operand->operand_ - instr->address_ - mnemonic_size - 4;
 
-	    if ((operand->operand_ & 0xffff0000) == 0){
-		immediate_size1_ = SIZE_WORD;
-		instr->OperandSizeOverride_ = 1;
-		immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 2;
-	    }
+	    // if ((operand->operand_ & 0xffff0000) == 0){
+	    //	immediate_size1_ = SIZE_WORD;
+	    //	instr->OperandSizeOverride_ = 1;
+	    //	immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 2;
+	    // }
 	}
 	else{
 	    immediate1_ = operand->operand_ - instr->address_ - mnemonic_size - 1;
 
-	    if ((operand->operand_ & 0xffff0000) == 0)
-		immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 1;
+	    // if ((operand->operand_ & 0xffff0000) == 0)
+	    //	immediate1_ = operand->operand_ - (instr->address_ & 0x0000ffff) - mnemonic_size - 1;
 	}
     }
     else if (operand->type_ == OPERAND_LABEL){
