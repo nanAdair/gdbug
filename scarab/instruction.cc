@@ -303,7 +303,7 @@ unsigned char* SCInstr::instruction2Binary(){
 }
 
 void SCInstr::printInstrDetail(){
-    cout << "Address: " << int2str((void*)this->address, sizeof(UINT32), 1, 0, false) << endl;
+    cout << "Address: " << int2str((void*)&this->address, sizeof(UINT32), 1, 0, false) << endl;
 
     cout << "Instruction type: ";
     switch (this->type){
@@ -440,6 +440,8 @@ void SCInstr::printInstrDetail(){
 	this->src3->printOperandDetail();
 	cout << endl;
     }
+
+    cout << "NEW EIP: " << int2str((void*)&this->new_eip, sizeof(UINT32), 1, 0, false) << endl;
 }
 
 // ===== InstrList ======

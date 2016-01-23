@@ -1926,6 +1926,12 @@ INT32 Disasm::disassembler(INT8 MACHINECODE[], int CODESIZE, INT32 addr, INT32 b
 
     copyAssembleAndMachineCode(NOT_ONLY_PREFIX);
     copyInstruction(instr);
+
+    // if (instr->type == FLOW_INSTRUCTION){
+    //	instr->printInstrDetail();
+    //	exit(0);
+    // }
+
     return currentByte;
 }
 
