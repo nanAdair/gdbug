@@ -1765,12 +1765,15 @@ void Disasm::copyInstruction(INSTRUCTION *instr)
     instr->AddressSizeOverride = AddressSizeOverride;
 
     instr->address = address;
-    if (instr->new_eip != -1)
-	instr->final_address = instr->new_eip;
-    else
-	instr->final_address = instr->address + currentByte;
+    //if (instr->new_eip != -1)
+	//instr->final_address = instr->new_eip;
+    //else
+	//instr->final_address = instr->address + currentByte;
 
     instr->size = currentByte;
+
+    instr->binary = (UINT8*)malloc(currentByte);
+    memcpy(instr->binary, machineCode, currentByte);
     free(instruction);
 }
 

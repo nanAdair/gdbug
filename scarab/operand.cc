@@ -72,6 +72,10 @@ INT32 Operand::getOperand() {
     return this->operand;
 }
 
+void Operand::setOperand(INT32 displacement) {
+    operand = displacement;
+}
+
 void Operand::printOperandDetail(){
     cout << "Type: ";
     switch (this->type){
@@ -217,4 +221,5 @@ ostream& operator<<(ostream &os, Operand o)
     os << o.type << "\t";
     os << o.operand << "\t";
     os << endl;
+    return os;
 }

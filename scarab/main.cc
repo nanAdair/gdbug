@@ -48,17 +48,18 @@ int main(int argc, char *argv[])
     cout << "BEGIN" << endl;
     InstrListT instrList = INSTRLIST->get_instr_list();
     for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
-	(*itr)->instruction2Binary();
+        (*itr)->instruction2Binary();
     }
     cout << "END" << endl;;
     // =======
     //cout << *INSTRLIST;
+
     //cout << obj_sec_vec;
 
-    // PatchVec upm_vec;
-    // obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
+    PatchVec upm_vec;
+    obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
 
-    // finalizeLayout(obj_sec_vec, upm_vec);
+    finalizeLayout(obj_sec_vec, upm_vec);
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
@@ -86,18 +87,18 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     string ld_file(argv[argc-1]);
     vector<string> so_files;
     for (int i = 0; i < argc-3; i++) {
-	string dynfile_name(argv[i+2]);
-	report(RL_FOUR, "handle so file");
-	so_files.push_back(dynfile_name.substr(dynfile_name.find_last_of("/")+1));
+        string dynfile_name(argv[i+2]);
+        report(RL_FOUR, "handle so file");
+        so_files.push_back(dynfile_name.substr(dynfile_name.find_last_of("/")+1));
 
-	FileDyn dynfile(dynfile_name);
+        FileDyn dynfile(dynfile_name);
 
-	SectionVec so_sec_vec;
-	so_sec_vec.init(dynfile);
-	VersionVec ver_vec(so_sec_vec);
-	SymbolDynVec cur_dynsym_vec(dynfile, so_sec_vec, ver_vec);
+        SectionVec so_sec_vec;
+        so_sec_vec.init(dynfile);
+        VersionVec ver_vec(so_sec_vec);
+        SymbolDynVec cur_dynsym_vec(dynfile, so_sec_vec, ver_vec);
 
-	dyn_sym_vec.add_from_SDVec(obj_sym_vec, cur_dynsym_vec);
+        dyn_sym_vec.add_from_SDVec(obj_sym_vec, cur_dynsym_vec);
     }
 
     obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
@@ -112,14 +113,14 @@ void finalizeLayout(SectionVec &obj_sec_vec, PatchVec &upm_vec)
 {
     int change = 0;
     do {
-	report(RL_THREE, "finalize sections adddress");
-	INSTRLIST->update_sections_size(obj_sec_vec);
-	obj_sec_vec.allocate_address();
-	INSTRLIST->update_instr_address(obj_sec_vec);
+        report(RL_THREE, "finalize sections adddress");
+        INSTRLIST->update_sections_size(obj_sec_vec);
+        obj_sec_vec.allocate_address();
+        INSTRLIST->update_instr_address(obj_sec_vec);
 
-	change = INSTRLIST->update_pc_relative_jumps();
-	change += upm_vec.apply();
-	cout << "change: " << change << endl;
+        change = INSTRLIST->update_pc_relative_jumps();
+        change += upm_vec.apply();
+        cout << "change: " << change << endl;
     } while (change);
 
     INSTRLIST->update_sections_data(obj_sec_vec);
@@ -133,8 +134,8 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
     report(RL_THREE, "Patch Section Final Content Begin");
     vector<string> so_files;
     for (int i = 0; i < argc-3; i++) {
-	string file_name = string(argv[i+2]);
-	so_files.push_back(file_name.substr(file_name.find_last_of("/")+1));
+        string file_name = string(argv[i+2]);
+        so_files.push_back(file_name.substr(file_name.find_last_of("/")+1));
     }
 
     obj_sec_vec.renew_sections_content(so_files, obj_sym_vec);

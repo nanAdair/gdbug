@@ -19,6 +19,7 @@ class Operand{
 	    int, int, OPERAND_SIZE, int);
 
     INT32 getOperand();
+    void setOperand(INT32 displacemnt);
     void printOperandDetail();
 
     /* segment */
