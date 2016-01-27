@@ -3151,8 +3151,8 @@ INSTRUCTION specialInstruction[] = {
     SCInstr({-1, -1, -1, -1, NULL, NULL, NULL, NULL,
      -1, -1, -1, -1, -1, -1, -1, SSE2_INSTRUCTION, CLASS_PAUSE, 0, 0, -1, 0, -1, NULL, NULL, "pause", -1, -1, -1, -1}),
     /* 0x90_2 */
-    SCInstr({-1, -1, -1, -1, &register_word_ax_s1, &register_word_ax_s1, NULL, NULL,
-     -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_XCHG, 0, 0, -1, 0, -1, NULL, NULL, "xchg ", -1, -1, -1, -1}),
+    SCInstr({-1, -1, -1, -1, &register_word_ax_s1_default, &register_word_ax_s1_default, NULL, NULL,
+		-1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_XCHG, 0, 0, -1, 0, -1, NULL, NULL, "xchg ", -1, -1, -1, -1}),
     /* 0x98_1 */
     SCInstr({-1, -1, -1, -1, &register_word_ax_s1_default, &register_byte_al_s1_default, NULL, NULL,
      -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_CWD, 0, 0, -1, 0, -1, NULL, NULL, "cbw", -1, -1, -1, -1}),

@@ -232,8 +232,12 @@ bool SCInstr::isDataInstruction() {
 void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
     asmInstruction->lockAndRepeat_ = this->lockAndRepeat;
     asmInstruction->segmentOverride_ = this->segmentOverride;
-    asmInstruction->OperandSizeOverride_ = this->OperandSizeOverride;
-    asmInstruction->AddressSizeOverride_ = this->AddressSizeOverride;
+    if (this->OperandSizeOverride == 0x66){
+	asmInstruction->OperandSizeOverride_ = 1;
+    }
+    if (this->AddressSizeOverride == 0x67){
+	asmInstruction->AddressSizeOverride_ = 1;
+    }
     asmInstruction->waitPrefix_ = -1;
 
     asmInstruction->dest_ = operand2ASMOperand(this->dest);
@@ -253,7 +257,7 @@ void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
 }
 
 ASMOPERAND* SCInstr::operand2ASMOperand(Operand *operand){
-    if (operand == NULL){
+    if (operand == NULL || operand->isDefault){
 	return NULL;
     }
 
@@ -484,15 +488,17 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 		if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
 		    size = data_size - start;
 		}
-		//if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
-		//size = data_size - start  + 1;
-		//if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
-		//size -= 1;
-		//}
 		memcpy(buffer, data + start, size);
+		//printf("Machine Code: %s\n", int2str(&buffer, sizeof(UINT32), 1, 0, false));
 		ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
-		if (ret == NOT_ENOUGH_CODE)
-		    break;
+		if (ret == NOT_ENOUGH_CODE){
+		    //printf("NOT ENOUGH CODE\n");
+		    start++;
+		    address++;
+		    continue;
+		    //break;
+		}
+		//printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
 		string sec_name = cur_sec->get_section_name();
 		if (sec_name == ".init")
@@ -505,8 +511,6 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 		    instr->secType = SECTION_PLT;
 		else
 		    instr->secType = SECTION_OTHER;
-
-		//printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
 		shared_ptr<INSTRUCTION> cur_instr(instr);
 		instr_list_.push_back(cur_instr);
@@ -628,21 +632,21 @@ void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
 	cur_sec = (*it)->secType;
 	if (cur_sec != last_sec) {
 	    switch(cur_sec) {
-		case SECTION_INIT:
-		    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-		    break;
-		case SECTION_TEXT:
-		    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-		    break;
-		case SECTION_FINI:
-		    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-		    break;
-		case SECTION_PLT:
-		    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-		    break;
-		default:
-		    report(RL_ONE, "can't handle instr sec type for now");
-		    exit(0);
+	    case SECTION_INIT:
+		sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		break;
+	    case SECTION_TEXT:
+		sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		break;
+	    case SECTION_FINI:
+		sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		break;
+	    case SECTION_PLT:
+		sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		break;
+	    default:
+		report(RL_ONE, "can't handle instr sec type for now");
+		exit(0);
 	    }
 
 	    last_sec = cur_sec;
@@ -666,21 +670,21 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
 	cur_sec = (*it)->secType;
 	if (cur_sec != last_sec) {
 	    switch(cur_sec) {
-		case SECTION_INIT:
-		    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-		    break;
-		case SECTION_TEXT:
-		    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-		    break;
-		case SECTION_FINI:
-		    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-		    break;
-		case SECTION_PLT:
-		    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-		    break;
-		default:
-		    report(RL_ONE, "can't handle instr sec type for now");
-		    exit(0);
+	    case SECTION_INIT:
+		sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		break;
+	    case SECTION_TEXT:
+		sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		break;
+	    case SECTION_FINI:
+		sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		break;
+	    case SECTION_PLT:
+		sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		break;
+	    default:
+		report(RL_ONE, "can't handle instr sec type for now");
+		exit(0);
 	    }
 
 	    last_sec = cur_sec;
@@ -690,7 +694,7 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
 	(*it)->final_address = sec->get_section_address() + offset;
 	offset += (*it)->size;
     }
-     //no need to update addr_to_instr_map_, won't use this
+    //no need to update addr_to_instr_map_, won't use this
 
     end_addr_ = instr_list_.back()->get_instruction_address() + instr_list_.back()->size;
 }
@@ -790,7 +794,7 @@ void InstrList::resolve_targets()
 	// 1: Normal instr
 	if (!(*it)->isPCChangingClass()) {
 	    if ((*it)->has_flag(BBL_END) &&
-		    !(EDGELIST->edge_exist_or_not(from, to))) {
+		!(EDGELIST->edge_exist_or_not(from, to))) {
 		if (!to) {
 		    // last block in the program
 		    EDGELIST->add_bbl_edge(from, BLOCKLIST->HELL, ET_HELL);
@@ -895,7 +899,8 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
     os << hex << ins.address << "\t";
     os << ins.size << "\t";
     os << hex << ins.get_instruction_address() << "\t";
-    os << byte_to_str(ins.binary, ins.size) << "\t";
+    //os << byte_to_str(ins.binary, ins.size) << "\t";
+    os << ins.ret_machineCode << "\t";
     os << string(ins.assembly);
     os << endl;
     return os;

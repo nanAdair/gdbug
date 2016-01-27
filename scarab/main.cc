@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
     binaryAbstraction(obj_sec_vec, obj_sym_vec, obj_rel_vec, argc, argv);
 
     INSTRLIST->disassemble2(obj_sec_vec);
+    //cout << *INSTRLIST;
     INSTRLIST->construct_cfg(obj_sym_vec);
 
     // =======

@@ -33,7 +33,7 @@ private:
     INT8 decodeModRM(Operand *operand, INT8 operand_number);
     bool needToChangeSign(Operand *operand, int size, INT8 type);
     void preprocessingFloatPointInstruction();
-    void addRegister(Operand *operand, bool isDefault);
+    void addRegister(Operand *operand);
     INT8 specialMnemonicProcess();
     INT8 SSEAndMMXInstructionProcess();
     void allocateOperand(Operand *operand);

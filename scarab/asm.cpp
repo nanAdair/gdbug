@@ -2623,12 +2623,12 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 m
     }
     else if (operand->type_ == OPERAND_IMMEDIATE){
 	if (immediate_size1_ == -1){
-	    if (instr->src1_ == NULL && operand->operand_size_ == SIZE_DWORD && (operand->operand_ & 0xffff0000) == 0){
-		instr->OperandSizeOverride_ = 1;
-		immediate_size1_ = SIZE_WORD;
-	    }
-	    else
-		immediate_size1_ = operand->operand_size_;
+	    // if (instr->src1_ == NULL && operand->operand_size_ == SIZE_DWORD && (operand->operand_ & 0xffff0000) == 0){
+	    //	instr->OperandSizeOverride_ = 1;
+	    //	immediate_size1_ = SIZE_WORD;
+	    // }
+	    // else
+	    immediate_size1_ = operand->operand_size_;
 	    immediate1_ = operand->operand_;
 	}
 	else if (immediate_size2_ == -1){
