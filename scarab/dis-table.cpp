@@ -90,6 +90,7 @@ Operand register_flags_s1_default = Operand(-1, ALL_EFLAGS, SIZE_WORD, OPERAND_R
 Operand immediate_byte_s1_s1 = Operand(-1, -1, SIZE_BYTE, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand immediate_word_s1_s1 = Operand(-1, -1, SIZE_WORD, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand immediate_dword_s1_s1 = Operand(-1, -1, SIZE_DWORD, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
+Operand immediate_byte_1_s1_default = Operand(-1, 1, SIZE_BYTE, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand immediate_byte_3_s1_default = Operand(-1, 3, SIZE_BYTE, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand immediate_byte_1_s1 = Operand(-1, 1, SIZE_BYTE, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand immediate_word_0_s1_default = Operand(-1, 0, SIZE_WORD, OPERAND_IMMEDIATE, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
@@ -2007,55 +2008,55 @@ INSTRUCTION getOneByteWithAuxiliaryOpcode[][8] = {
     /* 0xd0 */
     {
 	/* AuxiliaryOpcode = 0: ROL r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROL, OF, CF, -1, 1, -1, NULL, NULL, "rol ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROL, OF, CF, -1, 1, -1, NULL, NULL, "rol ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 1: ROR r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROR, OF, CF, -1, 1, -1, NULL, NULL, "ror ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROR, OF, CF, -1, 1, -1, NULL, NULL, "ror ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 2: RCL r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCL, OF, CF, -1, 1, -1, NULL, NULL, "rcl ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCL, OF, CF, -1, 1, -1, NULL, NULL, "rcl ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 3: RCR r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCR, OF, CF, -1, 1, -1, NULL, NULL, "rcr ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCR, OF, CF, -1, 1, -1, NULL, NULL, "rcr ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 4: SHL r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shl ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shl ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 5: SHR r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shr ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shr ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 6: SAL r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sal ", -1, -1, -1, -1}),
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sal ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 7: SAR r/m8, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, NULL, NULL, NULL,
-	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sar ", -1, -1, -1, -1})
+	SCInstr({-1, -1, -1, -1, &memory_byte_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
+		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sar ", -1, -1, -1, -1})
     },
     /* 0xd1 */
     {
 	/* AuxiliaryOpcode = 0: ROL r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 		    -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROL, OF, CF, -1, 1, -1, NULL, NULL, "rol ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 1: ROR r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_ROR, OF, CF, -1, 1, -1, NULL, NULL, "ror ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 2: RCL r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCL, OF, CF, -1, 1, -1, NULL, NULL, "rcl ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 3: RCR r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_RCR, OF, CF, -1, 1, -1, NULL, NULL, "rcr ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 4: SHL r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shl ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 5: SHR r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SHR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "shr ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 6: SAL r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAL, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sal ", -1, -1, -1, -1}),
 	/* AuxiliaryOpcode = 7: SAR r/m16/32, 1 */
-	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, NULL, NULL, NULL,
+	SCInstr({-1, -1, -1, -1, &memory_dword_s1_s1, &immediate_byte_1_s1_default, NULL, NULL,
 	 -1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_SAR, OF | ZF | PF, CF, -1, 1, -1, NULL, NULL, "sar ", -1, -1, -1, -1})
     },
     /* 0xd2 */
