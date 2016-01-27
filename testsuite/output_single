@@ -1,0 +1,631 @@
+[8:56:37]		[3] Binary Abstraction Begin
+[8:56:37]			[4] all data read successfully
+[8:56:37]			[4] section vector construction completed
+[8:56:37]			[4] merging sections completed
+[8:56:37]			[4] complete symbol list construction
+[8:56:37]			[4] complete relocation list construction
+[8:56:37]			[4] handle so file
+[8:56:37]			[4] all data read successfully
+[8:56:37]			[4] section vector construction completed
+[8:56:37]			[4] complete version vector construction
+[8:56:37]			[4] complete adding empty sections
+[8:56:37]			[4] complete allocating address for sections
+[8:56:37]			[4] add virtual address to symbols value
+[8:56:37]			[4] complete apply relocations
+[8:56:37]		[3] Binary Abstraction Done
+[8:56:37]		[3] disassemble binary code begin
+[8:56:37]		[3] disassemble binary code end
+[8:56:37]		[3] construct control flow graph begin
+[8:56:37]			[4] mark instruction for bbl
+[8:56:37]			[4] mark functions
+[8:56:37]			[4] create basic block list
+[8:56:37]			[4] create function list
+[8:56:37]			[4] resolve ret block to exit block
+[8:56:37]			[4] resolve cfg targets
+[8:56:37]			[4] resolve entryless functions
+[8:56:37]		[3] construct control flow graph end
+BEGIN
+08048258   53                   push ebx
+8048258	1	8048258	53	push ebx
+8048258	1	8048258	53	push ebx
+08048259   83 EC 08             sub esp, 8
+8048259	3	8048259	83ec08	sub esp, 8
+8048259	3	8048259	83ec08	sub esp, 8
+0804825C   E8 EF 01 00 00       call near 08048450
+804825c	5	804825c	e8ef010000	call near 08048450
+804825c	5	804825c	e8ef010000	call near 08048450
+08048261   81 C3 CB 13 00 00    add ebx, 13CB
+8048261	6	8048261	81c3cb130000	add ebx, 13CB
+8048261	6	8048261	81c3cb130000	add ebx, 13CB
+08048267   8B 83 FC FF FF FF    mov eax, dword ptr ds:[ebx - 4]
+8048267	6	8048267	8b83fcffffff	mov eax, dword ptr ds:[ebx - 4]
+8048267	6	8048267	8b83fcffffff	mov eax, dword ptr ds:[ebx - 4]
+0804826D   85 C0                test eax, eax
+804826d	2	804826d	85c0	test eax, eax
+804826d	2	804826d	85c0	test eax, eax
+0804826F   74 05                je short 08048276
+804826f	2	804826f	7405	je short 08048276
+804826f	2	804826f	7405	je short 08048276
+08048271   E8 3A 00 00 00       call near 080482B0
+8048271	5	8048271	e83a000000	call near 080482B0
+8048271	5	8048271	e83a000000	call near 080482B0
+08048276   83 C4 08             add esp, 8
+8048276	3	8048276	83c408	add esp, 8
+8048276	3	8048276	83c408	add esp, 8
+08048279   5B                   pop ebx
+8048279	1	8048279	5b	pop ebx
+8048279	1	8048279	5b	pop ebx
+0804827A   C3                   retn 
+804827a	1	804827a	c3	retn 
+804827a	1	804827a	c3	retn 
+08048280   FF 35 00 00 00 00    push dword ptr ds:[0]
+8048280	6	8048280	ff3500000000	push dword ptr ds:[0]
+8048280	6	8048280	ff3500000000	push dword ptr ds:[0]
+08048286   FF 25 00 00 00 00    jmp dword ptr ds:[0]
+8048286	6	8048286	ff2500000000	jmp dword ptr ds:[0]
+8048286	6	8048286	ff2500000000	jmp dword ptr ds:[0]
+0804828C   00 00                add byte ptr ds:[eax], al
+804828c	2	804828c	0000	add byte ptr ds:[eax], al
+804828c	2	804828c	0000	add byte ptr ds:[eax], al
+0804828E   00 00                add byte ptr ds:[eax], al
+804828e	2	804828e	0000	add byte ptr ds:[eax], al
+804828e	2	804828e	0000	add byte ptr ds:[eax], al
+08048290   FF 25 00 00 00 00    jmp dword ptr ds:[0]
+8048290	6	8048290	ff2500000000	jmp dword ptr ds:[0]
+8048290	6	8048290	ff2500000000	jmp dword ptr ds:[0]
+08048296   66 68 00 00          push 0
+8048296	5	8048296	6800000000	push 0
+8048296	5	8048296	6668000000	push 0
+0804829B   E9 00 00 00 00       jmp near 080482A0
+804829b	5	804829b	e900000000	jmp near 080482A0
+804829b	5	804829b	e900000000	jmp near 080482A0
+080482A0   FF 25 00 00 00 00    jmp dword ptr ds:[0]
+80482a0	6	80482a0	ff2500000000	jmp dword ptr ds:[0]
+80482a0	6	80482a0	ff2500000000	jmp dword ptr ds:[0]
+080482A6   66 68 08 00          push 8
+80482a6	5	80482a6	6808000000	push 8
+80482a6	5	80482a6	6668080000	push 8
+080482AB   E9 00 00 00 00       jmp near 080482B0
+80482ab	5	80482ab	e900000000	jmp near 080482B0
+80482ab	5	80482ab	e900000000	jmp near 080482B0
+080482B0   FF 25 00 00 00 00    jmp dword ptr ds:[0]
+80482b0	6	80482b0	ff2500000000	jmp dword ptr ds:[0]
+80482b0	6	80482b0	ff2500000000	jmp dword ptr ds:[0]
+080482B6   66 68 10 00          push 10
+80482b6	5	80482b6	6810000000	push 10
+80482b6	5	80482b6	6668100000	push 10
+080482BB   E9 00 00 00 00       jmp near 080482C0
+80482bb	5	80482bb	e900000000	jmp near 080482C0
+80482bb	5	80482bb	e900000000	jmp near 080482C0
+080482C0   31 ED                xor ebp, ebp
+80482c0	2	80482c0	31ed	xor ebp, ebp
+80482c0	2	80482c0	31ed	xor ebp, ebp
+080482C2   5E                   pop esi
+80482c2	1	80482c2	5e	pop esi
+80482c2	1	80482c2	5e	pop esi
+080482C3   89 E1                mov ecx, esp
+80482c3	2	80482c3	89e1	mov ecx, esp
+80482c3	2	80482c3	89e1	mov ecx, esp
+080482C5   83 E4 F0             and esp, 0F0
+80482c5	3	80482c5	83e4f0	and esp, 0F0
+80482c5	3	80482c5	83e4f0	and esp, 0F0
+080482C8   50                   push eax
+80482c8	1	80482c8	50	push eax
+80482c8	1	80482c8	50	push eax
+080482C9   54                   push esp
+80482c9	1	80482c9	54	push esp
+80482c9	1	80482c9	54	push esp
+080482CA   52                   push edx
+80482ca	1	80482ca	52	push edx
+80482ca	1	80482ca	52	push edx
+080482CB   68 40 84 04 08       push 8048440
+80482cb	5	80482cb	6840840408	push 8048440
+80482cb	5	80482cb	6840840408	push 8048440
+080482D0   68 E0 83 04 08       push 80483E0
+80482d0	5	80482d0	68e0830408	push 80483E0
+80482d0	5	80482d0	68e0830408	push 80483E0
+080482D5   51                   push ecx
+80482d5	1	80482d5	51	push ecx
+80482d5	1	80482d5	51	push ecx
+080482D6   56                   push esi
+80482d6	1	80482d6	56	push esi
+80482d6	1	80482d6	56	push esi
+080482D7   68 AB 83 04 08       push 80483AB
+80482d7	5	80482d7	68ab830408	push 80483AB
+80482d7	5	80482d7	68ab830408	push 80483AB
+080482DC   E8 BF FF FF FF       call near 080482A0
+80482dc	5	80482dc	e8bfffffff	call near 080482A0
+80482dc	5	80482dc	e8bfffffff	call near 080482A0
+080482E1   F4                   hlt
+80482e1	1	80482e1	f4	hlt
+80482e1	1	80482e1	f4	hlt
+080482E2   90                   nop
+80482e2	2	80482e2	6690	xchg ax, ax
+80482e2	2	80482e2	9000	xchg ax, ax
+080482E4   90                   nop
+80482e4	2	80482e4	6690	xchg ax, ax
+80482e4	2	80482e4	9000	xchg ax, ax
+080482E6   90                   nop
+80482e6	2	80482e6	6690	xchg ax, ax
+80482e6	2	80482e6	9000	xchg ax, ax
+080482E8   90                   nop
+80482e8	2	80482e8	6690	xchg ax, ax
+80482e8	2	80482e8	9000	xchg ax, ax
+080482EA   90                   nop
+80482ea	2	80482ea	6690	xchg ax, ax
+80482ea	2	80482ea	9000	xchg ax, ax
+080482EC   90                   nop
+80482ec	2	80482ec	6690	xchg ax, ax
+80482ec	2	80482ec	9000	xchg ax, ax
+080482EE   90                   nop
+80482ee	2	80482ee	6690	xchg ax, ax
+80482ee	2	80482ee	9000	xchg ax, ax
+080482F0   B8 53 96 04 08       mov eax, 8049653
+80482f0	5	80482f0	b853960408	mov eax, 8049653
+80482f0	5	80482f0	b853960408	mov eax, 8049653
+080482F5   2D 50 96 04 08       sub eax, 8049650
+80482f5	5	80482f5	2d50960408	sub eax, 8049650
+80482f5	5	80482f5	2d50960408	sub eax, 8049650
+080482FA   83 F8 06             cmp eax, 6
+80482fa	3	80482fa	83f806	cmp eax, 6
+80482fa	3	80482fa	83f806	cmp eax, 6
+080482FD   76 1A                jbe short 08048319
+80482fd	2	80482fd	761a	jbe short 08048319
+80482fd	2	80482fd	761a	jbe short 08048319
+080482FF   B8 00 00 00 00       mov eax, 0
+80482ff	5	80482ff	b800000000	mov eax, 0
+80482ff	5	80482ff	b800000000	mov eax, 0
+08048304   85 C0                test eax, eax
+8048304	2	8048304	85c0	test eax, eax
+8048304	2	8048304	85c0	test eax, eax
+08048306   74 11                je short 08048319
+8048306	2	8048306	7411	je short 08048319
+8048306	2	8048306	7411	je short 08048319
+08048308   55                   push ebp
+8048308	1	8048308	55	push ebp
+8048308	1	8048308	55	push ebp
+08048309   89 E5                mov ebp, esp
+8048309	2	8048309	89e5	mov ebp, esp
+8048309	2	8048309	89e5	mov ebp, esp
+0804830B   83 EC 14             sub esp, 14
+804830b	3	804830b	83ec14	sub esp, 14
+804830b	3	804830b	83ec14	sub esp, 14
+0804830E   68 50 96 04 08       push 8049650
+804830e	5	804830e	6850960408	push 8049650
+804830e	5	804830e	6850960408	push 8049650
+08048313   FF D0                call eax
+8048313	2	8048313	ffd0	call eax
+8048313	2	8048313	ffd0	call eax
+08048315   83 C4 10             add esp, 10
+8048315	3	8048315	83c410	add esp, 10
+8048315	3	8048315	83c410	add esp, 10
+08048318   C9                   leave 
+8048318	1	8048318	c9	leave 
+8048318	1	8048318	c9	leave 
+08048319   F3                   prefix rep:
+0804831A   FF                   ???
+0804831B   FF                   ???
+0804831C   FF                   ???
+F3FFFFFFFF
+Not enough code.
+8048319	1	8048319	f3	prefix rep:
+8048319	1	8048319	f3	prefix rep:
+0804831A   C3                   retn 
+804831a	1	804831a	c3	retn 
+804831a	1	804831a	c3	retn 
+0804831B   90                   nop
+804831b	1	804831b	90	nop
+804831b	1	804831b	90	nop
+0804831C   8D 74 26 00          lea esi, dword ptr ds:[esi]
+804831c	4	804831c	8d742600	lea esi, dword ptr ds:[esi]
+804831c	4	804831c	8d742600	lea esi, dword ptr ds:[esi]
+08048320   B8 50 96 04 08       mov eax, 8049650
+8048320	5	8048320	b850960408	mov eax, 8049650
+8048320	5	8048320	b850960408	mov eax, 8049650
+08048325   2D 50 96 04 08       sub eax, 8049650
+8048325	5	8048325	2d50960408	sub eax, 8049650
+8048325	5	8048325	2d50960408	sub eax, 8049650
+0804832A   C1 F8 02             sar eax, 2
+804832a	3	804832a	c1f802	sar eax, 2
+804832a	3	804832a	c1f802	sar eax, 2
+0804832D   89 C2                mov edx, eax
+804832d	2	804832d	89c2	mov edx, eax
+804832d	2	804832d	89c2	mov edx, eax
+0804832F   C1 EA 1F             shr edx, 1F
+804832f	3	804832f	c1ea1f	shr edx, 1F
+804832f	3	804832f	c1ea1f	shr edx, 1F
+08048332   01 D0                add eax, edx
+8048332	2	8048332	01d0	add eax, edx
+8048332	2	8048332	01d0	add eax, edx
+08048334   D1 F8                sar eax
+8048334	2	8048334	d1f8	sar eax
+8048334	2	8048334	d1f8	sar eax
+08048336   74 1B                je short 08048353
+8048336	2	8048336	741b	je short 08048353
+8048336	2	8048336	741b	je short 08048353
+08048338   BA 00 00 00 00       mov edx, 0
+8048338	5	8048338	ba00000000	mov edx, 0
+8048338	5	8048338	ba00000000	mov edx, 0
+0804833D   85 D2                test edx, edx
+804833d	2	804833d	85d2	test edx, edx
+804833d	2	804833d	85d2	test edx, edx
+0804833F   74 12                je short 08048353
+804833f	2	804833f	7412	je short 08048353
+804833f	2	804833f	7412	je short 08048353
+08048341   55                   push ebp
+8048341	1	8048341	55	push ebp
+8048341	1	8048341	55	push ebp
+08048342   89 E5                mov ebp, esp
+8048342	2	8048342	89e5	mov ebp, esp
+8048342	2	8048342	89e5	mov ebp, esp
+08048344   83 EC 10             sub esp, 10
+8048344	3	8048344	83ec10	sub esp, 10
+8048344	3	8048344	83ec10	sub esp, 10
+08048347   50                   push eax
+8048347	1	8048347	50	push eax
+8048347	1	8048347	50	push eax
+08048348   68 50 96 04 08       push 8049650
+8048348	5	8048348	6850960408	push 8049650
+8048348	5	8048348	6850960408	push 8049650
+0804834D   FF D2                call edx
+804834d	2	804834d	ffd2	call edx
+804834d	2	804834d	ffd2	call edx
+0804834F   83 C4 10             add esp, 10
+804834f	3	804834f	83c410	add esp, 10
+804834f	3	804834f	83c410	add esp, 10
+08048352   C9                   leave 
+8048352	1	8048352	c9	leave 
+8048352	1	8048352	c9	leave 
+08048353   F3                   prefix rep:
+08048354   FF                   ???
+08048355   FF                   ???
+08048356   FF                   ???
+F3FFFFFFFF
+Not enough code.
+8048353	1	8048353	f3	prefix rep:
+8048353	1	8048353	f3	prefix rep:
+08048354   C3                   retn 
+8048354	1	8048354	c3	retn 
+8048354	1	8048354	c3	retn 
+08048355   8D 74 26 00          lea esi, dword ptr ds:[esi]
+8048355	4	8048355	8d742600	lea esi, dword ptr ds:[esi]
+8048355	4	8048355	8d742600	lea esi, dword ptr ds:[esi]
+08048359   8D BC 27 00 00 00 00  lea edi, dword ptr ds:[edi]
+8048359	7	8048359	8dbc2700000000	lea edi, dword ptr ds:[edi]
+8048359	7	8048359	8dbc2700000000	lea edi, dword ptr ds:[edi]
+08048360   80 3D 58 96 04 08 00  cmp byte ptr ds:[8049658], 0
+8048360	7	8048360	803d5896040800	cmp byte ptr ds:[8049658], 0
+8048360	7	8048360	803d5896040800	cmp byte ptr ds:[8049658], 0
+08048367   75 13                jne short 0804837C
+8048367	2	8048367	7513	jne short 0804837C
+8048367	2	8048367	7513	jne short 0804837C
+08048369   55                   push ebp
+8048369	1	8048369	55	push ebp
+8048369	1	8048369	55	push ebp
+0804836A   89 E5                mov ebp, esp
+804836a	2	804836a	89e5	mov ebp, esp
+804836a	2	804836a	89e5	mov ebp, esp
+0804836C   83 EC 08             sub esp, 8
+804836c	3	804836c	83ec08	sub esp, 8
+804836c	3	804836c	83ec08	sub esp, 8
+0804836F   E8 7C FF FF FF       call near 080482F0
+804836f	5	804836f	e87cffffff	call near 080482F0
+804836f	5	804836f	e87cffffff	call near 080482F0
+08048374   C6 05 58 96 04 08 01  mov byte ptr ds:[8049658], 1
+8048374	7	8048374	c6055896040801	mov byte ptr ds:[8049658], 1
+8048374	7	8048374	c6055896040801	mov byte ptr ds:[8049658], 1
+0804837B   C9                   leave 
+804837b	1	804837b	c9	leave 
+804837b	1	804837b	c9	leave 
+0804837C   F3                   prefix rep:
+0804837D   FF                   ???
+0804837E   FF                   ???
+0804837F   FF                   ???
+F3FFFFFFFF
+Not enough code.
+804837c	1	804837c	f3	prefix rep:
+804837c	1	804837c	f3	prefix rep:
+0804837D   C3                   retn 
+804837d	1	804837d	c3	retn 
+804837d	1	804837d	c3	retn 
+0804837E   90                   nop
+804837e	2	804837e	6690	xchg ax, ax
+804837e	2	804837e	9000	xchg ax, ax
+08048380   B8 44 96 04 08       mov eax, 8049644
+8048380	5	8048380	b844960408	mov eax, 8049644
+8048380	5	8048380	b844960408	mov eax, 8049644
+08048385   8B 10                mov edx, dword ptr ds:[eax]
+8048385	2	8048385	8b10	mov edx, dword ptr ds:[eax]
+8048385	2	8048385	8b10	mov edx, dword ptr ds:[eax]
+08048387   85 D2                test edx, edx
+8048387	2	8048387	85d2	test edx, edx
+8048387	2	8048387	85d2	test edx, edx
+08048389   75 05                jne short 08048390
+8048389	2	8048389	7505	jne short 08048390
+8048389	2	8048389	7505	jne short 08048390
+0804838B   EB 93                jmp short 08048320
+804838b	2	804838b	eb93	jmp short 08048320
+804838b	2	804838b	eb93	jmp short 08048320
+0804838D   8D 76 00             lea esi, dword ptr ds:[esi]
+804838d	3	804838d	8d7600	lea esi, dword ptr ds:[esi]
+804838d	3	804838d	8d7600	lea esi, dword ptr ds:[esi]
+08048390   BA 00 00 00 00       mov edx, 0
+8048390	5	8048390	ba00000000	mov edx, 0
+8048390	5	8048390	ba00000000	mov edx, 0
+08048395   85 D2                test edx, edx
+8048395	2	8048395	85d2	test edx, edx
+8048395	2	8048395	85d2	test edx, edx
+08048397   74 F2                je short 0804838B
+8048397	2	8048397	74f2	je short 0804838B
+8048397	2	8048397	74f2	je short 0804838B
+08048399   55                   push ebp
+8048399	1	8048399	55	push ebp
+8048399	1	8048399	55	push ebp
+0804839A   89 E5                mov ebp, esp
+804839a	2	804839a	89e5	mov ebp, esp
+804839a	2	804839a	89e5	mov ebp, esp
+0804839C   83 EC 14             sub esp, 14
+804839c	3	804839c	83ec14	sub esp, 14
+804839c	3	804839c	83ec14	sub esp, 14
+0804839F   50                   push eax
+804839f	1	804839f	50	push eax
+804839f	1	804839f	50	push eax
+080483A0   FF D2                call edx
+80483a0	2	80483a0	ffd2	call edx
+80483a0	2	80483a0	ffd2	call edx
+080483A2   83 C4 10             add esp, 10
+80483a2	3	80483a2	83c410	add esp, 10
+80483a2	3	80483a2	83c410	add esp, 10
+080483A5   C9                   leave 
+80483a5	1	80483a5	c9	leave 
+80483a5	1	80483a5	c9	leave 
+080483A6   E9 75 FF FF FF       jmp near 08048320
+80483a6	5	80483a6	e975ffffff	jmp near 08048320
+80483a6	5	80483a6	e975ffffff	jmp near 08048320
+080483AB   8D 4C 24 04          lea ecx, dword ptr ss:[esp + 4]
+80483ab	4	80483ab	8d4c2404	lea ecx, dword ptr ss:[esp + 4]
+80483ab	4	80483ab	8d4c2404	lea ecx, dword ptr ss:[esp + 4]
+080483AF   83 E4 F0             and esp, 0F0
+80483af	3	80483af	83e4f0	and esp, 0F0
+80483af	3	80483af	83e4f0	and esp, 0F0
+080483B2   FF 71 FC             push dword ptr ds:[ecx - 4]
+80483b2	3	80483b2	ff71fc	push dword ptr ds:[ecx - 4]
+80483b2	3	80483b2	ff71fc	push dword ptr ds:[ecx - 4]
+080483B5   55                   push ebp
+80483b5	1	80483b5	55	push ebp
+80483b5	1	80483b5	55	push ebp
+080483B6   89 E5                mov ebp, esp
+80483b6	2	80483b6	89e5	mov ebp, esp
+80483b6	2	80483b6	89e5	mov ebp, esp
+080483B8   51                   push ecx
+80483b8	1	80483b8	51	push ecx
+80483b8	1	80483b8	51	push ecx
+080483B9   83 EC 04             sub esp, 4
+80483b9	3	80483b9	83ec04	sub esp, 4
+80483b9	3	80483b9	83ec04	sub esp, 4
+080483BC   83 EC 0C             sub esp, 0C
+80483bc	3	80483bc	83ec0c	sub esp, 0C
+80483bc	3	80483bc	83ec0c	sub esp, 0C
+080483BF   68 6C 84 04 08       push 804846C
+80483bf	5	80483bf	686c840408	push 804846C
+80483bf	5	80483bf	686c840408	push 804846C
+080483C4   E8 C7 FE FF FF       call near 08048290
+80483c4	5	80483c4	e8c7feffff	call near 08048290
+80483c4	5	80483c4	e8c7feffff	call near 08048290
+080483C9   83 C4 10             add esp, 10
+80483c9	3	80483c9	83c410	add esp, 10
+80483c9	3	80483c9	83c410	add esp, 10
+080483CC   B8 00 00 00 00       mov eax, 0
+80483cc	5	80483cc	b800000000	mov eax, 0
+80483cc	5	80483cc	b800000000	mov eax, 0
+080483D1   8B 4D FC             mov ecx, dword ptr ss:[ebp - 4]
+80483d1	3	80483d1	8b4dfc	mov ecx, dword ptr ss:[ebp - 4]
+80483d1	3	80483d1	8b4dfc	mov ecx, dword ptr ss:[ebp - 4]
+080483D4   C9                   leave 
+80483d4	1	80483d4	c9	leave 
+80483d4	1	80483d4	c9	leave 
+080483D5   8D 61 FC             lea esp, dword ptr ds:[ecx - 4]
+80483d5	3	80483d5	8d61fc	lea esp, dword ptr ds:[ecx - 4]
+80483d5	3	80483d5	8d61fc	lea esp, dword ptr ds:[ecx - 4]
+080483D8   C3                   retn 
+80483d8	1	80483d8	c3	retn 
+80483d8	1	80483d8	c3	retn 
+080483D9   90                   nop
+80483d9	2	80483d9	6690	xchg ax, ax
+80483d9	2	80483d9	9000	xchg ax, ax
+080483DB   90                   nop
+80483db	2	80483db	6690	xchg ax, ax
+80483db	2	80483db	9000	xchg ax, ax
+080483DD   90                   nop
+80483dd	2	80483dd	6690	xchg ax, ax
+80483dd	2	80483dd	9000	xchg ax, ax
+080483DF   90                   nop
+80483df	1	80483df	90	nop
+80483df	1	80483df	90	nop
+080483E0   55                   push ebp
+80483e0	1	80483e0	55	push ebp
+80483e0	1	80483e0	55	push ebp
+080483E1   57                   push edi
+80483e1	1	80483e1	57	push edi
+80483e1	1	80483e1	57	push edi
+080483E2   56                   push esi
+80483e2	1	80483e2	56	push esi
+80483e2	1	80483e2	56	push esi
+080483E3   53                   push ebx
+80483e3	1	80483e3	53	push ebx
+80483e3	1	80483e3	53	push ebx
+080483E4   E8 67 00 00 00       call near 08048450
+80483e4	5	80483e4	e867000000	call near 08048450
+80483e4	5	80483e4	e867000000	call near 08048450
+080483E9   81 C3 43 12 00 00    add ebx, 1243
+80483e9	6	80483e9	81c343120000	add ebx, 1243
+80483e9	6	80483e9	81c343120000	add ebx, 1243
+080483EF   83 EC 0C             sub esp, 0C
+80483ef	3	80483ef	83ec0c	sub esp, 0C
+80483ef	3	80483ef	83ec0c	sub esp, 0C
+080483F2   8B 6C 24 20          mov ebp, dword ptr ss:[esp + 20]
+80483f2	4	80483f2	8b6c2420	mov ebp, dword ptr ss:[esp + 20]
+80483f2	4	80483f2	8b6c2420	mov ebp, dword ptr ss:[esp + 20]
+080483F6   8D B3 2C 00 00 00    lea esi, dword ptr ds:[ebx + 2C]
+80483f6	6	80483f6	8db32c000000	lea esi, dword ptr ds:[ebx + 2C]
+80483f6	6	80483f6	8db32c000000	lea esi, dword ptr ds:[ebx + 2C]
+080483FC   E8 57 FE FF FF       call near 08048258
+80483fc	5	80483fc	e857feffff	call near 08048258
+80483fc	5	80483fc	e857feffff	call near 08048258
+08048401   8D 83 28 00 00 00    lea eax, dword ptr ds:[ebx + 28]
+8048401	6	8048401	8d8328000000	lea eax, dword ptr ds:[ebx + 28]
+8048401	6	8048401	8d8328000000	lea eax, dword ptr ds:[ebx + 28]
+08048407   29 C6                sub esi, eax
+8048407	2	8048407	29c6	sub esi, eax
+8048407	2	8048407	29c6	sub esi, eax
+08048409   C1 FE 02             sar esi, 2
+8048409	3	8048409	c1fe02	sar esi, 2
+8048409	3	8048409	c1fe02	sar esi, 2
+0804840C   85 F6                test esi, esi
+804840c	2	804840c	85f6	test esi, esi
+804840c	2	804840c	85f6	test esi, esi
+0804840E   74 25                je short 08048435
+804840e	2	804840e	7425	je short 08048435
+804840e	2	804840e	7425	je short 08048435
+08048410   31 FF                xor edi, edi
+8048410	2	8048410	31ff	xor edi, edi
+8048410	2	8048410	31ff	xor edi, edi
+08048412   8D B6 00 00 00 00    lea esi, dword ptr ds:[esi]
+8048412	6	8048412	8db600000000	lea esi, dword ptr ds:[esi]
+8048412	6	8048412	8db600000000	lea esi, dword ptr ds:[esi]
+08048418   83 EC 04             sub esp, 4
+8048418	3	8048418	83ec04	sub esp, 4
+8048418	3	8048418	83ec04	sub esp, 4
+0804841B   FF 74 24 2C          push dword ptr ss:[esp + 2C]
+804841b	4	804841b	ff74242c	push dword ptr ss:[esp + 2C]
+804841b	4	804841b	ff74242c	push dword ptr ss:[esp + 2C]
+0804841F   FF 74 24 2C          push dword ptr ss:[esp + 2C]
+804841f	4	804841f	ff74242c	push dword ptr ss:[esp + 2C]
+804841f	4	804841f	ff74242c	push dword ptr ss:[esp + 2C]
+08048423   55                   push ebp
+8048423	1	8048423	55	push ebp
+8048423	1	8048423	55	push ebp
+08048424   FF 94 7B 28 00 00 00  call dword ptr ds:[ebx + edi * 2 + 28]
+8048424	7	8048424	ff94bb28000000	call dword ptr ds:[ebx + edi * 4 + 28]
+8048424	7	8048424	ff947b28000000	call dword ptr ds:[ebx + edi * 4 + 28]
+0804842B   83 C7 01             add edi, 1
+804842b	3	804842b	83c701	add edi, 1
+804842b	3	804842b	83c701	add edi, 1
+0804842E   83 C4 10             add esp, 10
+804842e	3	804842e	83c410	add esp, 10
+804842e	3	804842e	83c410	add esp, 10
+08048431   39 F7                cmp edi, esi
+8048431	2	8048431	39f7	cmp edi, esi
+8048431	2	8048431	39f7	cmp edi, esi
+08048433   75 E3                jne short 08048418
+8048433	2	8048433	75e3	jne short 08048418
+8048433	2	8048433	75e3	jne short 08048418
+08048435   83 C4 0C             add esp, 0C
+8048435	3	8048435	83c40c	add esp, 0C
+8048435	3	8048435	83c40c	add esp, 0C
+08048438   5B                   pop ebx
+8048438	1	8048438	5b	pop ebx
+8048438	1	8048438	5b	pop ebx
+08048439   5E                   pop esi
+8048439	1	8048439	5e	pop esi
+8048439	1	8048439	5e	pop esi
+0804843A   5F                   pop edi
+804843a	1	804843a	5f	pop edi
+804843a	1	804843a	5f	pop edi
+0804843B   5D                   pop ebp
+804843b	1	804843b	5d	pop ebp
+804843b	1	804843b	5d	pop ebp
+0804843C   C3                   retn 
+804843c	1	804843c	c3	retn 
+804843c	1	804843c	c3	retn 
+0804843D   8D 76 00             lea esi, dword ptr ds:[esi]
+804843d	3	804843d	8d7600	lea esi, dword ptr ds:[esi]
+804843d	3	804843d	8d7600	lea esi, dword ptr ds:[esi]
+08048440   F3                   prefix rep:
+08048441   FF                   ???
+08048442   FF                   ???
+08048443   FF                   ???
+F3FFFFFFFF
+Not enough code.
+8048440	1	8048440	f3	prefix rep:
+8048440	1	8048440	f3	prefix rep:
+08048441   C3                   retn 
+8048441	1	8048441	c3	retn 
+8048441	1	8048441	c3	retn 
+08048442   00 00                add byte ptr ds:[eax], al
+8048442	2	8048442	0000	add byte ptr ds:[eax], al
+8048442	2	8048442	0000	add byte ptr ds:[eax], al
+08048444   00 00                add byte ptr ds:[eax], al
+8048444	2	8048444	0000	add byte ptr ds:[eax], al
+8048444	2	8048444	0000	add byte ptr ds:[eax], al
+08048446   00 00                add byte ptr ds:[eax], al
+8048446	2	8048446	0000	add byte ptr ds:[eax], al
+8048446	2	8048446	0000	add byte ptr ds:[eax], al
+08048448   00 00                add byte ptr ds:[eax], al
+8048448	2	8048448	0000	add byte ptr ds:[eax], al
+8048448	2	8048448	0000	add byte ptr ds:[eax], al
+0804844A   00 00                add byte ptr ds:[eax], al
+804844a	2	804844a	0000	add byte ptr ds:[eax], al
+804844a	2	804844a	0000	add byte ptr ds:[eax], al
+0804844C   00 00                add byte ptr ds:[eax], al
+804844c	2	804844c	0000	add byte ptr ds:[eax], al
+804844c	2	804844c	0000	add byte ptr ds:[eax], al
+0804844E   00 00                add byte ptr ds:[eax], al
+804844e	2	804844e	0000	add byte ptr ds:[eax], al
+804844e	2	804844e	0000	add byte ptr ds:[eax], al
+08048450   8B 1C 24             mov ebx, dword ptr ss:[esp]
+8048450	3	8048450	8b1c24	mov ebx, dword ptr ss:[esp]
+8048450	3	8048450	8b1c24	mov ebx, dword ptr ss:[esp]
+08048453   C3                   retn 
+8048453	1	8048453	c3	retn 
+8048453	1	8048453	c3	retn 
+08048454   53                   push ebx
+8048454	1	8048454	53	push ebx
+8048454	1	8048454	53	push ebx
+08048455   83 EC 08             sub esp, 8
+8048455	3	8048455	83ec08	sub esp, 8
+8048455	3	8048455	83ec08	sub esp, 8
+08048458   E8 F3 FF FF FF       call near 08048450
+8048458	5	8048458	e8f3ffffff	call near 08048450
+8048458	5	8048458	e8f3ffffff	call near 08048450
+0804845D   81 C3 CF 11 00 00    add ebx, 11CF
+804845d	6	804845d	81c3cf110000	add ebx, 11CF
+804845d	6	804845d	81c3cf110000	add ebx, 11CF
+08048463   83 C4 08             add esp, 8
+8048463	3	8048463	83c408	add esp, 8
+8048463	3	8048463	83c408	add esp, 8
+08048466   5B                   pop ebx
+8048466	1	8048466	5b	pop ebx
+8048466	1	8048466	5b	pop ebx
+08048467   C3                   retn 
+8048467	1	8048467	c3	retn 
+8048467	1	8048467	c3	retn 
+END
+[8:56:37]			[4] begin construct upm from relocations
+[8:56:37]			[4] construct upm from relocations done
+[8:56:37]		[3] finalize sections adddress
+[8:56:37]			[4] update sections size
+[8:56:37]			[4] complete allocating address for sections
+[8:56:37]			[4] update instructions address
+[8:56:37]			[4] fix pc relative jumps instructions
+[8:56:37]			[4] UPM apply
+change: 0
+[8:56:37]			[4] update sections data
+[8:56:37]		[3] Patch Section Final Content Begin
+[8:56:37]			[4] update .dynsym done
+[8:56:37]			[4] update .hash done
+[8:56:37]			[4] update .gnu.version done
+[8:56:37]			[4] update .gnu.version_r done
+[8:56:37]			[4] update .rel.dyn done
+[8:56:37]			[4] update .rel.plt done
+[8:56:37]			[4] update .plt done
+[8:56:37]			[4] update .dynamic done
+[8:56:37]			[4] update .got.plt done
+[8:56:37]			[4] update .symtab done
+[8:56:37]		[3] Patch Section Final Content End
+[8:56:37]		[3] Start construct file header and tail
+[8:56:37]			[4] construction section table
+[8:56:37]			[4] construction program header
+[8:56:37]			[4] construction file header
+[8:56:37]			[4] write out to file
+[8:56:37]		[3] All done!
