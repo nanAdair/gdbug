@@ -380,149 +380,149 @@ INT8 Disasm::specialMnemonicProcess()
 	    instruction->type = IRREPLACEABLE_INSTRUCTION;
 	break;
     }
-    // CBW
-    case 0x98:{
-	if (OperandSizeOverride == PREFIX_OPERAND)
-	    memcpy(instruction, &specialInstruction[SPECIAL_98], sizeof(INSTRUCTION));
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    // CDQ
-    case 0x99:{
-	if (OperandSizeOverride == PREFIX_OPERAND)
-	    memcpy(instruction, &specialInstruction[SPECIAL_99], sizeof(INSTRUCTION));
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    // IRET
-    case 0xcf:{
-	if (OperandSizeOverride == PREFIX_OPERAND)
-	    memcpy(instruction, &specialInstruction[SPECIAL_cf], sizeof(INSTRUCTION));
-	instruction->type = STACK_OPERATE_INSTRUCTION;
-	break;
-    }
-    // AAM
-    case 0xd4:{
-	if ((unsigned char)machineCode[currentByte] == 0x0a){
-	    currentByte++;
-	    memcpy(instruction, &specialInstruction[SPECIAL_d4], sizeof(INSTRUCTION));
-	}
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    // AAD
-    case 0xd5:{
-	if ((unsigned char)machineCode[currentByte] == 0x0a){
-	    currentByte++;
-	    memcpy(instruction, &specialInstruction[SPECIAL_d5], sizeof(INSTRUCTION));
-	}
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    case 0xe0:
-    {
-	if (AddressSizeOverride == PREFIX_ADDRESS)
-	    memcpy(instruction, &specialInstruction[SPECIAL_e0], sizeof(INSTRUCTION));
-	instruction->type = FLOW_INSTRUCTION;
-	break;
-    }
-    case 0xe1:
-    {
-	if (AddressSizeOverride == PREFIX_ADDRESS)
-	    memcpy(instruction, &specialInstruction[SPECIAL_e1], sizeof(INSTRUCTION));
-	instruction->type = FLOW_INSTRUCTION;
-	break;
-    }
-    case 0xe2:
-    {
-	if (AddressSizeOverride == PREFIX_ADDRESS)
-	    memcpy(instruction, &specialInstruction[SPECIAL_e2], sizeof(INSTRUCTION));
-	instruction->type = FLOW_INSTRUCTION;
-	break;
-    }
-    case 0xe3:
-    {
-	if (AddressSizeOverride == PREFIX_ADDRESS)
-	    memcpy(instruction, &specialInstruction[SPECIAL_e3], sizeof(INSTRUCTION));
-	instruction->type = FLOW_INSTRUCTION;
-	break;
-    }
-    case 0x0f00:{
-	if (((machineCode[currentByte] >> 6) & 3) == 3 && ((machineCode[currentByte] >> 3) & 7) == 0)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f00_1], sizeof(INSTRUCTION));
-	else if (((machineCode[currentByte] >> 6) & 3) == 3 && ((machineCode[currentByte] >> 3) & 7) == 1)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f00_2], sizeof(INSTRUCTION));
-	else
+	// CBW
+	case 0x98:{
+	    if (OperandSizeOverride == PREFIX_OPERAND)
+		memcpy(instruction, &specialInstruction[SPECIAL_98], sizeof(INSTRUCTION));
 	    instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    case 0x0f01:{
-	currentByte++;
+	    break;
+	}
+	// CDQ
+	case 0x99:{
+	    if (OperandSizeOverride == PREFIX_OPERAND)
+		memcpy(instruction, &specialInstruction[SPECIAL_99], sizeof(INSTRUCTION));
+	    instruction->type = NORMAL_INSTRUCTION;
+	    break;
+	}
+	    // IRET
+	case 0xcf:{
+	    if (OperandSizeOverride == PREFIX_OPERAND)
+		memcpy(instruction, &specialInstruction[SPECIAL_cf], sizeof(INSTRUCTION));
+	    instruction->type = STACK_OPERATE_INSTRUCTION;
+	    break;
+	}
+	    // AAM
+	case 0xd4:{
+	    if ((unsigned char)machineCode[currentByte] == 0x0a){
+		currentByte++;
+		memcpy(instruction, &specialInstruction[SPECIAL_d4], sizeof(INSTRUCTION));
+	    }
+	    instruction->type = NORMAL_INSTRUCTION;
+	    break;
+	}
+	    // AAD
+	case 0xd5:{
+	    if ((unsigned char)machineCode[currentByte] == 0x0a){
+		currentByte++;
+		memcpy(instruction, &specialInstruction[SPECIAL_d5], sizeof(INSTRUCTION));
+	    }
+	    instruction->type = NORMAL_INSTRUCTION;
+	    break;
+	}
+	case 0xe0:
+	    {
+		if (AddressSizeOverride == PREFIX_ADDRESS)
+		    memcpy(instruction, &specialInstruction[SPECIAL_e0], sizeof(INSTRUCTION));
+		instruction->type = FLOW_INSTRUCTION;
+		break;
+	    }
+	case 0xe1:
+	    {
+		if (AddressSizeOverride == PREFIX_ADDRESS)
+		    memcpy(instruction, &specialInstruction[SPECIAL_e1], sizeof(INSTRUCTION));
+		instruction->type = FLOW_INSTRUCTION;
+		break;
+	    }
+	case 0xe2:
+	    {
+		if (AddressSizeOverride == PREFIX_ADDRESS)
+		    memcpy(instruction, &specialInstruction[SPECIAL_e2], sizeof(INSTRUCTION));
+		instruction->type = FLOW_INSTRUCTION;
+		break;
+	    }
+	case 0xe3:
+	    {
+		if (AddressSizeOverride == PREFIX_ADDRESS)
+		    memcpy(instruction, &specialInstruction[SPECIAL_e3], sizeof(INSTRUCTION));
+		instruction->type = FLOW_INSTRUCTION;
+		break;
+	    }
+	case 0x0f00:{
+	    if (((machineCode[currentByte] >> 6) & 3) == 3 && ((machineCode[currentByte] >> 3) & 7) == 0)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f00_1], sizeof(INSTRUCTION));
+	    else if (((machineCode[currentByte] >> 6) & 3) == 3 && ((machineCode[currentByte] >> 3) & 7) == 1)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f00_2], sizeof(INSTRUCTION));
+	    else
+		instruction->type = NORMAL_INSTRUCTION;
+	    break;
+	}
+	case 0x0f01:{
+	    currentByte++;
 
-	if ((unsigned char)machineCode[currentByte - 1] == 0xc1)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c1], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xc2)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c2], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xc3)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c3], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xc4)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c4], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xc8)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c8], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xc9)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01c9], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xd0)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01d0], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xd1)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01d1], sizeof(INSTRUCTION));
-	else if ((unsigned char)machineCode[currentByte - 1] == 0xf9)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f01f9], sizeof(INSTRUCTION));
-	else if (((machineCode[currentByte - 1] >> 3) & 7) == 0x4 && ((machineCode[currentByte - 1] >> 6) & 3) == 0x3){
-	    currentByte--;
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f10_4], sizeof(INSTRUCTION));
+	    if ((unsigned char)machineCode[currentByte - 1] == 0xc1)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c1], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xc2)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c2], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xc3)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c3], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xc4)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c4], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xc8)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c8], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xc9)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01c9], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xd0)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01d0], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xd1)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01d1], sizeof(INSTRUCTION));
+	    else if ((unsigned char)machineCode[currentByte - 1] == 0xf9)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f01f9], sizeof(INSTRUCTION));
+	    else if (((machineCode[currentByte - 1] >> 3) & 7) == 0x4 && ((machineCode[currentByte - 1] >> 6) & 3) == 0x3){
+		currentByte--;
+		memcpy(instruction, &specialInstruction[SPECIAL_0f10_4], sizeof(INSTRUCTION));
+	    }
+	    else{
+		instruction->type = NORMAL_INSTRUCTION;
+		currentByte--;
+	    }
+	    break;
 	}
-	else{
+	case 0x0f02:{
+	    INT8 mod = (machineCode[currentByte] >> 6) & 3;
+	    if (mod == 3)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f02_1], sizeof(INSTRUCTION));
 	    instruction->type = NORMAL_INSTRUCTION;
-	    currentByte--;
+	    break;
 	}
-	break;
-    }
-    case 0x0f02:{
-	INT8 mod = (machineCode[currentByte] >> 6) & 3;
-	if (mod == 3)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f02_1], sizeof(INSTRUCTION));
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    case 0x0f03:{
-	INT8 mod = (machineCode[currentByte] >> 6) & 3;
-	if (mod == 3)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0f03_1], sizeof(INSTRUCTION));
-	instruction->type = NORMAL_INSTRUCTION;
-	break;
-    }
-    case 0x0fb8:{
-	if ((unsigned char)lockAndRepeat != PREFIX_REP)
-	    memcpy(instruction, &specialInstruction[SPECIAL_UNDEFINED], sizeof(INSTRUCTION));
-	else{
-	    lockAndRepeat = -1;
+	case 0x0f03:{
+	    INT8 mod = (machineCode[currentByte] >> 6) & 3;
+	    if (mod == 3)
+		memcpy(instruction, &specialInstruction[SPECIAL_0f03_1], sizeof(INSTRUCTION));
 	    instruction->type = NORMAL_INSTRUCTION;
+	    break;
 	}
-	break;
-    }
-    case 0x0fc7:{
-	if (OperandSizeOverride == PREFIX_OPERAND)
-	    memcpy(instruction, &specialInstruction[SPECIAL_0fc7_1], sizeof(INSTRUCTION));
-	else if ((unsigned char)lockAndRepeat == PREFIX_REP){
-	    memcpy(instruction, &specialInstruction[SPECIAL_0fc7_2], sizeof(INSTRUCTION));
-	    lockAndRepeat = -1;
+	case 0x0fb8:{
+	    if ((unsigned char)lockAndRepeat != PREFIX_REP)
+		memcpy(instruction, &specialInstruction[SPECIAL_UNDEFINED], sizeof(INSTRUCTION));
+	    else{
+		lockAndRepeat = -1;
+		instruction->type = NORMAL_INSTRUCTION;
+	    }
+	    break;
 	}
-	else
-	    instruction->type = VMX_INSTRUCTION;
-	break;
-    }
-    default:
-	break;
+	case 0x0fc7:{
+	    if (OperandSizeOverride == PREFIX_OPERAND)
+		memcpy(instruction, &specialInstruction[SPECIAL_0fc7_1], sizeof(INSTRUCTION));
+	    else if ((unsigned char)lockAndRepeat == PREFIX_REP){
+		memcpy(instruction, &specialInstruction[SPECIAL_0fc7_2], sizeof(INSTRUCTION));
+		lockAndRepeat = -1;
+	    }
+	    else
+		instruction->type = VMX_INSTRUCTION;
+	    break;
+	}
+	default:
+	    break;
     }
     instruction->opcode = opcode;
     return DECODE_SUCCESS;
@@ -1451,11 +1451,8 @@ bool Disasm::needToChangeSign(Operand *operand, int size, INT8 type)
     return true;
 }
 
-void Disasm::addRegister(Operand *operand, bool isDefault)
+void Disasm::addRegister(Operand *operand)
 {
-    if (isDefault)
-	return;
-
     if (operand->operand_size == SIZE_BYTE)
 	strcat(assemblyCode, Register8[operand->operand]);
     else if (operand->operand_size == SIZE_WORD)
@@ -1545,19 +1542,17 @@ void Disasm::copyOperand(Operand *operand, INT8 operand_number)
     static int operand_order = FIRST_OPERAND;
     if (operand_number == FIRST_OPERAND)
 	operand_order = FIRST_OPERAND;
-    if (operand == NULL || operand->isDefault)
+    if (operand == NULL)
 	return;
     if (operand_order != FIRST_OPERAND)
 	strcat(assemblyCode, ", ");
-    if (!operand->isDefault){
-	if (operand->type == OPERAND_REGISTER)
-	    addRegister(operand, 1);
-	operand_order++;
-    }
+    operand_order++;
 
-    if (operand->type == OPERAND_MEMORY || operand->type == OPERAND_MEMORY_OFFSET ||
-	operand->type == OPERAND_SSE_MEMORY || operand->type == OPERAND_MMX_MEMORY ||
-	operand->type == OPERAND_MEMORY_MEMORY){
+    if (operand->type == OPERAND_REGISTER)
+	addRegister(operand);
+    else if (operand->type == OPERAND_MEMORY || operand->type == OPERAND_MEMORY_OFFSET ||
+	     operand->type == OPERAND_SSE_MEMORY || operand->type == OPERAND_MMX_MEMORY ||
+	     operand->type == OPERAND_MEMORY_MEMORY){
 	if (operand->operand_size == SIZE_BYTE)
 	    strcat(assemblyCode, "byte ptr ");
 	else if (operand->operand_size == SIZE_WORD)
@@ -1647,7 +1642,7 @@ void Disasm::copyOperand(Operand *operand, INT8 operand_number)
 	    operand->operand = instruction->regop & 7;
 
 	if (operand->type == OPERAND_REGISTER)
-	    addRegister(operand, 0);
+	    addRegister(operand);
 	else{
 	    if (operand->operand_size == SIZE_XMM)
 		strcat(assemblyCode, XMMRegister[operand->operand]);

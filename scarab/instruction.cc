@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include "log.h"
 #include "section.h"
@@ -32,6 +33,7 @@
 #include "edge.h"
 using namespace std;
 
+string byte_to_str(UINT8 *data, int length);
 // ===== SCInstr ==========
 SCInstr::SCInstr() :
     dest(NULL),
@@ -236,8 +238,12 @@ bool SCInstr::isDataInstruction() {
 void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
     asmInstruction->lockAndRepeat_ = this->lockAndRepeat;
     asmInstruction->segmentOverride_ = this->segmentOverride;
-    asmInstruction->OperandSizeOverride_ = this->OperandSizeOverride;
-    asmInstruction->AddressSizeOverride_ = this->AddressSizeOverride;
+    if (this->OperandSizeOverride == 0x66){
+	asmInstruction->OperandSizeOverride_ = 1;
+    }
+    if (this->AddressSizeOverride == 0x67){
+	asmInstruction->AddressSizeOverride_ = 1;
+    }
     asmInstruction->waitPrefix_ = -1;
 
     asmInstruction->dest_ = operand2ASMOperand(this->dest);
@@ -257,8 +263,13 @@ void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
 }
 
 ASMOPERAND* SCInstr::operand2ASMOperand(Operand *operand){
-    if (operand == NULL){
-        return NULL;
+//<<<<<<< HEAD
+    //if (operand == NULL){
+        //return NULL;
+//=======
+    if (operand == NULL || operand->isDefault){
+	return NULL;
+//>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
 
     ASMOPERAND* asmOperand = new ASMOPERAND();
@@ -300,10 +311,17 @@ unsigned char* SCInstr::instruction2Binary(){
     //Disasm disasm;
     //disasm.disassembleMachineCode(machineCode, int2str(&asmInstruction->address_, sizeof(UINT32), 1, 0, false), 0);
 
-    cout << *this;
+    string op1 = byte_to_str(binary, size);
+    //cout << *this;
     free(binary);
     binary = reinterpret_cast<UINT8*>(string2hex(machineCode));
-    cout << *this;
+    string op2 = byte_to_str(binary, size);
+    //cout << *this;
+    if (op1 != op2) {
+        cout << op1 << "\t";
+        cout << op2 << "\t";
+        cout << "\t" << *this;
+    }
     //printf("%s\n", machineCode);
     //printInstrDetail();
 
@@ -493,15 +511,20 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
                 if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
                     size = data_size - start;
                 }
-                //if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
-                //size = data_size - start  + 1;
-                //if ((INT32)MAX_INSTRUCTION_SIZE > data_size)
-                //size -= 1;
-                //}
                 memcpy(buffer, data + start, size);
+                //printf("Machine Code: %s\n", int2str(&buffer, sizeof(UINT32), 1, 0, false));
                 ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
-                if (ret == NOT_ENOUGH_CODE)
+                if (ret == NOT_ENOUGH_CODE){
+                    //printf("NOT ENOUGH CODE\n");
+                    start++;
+                    address++;
+                    continue;
+                    //break;
+                }
+                if (start + ret > data_size){
                     break;
+                }
+                //printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
                 string sec_name = cur_sec->get_section_name();
                 if (sec_name == ".init")
@@ -515,9 +538,6 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
                 else
                     instr->secType = SECTION_OTHER;
 
-                //cout << hex << address << "\t";
-                //printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
-
                 shared_ptr<INSTRUCTION> cur_instr(instr);
                 instr_list_.push_back(cur_instr);
                 addr_to_instr_map_.insert(pair<UINT32, shared_ptr<INSTRUCTION> >(cur_instr->address, cur_instr));
@@ -526,6 +546,7 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
                 start += ret;
             }
         }
+        //>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
 
     begin_addr_ = instr_list_.front()->get_instruction_address();
@@ -636,32 +657,60 @@ void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->secType;
-        if (cur_sec != last_sec) {
-            switch(cur_sec) {
-                case SECTION_INIT:
-                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-                    break;
-                case SECTION_TEXT:
-                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-                    break;
-                case SECTION_FINI:
-                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-                    break;
-                case SECTION_PLT:
-                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-                    break;
-                default:
-                    report(RL_ONE, "can't handle instr sec type for now");
-                    exit(0);
-            }
+//<<<<<<< HEAD
+        //cur_sec = (*it)->secType;
+        //if (cur_sec != last_sec) {
+            //switch(cur_sec) {
+                //case SECTION_INIT:
+                    //sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    //break;
+                //case SECTION_TEXT:
+                    //sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    //break;
+                //case SECTION_FINI:
+                    //sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    //break;
+                //case SECTION_PLT:
+                    //sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    //break;
+                //default:
+                    //report(RL_ONE, "can't handle instr sec type for now");
+                    //exit(0);
+            //}
 
-            last_sec = cur_sec;
-            sec->clear_section_data();
-        }
+            //last_sec = cur_sec;
+            //sec->clear_section_data();
+        //}
 
         //sec->expand_section_data((*it)->binary, (*it)->size, 1);
-        sec->expand_section_data((UINT8*)(*it)->binary, (*it)->size, 1);
+        //sec->expand_section_data((UINT8*)(*it)->binary, (*it)->size, 1);
+//=======
+	cur_sec = (*it)->secType;
+	if (cur_sec != last_sec) {
+	    switch(cur_sec) {
+	    case SECTION_INIT:
+		sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		break;
+	    case SECTION_TEXT:
+		sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		break;
+	    case SECTION_FINI:
+		sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		break;
+	    case SECTION_PLT:
+		sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		break;
+	    default:
+		report(RL_ONE, "can't handle instr sec type for now");
+		exit(0);
+	    }
+
+	    last_sec = cur_sec;
+	    sec->clear_section_data();
+	}
+
+	sec->expand_section_data((*it)->binary, (*it)->size, 1);
+//>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
 }
 
@@ -675,33 +724,62 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->secType;
-        if (cur_sec != last_sec) {
-            switch(cur_sec) {
-                case SECTION_INIT:
-                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-                    break;
-                case SECTION_TEXT:
-                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-                    break;
-                case SECTION_FINI:
-                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-                    break;
-                case SECTION_PLT:
-                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-                    break;
-                default:
-                    report(RL_ONE, "can't handle instr sec type for now");
-                    exit(0);
-            }
+//<<<<<<< HEAD
+        //cur_sec = (*it)->secType;
+        //if (cur_sec != last_sec) {
+            //switch(cur_sec) {
+                //case SECTION_INIT:
+                    //sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    //break;
+                //case SECTION_TEXT:
+                    //sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    //break;
+                //case SECTION_FINI:
+                    //sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    //break;
+                //case SECTION_PLT:
+                    //sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    //break;
+                //default:
+                    //report(RL_ONE, "can't handle instr sec type for now");
+                    //exit(0);
+            //}
 
-            last_sec = cur_sec;
-            offset = 0;
-        }
+            //last_sec = cur_sec;
+            //offset = 0;
+        //}
 
-        (*it)->address = sec->get_section_address() + offset;
+        //(*it)->address = sec->get_section_address() + offset;
         //(*it)->last_address = sec->get_section_address() + offset;
-        offset += (*it)->size;
+        //offset += (*it)->size;
+//=======
+	cur_sec = (*it)->secType;
+	if (cur_sec != last_sec) {
+	    switch(cur_sec) {
+	    case SECTION_INIT:
+		sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		break;
+	    case SECTION_TEXT:
+		sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		break;
+	    case SECTION_FINI:
+		sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		break;
+	    case SECTION_PLT:
+		sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		break;
+	    default:
+		report(RL_ONE, "can't handle instr sec type for now");
+		exit(0);
+	    }
+
+	    last_sec = cur_sec;
+	    offset = 0;
+	}
+
+	(*it)->final_address = sec->get_section_address() + offset;
+	offset += (*it)->size;
+//>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
     //no need to update addr_to_instr_map_, won't use this
 
@@ -809,81 +887,81 @@ void InstrList::resolve_targets()
 {
     report(RL_FOUR, "resolve cfg targets");
     for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        shared_ptr<Block> from = (*it)->get_block();
-        shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
-        // 1: Normal instr
-        if (!(*it)->isPCChangingClass()) {
-            if ((*it)->has_flag(BBL_END) &&
-                    !(EDGELIST->edge_exist_or_not(from, to))) {
-                if (!to) {
-                    // last block in the program
-                    EDGELIST->add_bbl_edge(from, BLOCKLIST->HELL, ET_HELL);
-                }
-                else {
-                    EDGELIST->add_bbl_edge(from, to, ET_NORMAL);
-                }
-                from->set_type(BT_NORMAL);
-            }
-            continue;
-        }
-        // 2. Conditional branch instr
-        if ((*it)->isConditionalJmpClass()) {
-            if (to) {
-                EDGELIST->add_bbl_edge(from, to, ET_FALSE);
-            }
-            UINT32 target_addr;
-            // target is through indirect calculation
-            if ((target_addr = (*it)->get_target_address()) == 0)
-                continue;
-            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
-            //cout << **it;
-            //cout << target_addr << endl;
-            if (to_instr)
-                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_TRUE);
-            (*it)->set_jump_target(to_instr);
-            continue;
-        }
-        // 3. Jmp instr
-        if ((*it)->isJmpClass()) {
-            UINT32 target_addr;
-            // target is through indirect calculation
-            if ((target_addr = (*it)->get_target_address()) == 0)
-                continue;
-            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
-            //cout << **it;
-            //cout << target_addr << endl;
-            if (to_instr) {
-                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_UNCOND);
-            }
-            (*it)->set_jump_target(to_instr);
-            continue;
-        }
-        // 4. Call instr
-        if ((*it)->isCallClass()) {
-            UINT32 target_addr;
-            // target is through indirect calculation
-            if ((target_addr = (*it)->get_target_address()) == 0)
-                continue;
-            shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
-            //cout << **it;
-            //cout << target_addr << endl;
-            if (to_instr) {
-                EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_FUNCALL);
-                if (to) {
-                    EDGELIST->add_bbl_edge(to_instr->get_block(), to, ET_RETURN);
-                }
-            }
-            (*it)->set_jump_target(to_instr);
-            if (to) {
-                EDGELIST->add_bbl_edge(from, to, ET_FUNLINK);
-            }
-            continue;
-        }
-        // 5. Ret instr added above
-        if ((*it)->isReturnClass()) {
-            (*it)->get_block()->set_type(BT_RETURN);
-            continue;
-        }
+	shared_ptr<Block> from = (*it)->get_block();
+	shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
+	// 1: Normal instr
+	if (!(*it)->isPCChangingClass()) {
+	    if ((*it)->has_flag(BBL_END) &&
+		!(EDGELIST->edge_exist_or_not(from, to))) {
+		if (!to) {
+		    // last block in the program
+		    EDGELIST->add_bbl_edge(from, BLOCKLIST->HELL, ET_HELL);
+		}
+		else {
+		    EDGELIST->add_bbl_edge(from, to, ET_NORMAL);
+		}
+		from->set_type(BT_NORMAL);
+	    }
+	    continue;
+	}
+	// 2. Conditional branch instr
+	if ((*it)->isConditionalJmpClass()) {
+	    if (to) {
+		EDGELIST->add_bbl_edge(from, to, ET_FALSE);
+	    }
+	    UINT32 target_addr;
+	    // target is through indirect calculation
+	    if ((target_addr = (*it)->get_target_address()) == 0)
+		continue;
+	    shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+	    //cout << **it;
+	    //cout << target_addr << endl;
+	    if (to_instr)
+		EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_TRUE);
+	    (*it)->set_jump_target(to_instr);
+	    continue;
+	}
+	// 3. Jmp instr
+	if ((*it)->isJmpClass()) {
+	    UINT32 target_addr;
+	    // target is through indirect calculation
+	    if ((target_addr = (*it)->get_target_address()) == 0)
+		continue;
+	    shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+	    //cout << **it;
+	    //cout << target_addr << endl;
+	    if (to_instr) {
+		EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_UNCOND);
+	    }
+	    (*it)->set_jump_target(to_instr);
+	    continue;
+	}
+	// 4. Call instr
+	if ((*it)->isCallClass()) {
+	    UINT32 target_addr;
+	    // target is through indirect calculation
+	    if ((target_addr = (*it)->get_target_address()) == 0)
+		continue;
+	    shared_ptr<INSTRUCTION> to_instr = this->get_instr_by_exact_address(target_addr);
+	    //cout << **it;
+	    //cout << target_addr << endl;
+	    if (to_instr) {
+		EDGELIST->add_bbl_edge(from, to_instr->get_block(), ET_FUNCALL);
+		if (to) {
+		    EDGELIST->add_bbl_edge(to_instr->get_block(), to, ET_RETURN);
+		}
+	    }
+	    (*it)->set_jump_target(to_instr);
+	    if (to) {
+		EDGELIST->add_bbl_edge(from, to, ET_FUNLINK);
+	    }
+	    continue;
+	}
+	// 5. Ret instr added above
+	if ((*it)->isReturnClass()) {
+	    (*it)->get_block()->set_type(BT_RETURN);
+	    continue;
+	}
     }
 }
 
@@ -919,9 +997,14 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
     os << hex << ins.address << "\t";
     os << ins.size << "\t";
     os << hex << ins.get_instruction_address() << "\t";
+//<<<<<<< HEAD
     //os << ins.binary << "\t";
     os << byte_to_str((UINT8*)(ins.binary), ins.size) << "\t";
     //printf("%s\n", ins.ret_machineCode);
+//=======
+    //os << byte_to_str(ins.binary, ins.size) << "\t";
+    //os << ins.ret_machineCode << "\t";
+//>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     os << string(ins.assembly);
     os << endl;
     return os;
