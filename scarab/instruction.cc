@@ -498,6 +498,9 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
 		    continue;
 		    //break;
 		}
+		if (start + ret > data_size){
+		    break;
+		}
 		//printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
 		string sec_name = cur_sec->get_section_name();
