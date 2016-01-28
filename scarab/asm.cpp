@@ -2532,11 +2532,11 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 m
 		    modrm_ = (modrm_ & 0xf8) | 0x4;
 		    sib_exist_ = true;
 
-		    if (operand->scale_ == 2)
+		    if (operand->scale_ == 1)
 			sib_ |= 0x40;
-		    else if (operand->scale_ == 4)
+		    else if (operand->scale_ == 2)
 			sib_ |= 0x80;
-		    else if (operand->scale_ == 8)
+		    else if (operand->scale_ == 3)
 			sib_ |= 0xc0;
 
 		    if (operand->base_ == -1)

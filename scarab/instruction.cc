@@ -300,7 +300,7 @@ unsigned char* SCInstr::instruction2Binary(){
     Disasm disasm;
     disasm.disassembleMachineCode(machineCode, int2str(&asmInstruction->address_, sizeof(UINT32), 1, 0, false));
 
-    //printInstrDetail();
+    printInstrDetail();
 
     // don't forget to delete
     return asmInstruction->machineCode_;
