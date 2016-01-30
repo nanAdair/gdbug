@@ -53,11 +53,14 @@ Operand register_byte_al_s1_default = Operand(-1, AL, SIZE_BYTE, OPERAND_REGISTE
 Operand register_dword_eax_s1 = Operand(-1, EAX, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand register_dword_ecx_s1 = Operand(-1, ECX, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand register_dword_ebx_s1 = Operand(-1, EBX, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
+Operand register_dword_ebx_s1_default = Operand(-1, EBX, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand register_dword_edx_s1 = Operand(-1, EDX, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand register_dword_esp_s1 = Operand(-1, ESP, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand register_dword_ebp_s1 = Operand(-1, EBP, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
 Operand register_dword_esi_s1 = Operand(-1, ESI, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
+Operand register_dword_esi_s1_default = Operand(-1, ESI, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand register_dword_edi_s1 = Operand(-1, EDI, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
+Operand register_dword_edi_s1_default = Operand(-1, EDI, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand register_word_all_s1_default = Operand(-1, ALL_16BITS_REGISTER, SIZE_WORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand register_dword_all_s1_default = Operand(-1, ALL_32BITS_REGISTER, SIZE_DWORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 1);
 Operand register_word_ax_s1 = Operand(-1, AX, SIZE_WORD, OPERAND_REGISTER, -1, -1, -1, 0, -1, SIZE_UNDEFINED, 0);
@@ -655,7 +658,7 @@ INSTRUCTION getOneByteOpcode[] = {
     SCInstr({-1, -1, -1, -1, &register_dword_eax_s1_default, &register_dword_edi_s1_default, NULL, NULL,
 		-1, -1, -1, -1, -1, -1, -1, NORMAL_INSTRUCTION, CLASS_XCHG, 0, 0, -1, 0, -1, NULL, NULL, "xchg ", -1, -1, -1, -1}),
     /* 0x98: CWD EAX, AX */
-    SCInstr({-1, -1, -1, -1, &register_fixed_dword_eax_s1_default_default, &register_word_ax_s1_default_default, NULL, NULL,
+    SCInstr({-1, -1, -1, -1, &register_fixed_dword_eax_s1_default, &register_word_ax_s1_default, NULL, NULL,
 		-1, -1, -1, -1, -1, -1, -1, SPECIAL_MNEMONIC,  CLASS_CWD, 0, 0, -1, 0, -1, NULL, NULL, "cwde", -1, -1, -1, -1}),
     /* 0x99: CDW EDX, EAX */
     SCInstr({-1, -1, -1, -1, &register_fixed_dword_edx_s1_default, &register_fixed_dword_eax_s1_default, NULL, NULL,

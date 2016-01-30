@@ -2643,6 +2643,10 @@ void Semantic::encodeOperand(ASMINSTRUCTION *instr, ASMOPERAND *operand, UINT8 m
 	if (operand->signExtended_ && instr->s_ == 1)
 	    signExtended_ = true;
     }
+    else if (operand->type_ == OPERAND_MEMORY_OFFSET){
+	displacement_size_ = SIZE_DWORD;
+	displacement_ = operand->operand_;
+    }
 
     if (operand->displacement_size_ != -1 && operand->type_ != OPERAND_FLOW){
 	displacement_size_ = operand->displacement_size_;
