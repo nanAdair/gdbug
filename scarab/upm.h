@@ -112,6 +112,31 @@ public:
     bool apply();
 };
 
+class PatchSecSectoInstr : public Patch
+{
+public:
+    PatchSecSectoInstr(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Section> base, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add) :
+        src_sec(src), src_offset(s_offset),
+        base_sec(base),
+        dest_instr(dest), dest_offset(d_offset),
+        addend(add) {}
+protected:
+    shared_ptr<Section> src_sec;
+    INT32 src_offset;
+    shared_ptr<Section> base_sec;
+    shared_ptr<SCInstr> dest_instr;
+    UINT32 dest_offset;
+    INT32 addend;
+};
+
+class PatchSecSectoInstr32 : public PatchSecSectoInstr
+{
+public:
+    PatchSecSectoInstr32(shared_ptr<Section> src, INT32 s_offset, shared_ptr<Section> base, shared_ptr<SCInstr> dest, UINT32 d_offset, INT32 add):
+        PatchSecSectoInstr(src, s_offset, base, dest, d_offset, add) {}
+    bool apply();
+};
+
 class PatchSectiontoSection : public Patch
 {
 public:

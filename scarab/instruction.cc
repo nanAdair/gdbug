@@ -138,6 +138,11 @@ INT32 SCInstr::get_opcode() const
     return opcode;
 }
 
+INT32 SCInstr::get_sec_type() const 
+{
+    return secType;
+}
+
 Operand* SCInstr::get_dest() const
 {
     return dest;
@@ -146,6 +151,11 @@ Operand* SCInstr::get_dest() const
 shared_ptr<SCInstr> SCInstr::get_jump_target() const
 {
     return jump_target_;
+}
+
+void SCInstr::set_sec_type(INT32 type)
+{
+    secType = type;
 }
 
 void SCInstr::set_flag(IFLAG flag)
@@ -609,6 +619,16 @@ shared_ptr<SCInstr> InstrList::get_next_instr(shared_ptr<SCInstr> ins)
     return res;
 }
 
+void InstrList::add_instr_after(shared_ptr<SCInstr> source, shared_ptr<SCInstr> to_add)
+{
+    InstrIterT it;
+    for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if (*it == source)
+            break;
+    }
+    instr_list_.insert(++it, to_add);
+}
+
 void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
 {
     report(RL_FOUR, "update sections size");
@@ -710,6 +730,7 @@ void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
 	}
 
 	sec->expand_section_data((*it)->binary, (*it)->size, 1);
+    //cout << *sec;
 //>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
 }
@@ -889,6 +910,10 @@ void InstrList::resolve_targets()
     for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
 	shared_ptr<Block> from = (*it)->get_block();
 	shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
+    //if (from)
+        //cout << *from;
+    //if (to)
+        //cout << *to;
 	// 1: Normal instr
 	if (!(*it)->isPCChangingClass()) {
 	    if ((*it)->has_flag(BBL_END) &&
@@ -971,7 +996,7 @@ void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
     BLOCKLIST->mark_bbl();
     FUNLIST->mark_functions(obj_sym_vec);
     BLOCKLIST->create_bbl();
-    //cout << *BLOCKLIST << endl;
+    //cout << *BLOCKLIST;
     FUNLIST->create_function_list(obj_sym_vec);
     //cout << *FUNLIST;
     this->resolve_function_exit_block();

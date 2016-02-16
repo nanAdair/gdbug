@@ -232,10 +232,9 @@ void RelocationVec::construct_upm(const SectionVec &obj_sec, PatchVec &upm_vec)
                     upm_item = make_shared<PatchSectiontoInstr32>(src_sec, src_offset, dest_instr, dest_offset, addend);
                 else if (rel_type == R_386_GOTPC)
                     upm_item = make_shared<PatchSectiontoInstrPC32>(src_sec, src_offset, dest_instr, dest_offset, addend);
-                else if (rel_type == R_386_GOTOFF || R_386_GOT32) {
+                else if (rel_type == R_386_GOTOFF || rel_type == R_386_GOT32) {
                     shared_ptr<Section> gotplt = obj_sec.get_section_by_name(GOT_PLT_SECTION_NAME);
-                    src_offset = src_offset - gotplt->get_section_address();
-                    upm_item = make_shared<PatchSectiontoInstr32>(src_sec, src_offset, dest_instr, dest_offset, addend);
+                    upm_item = make_shared<PatchSecSectoInstr32>(src_sec, src_offset, gotplt, dest_instr, dest_offset, addend);
                 }
                 else
                     report(RL_ONE, "[construct upm] relocation type can't handled for src sec and dest instr");

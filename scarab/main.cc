@@ -19,6 +19,7 @@
 #include <string>
 #include <iostream>
 
+#include "block.h"
 #include "file.h"
 #include "section.h"
 #include "symbol.h"
@@ -27,6 +28,7 @@
 #include "instruction.h"
 #include "upm.h"
 #include "log.h"
+#include "obfuscation.h"
 using namespace std;
 
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
@@ -47,10 +49,10 @@ int main(int argc, char *argv[])
 
     // =======
     cout << "BEGIN" << endl;
-    InstrListT instrList = INSTRLIST->get_instr_list();
-    for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
-        (*itr)->instruction2Binary();
-    }
+    //InstrListT instrList = INSTRLIST->get_instr_list();
+    //for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
+        //(*itr)->instruction2Binary();
+    //}
     cout << "END" << endl;;
     // =======
     //cout << *INSTRLIST;
@@ -59,6 +61,15 @@ int main(int argc, char *argv[])
 
     PatchVec upm_vec;
     obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
+
+    // add obfuscation here
+    report(RL_THREE, "Obfuscation Begin");
+    vector<Obfuscation*> methods;
+    methods.push_back(new ROPObfuscation);
+    for (int i = 0; i < methods.size(); i++)
+        methods[i]->obfuscate(upm_vec);
+    cout << *BLOCKLIST;
+    report(RL_THREE, "Obfuscation End");
 
     finalizeLayout(obj_sec_vec, upm_vec);
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);

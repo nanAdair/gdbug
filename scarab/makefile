@@ -1,4 +1,4 @@
-objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o utility.o asm.o asm-table.o
+objects = main.o log.o file.o section.o symbol.o relocation.o version.o instruction.o disasm.o dis-table.o operand.o upm.o block.o function.o edge.o utility.o asm.o asm-table.o obfuscation.o
 CC = g++
 CFLAGS = -c -std=c++11
 
@@ -38,7 +38,7 @@ asm-table.o: asm-table.cpp asm-table.h asm.h asm.cpp
 asm.o: asm.cpp asm.h utility.h utility.cpp dis.h type.h
 	g++ -c -std=c++11 asm.cpp
 
-block.o: type.h block.h
+block.o: type.h block.h block.cc
 	$(CC) $(CFLAGS) block.cc
 
 function.o: type.h function.h function.cc
@@ -53,6 +53,8 @@ upm.o: upm.cc upm.h
 log.o: log.cc log.h
 	$(CC) $(CFLAGS) log.cc
 
+obfuscation.o: obfuscation.cc obfuscation.h
+	$(CC) $(CFLAGS) obfuscation.cc
 .PHONY: clean
 clean:
 	-rm -rf main $(objects)

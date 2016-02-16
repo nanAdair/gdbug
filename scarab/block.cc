@@ -43,6 +43,16 @@ Block::Block(UINT32 i, shared_ptr<INSTRUCTION> one, shared_ptr<INSTRUCTION> two)
 Block::~Block()
 {}
 
+UINT32 Block::get_block_id() const 
+{
+    return id_;
+}
+
+UINT32 Block::get_block_size() const 
+{
+    return size_;
+}
+
 shared_ptr<INSTRUCTION> Block::get_first_instr() const 
 {
     return first_instr_;
@@ -78,6 +88,11 @@ void Block::set_type(BTYPE type)
     type_ = type;
 }
 
+void Block::set_size(UINT32 size)
+{
+    size_ = size;
+}
+
 void Block::add_prev_edge(shared_ptr<Edge> e)
 {
     prev_.push_back(e);
@@ -110,6 +125,11 @@ BlockList* BlockList::sharedBlockList()
     return shared_bbl_;
 }
 
+UINT32 BlockList::get_block_list_size() const 
+{
+    return bbl_.size();
+}
+
 BlockListT BlockList::get_block_list() const
 {
     return bbl_;
@@ -137,10 +157,19 @@ shared_ptr<Block> BlockList::get_next_block(shared_ptr<Block> b)
         if (*it == b)
             break;
     }
-    if (it == bbl_.begin() || it == bbl_.end())
+    if (it == bbl_.end() || ++it == bbl_.end())
         return res;
-    res = *it;
+    res = *(it);
     return res;
+}
+
+void BlockList::add_block(shared_ptr<Block> source, shared_ptr<Block> to_add)
+{
+    BlockIterT it;
+    for (it = bbl_.begin(); it != bbl_.end(); it++) 
+        if (*it == source)
+            break;
+    bbl_.insert(++it, to_add);
 }
 
 void BlockList::mark_bbl()
@@ -176,7 +205,9 @@ void BlockList::create_bbl()
     InstrListT instrs = INSTRLIST->get_instr_list();
     InstrIterT instrIter;
     shared_ptr<Block> new_bb;
+    UINT32 num = 0;
     for (instrIter = instrs.begin(); instrIter != instrs.end(); instrIter++) {
+        num++;
         if ((*instrIter)->has_flag(BBL_START)) {
             new_bb = make_shared<Block>(static_cast<UINT32>(bbl_.size()), *instrIter, *instrIter);
             bbl_.push_back(new_bb);
@@ -184,6 +215,8 @@ void BlockList::create_bbl()
         }
         if ((*instrIter)->has_flag(BBL_END)) {
             new_bb->set_last_instr(*instrIter);
+            new_bb->set_size(num);
+            num = 0;
             //cout << "[end  ]" << "\t" << **instrIter;
         }
         (*instrIter)->set_block(new_bb);
@@ -194,6 +227,7 @@ void BlockList::create_bbl()
 ostream &operator<<(ostream &os, const Block &b)
 {
     os << b.id_ << endl;
+    os << b.size_ << endl;
     os << *(b.first_instr_);
     os << *(b.last_instr_);
     return os;
@@ -211,4 +245,5 @@ ostream &operator<<(ostream &os, const BlockList &b)
             continue;
         os << **it;
     }
+    return os;
 }

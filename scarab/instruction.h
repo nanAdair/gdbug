@@ -56,8 +56,10 @@ public:
     UINT8* get_instruction_data() const;
     INT32 get_instruction_size() const;
     INT32 get_opcode() const;
+    INT32 get_sec_type() const;
     Operand* get_dest() const;
     shared_ptr<SCInstr> get_jump_target() const;
+    void set_sec_type(INT32);
     void set_flag(IFLAG flag);
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
@@ -219,6 +221,7 @@ public:
     shared_ptr<SCInstr> get_instr_by_exact_address(UINT32 addr) const;
     shared_ptr<SCInstr> get_prev_instr(shared_ptr<SCInstr>);
     shared_ptr<SCInstr> get_next_instr(shared_ptr<SCInstr>);
+    void add_instr_after(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
 
     void update_sections_size(SectionVec&) const;
     void update_sections_data(SectionVec&) const;
