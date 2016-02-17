@@ -222,6 +222,8 @@ public:
     shared_ptr<SCInstr> get_prev_instr(shared_ptr<SCInstr>);
     shared_ptr<SCInstr> get_next_instr(shared_ptr<SCInstr>);
     void add_instr_after(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
+    void add_instrs_from_block(shared_ptr<SCInstr>, shared_ptr<Block>);
+    void remove_instrs(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
 
     void update_sections_size(SectionVec&) const;
     void update_sections_data(SectionVec&) const;
@@ -232,6 +234,8 @@ public:
     void resolve_targets();
 
     INT32 update_pc_relative_jumps();
+    shared_ptr<SCInstr> get_dump_instr();
+    void rebuild_from_bbl();
 
 private:
     InstrList(){}

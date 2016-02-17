@@ -43,3 +43,9 @@ private:
     void repair_block_relationship(shared_ptr<Block>);
     void make_gadgets(shared_ptr<Block>, shared_ptr<Block>, PatchVec&);
 };
+
+class JunkObfuscation: public Obfuscation 
+{
+public:
+    void obfuscate(PatchVec&);
+};

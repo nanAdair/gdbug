@@ -26,11 +26,14 @@ using std::shared_ptr;
 using std::make_shared;
 #include <fstream>
 using std::ostream;
+#include <set>
+using std::set;
 
 class SCInstr;
 typedef SCInstr INSTRUCTION;
 class Edge;
 class Function;
+class SectionVec;
 
 class Block 
 {
@@ -46,12 +49,15 @@ public:
     shared_ptr<INSTRUCTION> get_last_instr() const;
     shared_ptr<Function> get_function() const;
     EdgeListT get_succ_edges() const;
+    bool get_junk_flag() const;
+    void set_first_instr(shared_ptr<INSTRUCTION>);
     void set_last_instr(shared_ptr<INSTRUCTION>);
     void set_function(shared_ptr<Function>);
     void set_type(BTYPE);
     void set_size(UINT32);
     void add_prev_edge(shared_ptr<Edge>);
     void add_succ_edge(shared_ptr<Edge>);
+    void set_junk_flag(bool);
 
 private:
     UINT32 id_;
@@ -63,6 +69,7 @@ private:
     EdgeListT prev_;
     EdgeListT succ_;
     shared_ptr<Function> fun_;
+    bool is_junk_target_;
 };
 
 class BlockList
@@ -79,10 +86,14 @@ public:
     shared_ptr<Block> get_next_block(shared_ptr<Block> b);
 
     void add_block(shared_ptr<Block>, shared_ptr<Block>);
+    shared_ptr<Block> remove_block(shared_ptr<Block>);
+    set<shared_ptr<Block> > order_insert_candidates();
+    set<shared_ptr<Block> > junk_insert_candidates();
     
     void create_bbl();
     void mark_bbl();
     void divide_bbl_by_instr(shared_ptr<Block>, shared_ptr<INSTRUCTION>);
+    void update_sections_data(SectionVec &);
 
 private:
     BlockList();

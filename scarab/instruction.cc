@@ -327,11 +327,11 @@ unsigned char* SCInstr::instruction2Binary(){
     binary = reinterpret_cast<UINT8*>(string2hex(machineCode));
     string op2 = byte_to_str(binary, size);
     //cout << *this;
-    if (op1 != op2) {
-        cout << op1 << "\t";
-        cout << op2 << "\t";
-        cout << "\t" << *this;
-    }
+    //if (op1 != op2) {
+        //cout << op1 << "\t";
+        //cout << op2 << "\t";
+        //cout << "\t" << *this;
+    //}
     //printf("%s\n", machineCode);
     //printInstrDetail();
 
@@ -629,6 +629,35 @@ void InstrList::add_instr_after(shared_ptr<SCInstr> source, shared_ptr<SCInstr> 
     instr_list_.insert(++it, to_add);
 }
 
+void InstrList::remove_instrs(shared_ptr<SCInstr> start, shared_ptr<SCInstr> end)
+{
+    //InstrIterT it_start = find(instr_list_.begin(), instr_list_.end(); start);
+    //InstrIterT it_end = find(instr_list_.begin(), instr_list_.end(); end);
+    //instr_list_.erase(it_start, ++it_end);
+}
+
+void InstrList::rebuild_from_bbl() 
+{
+    InstrIterT it_start = instr_list_.begin();
+    InstrIterT it_end = instr_list_.end();
+    it_end--;
+    BlockIterT it;
+    BlockListT bbl = BLOCKLIST->get_block_list();
+    for (it = bbl.begin(); it != bbl.end(); it++) {
+        if (it == bbl.begin())
+            continue;
+        shared_ptr<INSTRUCTION> cur_instr = (*it)->get_first_instr();
+        shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
+        while (cur_instr != last_instr) {
+            instr_list_.push_back(cur_instr);
+            cur_instr = INSTRLIST->get_next_instr(cur_instr);
+        }
+        instr_list_.push_back(cur_instr);
+    }
+    it_end++;
+    instr_list_.erase(it_start, it_end);
+}
+
 void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
 {
     report(RL_FOUR, "update sections size");
@@ -677,34 +706,6 @@ void InstrList::update_sections_data(SectionVec &obj_sec_vec) const
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-//<<<<<<< HEAD
-        //cur_sec = (*it)->secType;
-        //if (cur_sec != last_sec) {
-            //switch(cur_sec) {
-                //case SECTION_INIT:
-                    //sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-                    //break;
-                //case SECTION_TEXT:
-                    //sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-                    //break;
-                //case SECTION_FINI:
-                    //sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-                    //break;
-                //case SECTION_PLT:
-                    //sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-                    //break;
-                //default:
-                    //report(RL_ONE, "can't handle instr sec type for now");
-                    //exit(0);
-            //}
-
-            //last_sec = cur_sec;
-            //sec->clear_section_data();
-        //}
-
-        //sec->expand_section_data((*it)->binary, (*it)->size, 1);
-        //sec->expand_section_data((UINT8*)(*it)->binary, (*it)->size, 1);
-//=======
 	cur_sec = (*it)->secType;
 	if (cur_sec != last_sec) {
 	    switch(cur_sec) {
@@ -1003,6 +1004,18 @@ void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
     this->resolve_targets();
     FUNLIST->resolve_entryless_function();
     report(RL_THREE, "construct control flow graph end");
+}
+
+shared_ptr<INSTRUCTION> InstrList::get_dump_instr()
+{
+    INSTRUCTION *instr = new SCInstr();
+    instr->size = 1;
+    instr->binary = new UINT8[instr->size];
+    UINT8 data[] = {0xff};
+    memcpy(reinterpret_cast<INT8*>(instr->binary), data, instr->size);
+
+    shared_ptr<INSTRUCTION> res(instr);
+    return res;
 }
 
 /*-----------------------------------------------------------------------------

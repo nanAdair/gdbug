@@ -35,9 +35,9 @@ bool PatchInstrtoInstr32::apply()
 
     new_val = src_instr->get_instruction_address() + addend;
     if (old_val != new_val) {
-    cout << "1" << endl;
-        cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+    //cout << "1" << endl;
+        //cout << *dest_instr;
+        //cout << old_val << " " << new_val << endl;
         memcpy(target_address, &new_val, sizeof(int));
         return true;
     }
@@ -53,9 +53,9 @@ bool PatchInstrtoInstrPC32::apply()
 
     new_val = src_instr->get_instruction_address() + addend - (dest_instr->get_instruction_address() + dest_offset);
     if (old_val != new_val) {
-    cout << "2" << endl;
-        cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+    //cout << "2" << endl;
+        //cout << *dest_instr;
+        //cout << old_val << " " << new_val << endl;
         memcpy(target_address, &new_val, sizeof(int));
         return true;
     }
@@ -70,9 +70,9 @@ bool PatchSectiontoInstr32::apply()
 
     new_val = src_sec->get_section_address() + src_offset + addend;
     if (old_val != new_val) {
-    cout << "3" << endl;
-        cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+    //cout << "3" << endl;
+        //cout << *dest_instr;
+        //cout << old_val << " " << new_val << endl;
         memcpy(target_address, &new_val, sizeof(int));
         return true;
     }
@@ -88,9 +88,9 @@ bool PatchSectiontoInstrPC32::apply()
 
     new_val = src_sec->get_section_address() + src_offset + addend - (dest_instr->get_instruction_address() + dest_offset);
     if (old_val != new_val) {
-    cout << "4" << endl;
-        cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+    //cout << "4" << endl;
+        //cout << *dest_instr;
+        //cout << old_val << " " << new_val << endl;
         memcpy(target_address, &new_val, sizeof(int));
         return true;
     }
@@ -104,13 +104,13 @@ bool PatchSecSectoInstr32::apply()
     old_val = *(reinterpret_cast<int*>(target_address));
 
     new_val = src_sec->get_section_address() + src_offset - base_sec->get_section_address() + addend;
-    cout << "test ";
-    cout << *dest_instr;
-    cout << old_val << " " << new_val << endl;
+    //cout << "test ";
+    //cout << *dest_instr;
+    //cout << old_val << " " << new_val << endl;
     if (old_val != new_val) {
-    cout << "5" << endl;
-        cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+    //cout << "5" << endl;
+        //cout << *dest_instr;
+        //cout << old_val << " " << new_val << endl;
         memcpy(target_address, &new_val, sizeof(int));
         return true;
     }
@@ -126,9 +126,9 @@ bool PatchSectiontoSection32::apply()
 
     new_val = src_sec->get_section_address() + src_offset + addend;
     if (old_val != new_val) {
-    cout << "6" << endl;
+    //cout << "6" << endl;
         //cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+        //cout << old_val << " " << new_val << endl;
         dest_sec->update_section_data(dest_offset, reinterpret_cast<UINT8*>(&new_val), sizeof(int));
         return true;
     }
@@ -144,9 +144,9 @@ bool PatchSectiontoSectionPC32::apply()
 
     new_val = src_sec->get_section_address() + src_offset + addend - (dest_sec->get_section_address() + dest_offset);
     if (old_val != new_val) {
-    cout << "7" << endl;
+    //cout << "7" << endl;
         //cout << *dest_instr;
-        cout << old_val << " " << new_val << endl;
+        //cout << old_val << " " << new_val << endl;
         dest_sec->update_section_data(dest_offset, reinterpret_cast<UINT8*>(&new_val), sizeof(int));
         return true;
     }

@@ -25,11 +25,13 @@ using namespace std;
 #include "log.h"
 #include "function.h"
 #include "edge.h"
+#include "section.h"
 
 Block::Block():
     id_(0),
     type_(BT_INVALID),
-    flags_(0)
+    flags_(0),
+    is_junk_target_(false)
 {}
 
 Block::Block(UINT32 i, shared_ptr<INSTRUCTION> one, shared_ptr<INSTRUCTION> two):
@@ -38,6 +40,9 @@ Block::Block(UINT32 i, shared_ptr<INSTRUCTION> one, shared_ptr<INSTRUCTION> two)
     id_ = i;
     first_instr_ = one;
     last_instr_ = two;
+    // only insert junk instruction in .text and after jmp
+    //if (last_instr_->get_sec_type() == SECTION_TEXT && last_instr_->isJmpClass())
+        //is_junk_target_ = true;
 }
 
 Block::~Block()
@@ -73,6 +78,16 @@ EdgeListT Block::get_succ_edges() const
     return succ_;
 }
 
+bool Block::get_junk_flag() const 
+{
+    return is_junk_target_;
+}
+
+void Block::set_first_instr(shared_ptr<INSTRUCTION> instr)
+{
+    first_instr_ = instr;
+}
+
 void Block::set_last_instr(shared_ptr<INSTRUCTION> instr)
 {
     last_instr_ = instr;
@@ -91,6 +106,11 @@ void Block::set_type(BTYPE type)
 void Block::set_size(UINT32 size)
 {
     size_ = size;
+}
+
+void Block::set_junk_flag(bool b)
+{
+    is_junk_target_ = b;
 }
 
 void Block::add_prev_edge(shared_ptr<Edge> e)
@@ -172,6 +192,56 @@ void BlockList::add_block(shared_ptr<Block> source, shared_ptr<Block> to_add)
     bbl_.insert(++it, to_add);
 }
 
+shared_ptr<Block> BlockList::remove_block(shared_ptr<Block> b)
+{
+    BlockIterT it;
+    for (it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (*it == b)
+            break;
+    }
+    bbl_.erase(it);
+    return b;
+}
+
+/*-----------------------------------------------------------------------------
+ *  candidates to insert rop gadgets
+ *  .text && jmp 
+ *-----------------------------------------------------------------------------*/
+set<shared_ptr<Block> > BlockList::order_insert_candidates()
+{
+    BlockIterT it;
+    set<shared_ptr<Block> > res;
+    for (it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (it == bbl_.begin())
+            continue;
+        shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
+        if (last_instr->get_sec_type() != SECTION_TEXT)
+            continue;
+        if (last_instr->isJmpClass())
+        //if (last_instr->isJmpClass() || last_instr->isReturnClass())
+            res.insert(*it);
+    }
+    return res;
+}
+
+set<shared_ptr<Block> > BlockList::junk_insert_candidates()
+{
+    BlockIterT it;
+    set<shared_ptr<Block> > res;
+    for (it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (it == bbl_.begin())
+            continue;
+        if ((*it)->get_junk_flag()) {
+            res.insert(*it);
+            continue;
+        }
+        shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
+        if (last_instr->get_sec_type() == SECTION_TEXT && last_instr->isJmpClass())
+            res.insert(*it);
+    }
+    return res;
+}
+
 void BlockList::mark_bbl()
 {
     report(RL_FOUR, "mark instruction for bbl");
@@ -223,10 +293,56 @@ void BlockList::create_bbl()
     }
 }
 
+void BlockList::update_sections_data(SectionVec &obj_sec_vec)
+{
+    report(RL_FOUR, "update sections data");
+    BlockIterT it; 
+    int offset = 0;
+    int last_sec, cur_sec;
+    last_sec = -1;
+    shared_ptr<Section> sec;
+
+    for(it = bbl_.begin(); it != bbl_.end(); it++) {
+        if (it == bbl_.begin())
+            continue;
+        //cout << (*it);
+        shared_ptr<INSTRUCTION> cur_instr = (*it)->get_first_instr();
+        shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
+        cur_sec = cur_instr->get_sec_type();
+        if (cur_sec != last_sec) {
+            switch(cur_sec) {
+                case SECTION_INIT:
+                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+                    break;
+                case SECTION_TEXT:
+                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+                    break;
+                case SECTION_FINI:
+                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+                    break;
+                case SECTION_PLT:
+                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+                    break;
+                default:
+                    report(RL_ONE, "can't handle instr sec type for now");
+                    exit(0);
+            }
+
+            last_sec = cur_sec;
+            sec->clear_section_data();
+        }
+
+        while (cur_instr != last_instr) {
+            sec->expand_section_data(cur_instr->get_instruction_data(), cur_instr->get_instruction_size(), 1);
+            cur_instr = INSTRLIST->get_next_instr(cur_instr);
+        }
+        sec->expand_section_data(cur_instr->get_instruction_data(), cur_instr->get_instruction_size(), 1);
+    }
+}
 // ===== helper functions=======
 ostream &operator<<(ostream &os, const Block &b)
 {
-    os << b.id_ << endl;
+    os << dec << b.id_ << endl;
     os << b.size_ << endl;
     os << *(b.first_instr_);
     os << *(b.last_instr_);

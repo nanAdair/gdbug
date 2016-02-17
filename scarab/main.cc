@@ -66,13 +66,14 @@ int main(int argc, char *argv[])
     report(RL_THREE, "Obfuscation Begin");
     vector<Obfuscation*> methods;
     methods.push_back(new ROPObfuscation);
+    methods.push_back(new JunkObfuscation);
     for (int i = 0; i < methods.size(); i++)
         methods[i]->obfuscate(upm_vec);
-    cout << *BLOCKLIST;
     report(RL_THREE, "Obfuscation End");
 
     finalizeLayout(obj_sec_vec, upm_vec);
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
+    //cout << *BLOCKLIST;
     string res("output");
     writeOut(obj_sec_vec, res);
 }
@@ -123,6 +124,7 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
 
 void finalizeLayout(SectionVec &obj_sec_vec, PatchVec &upm_vec)
 {
+    INSTRLIST->rebuild_from_bbl();
     int change = 0;
     do {
         report(RL_THREE, "finalize sections adddress");
