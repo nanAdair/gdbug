@@ -52,6 +52,11 @@ Function::Function(UINT32 i, string &s, shared_ptr<Block> one, shared_ptr<Block>
     last_block_ = two;
 }
 
+UINT32 Function::get_function_id() const 
+{
+    return id_;
+}
+
 void Function::set_last_block(shared_ptr<Block> block)
 {
     last_block_ = block;
@@ -60,6 +65,11 @@ void Function::set_last_block(shared_ptr<Block> block)
 shared_ptr<Block> Function::get_first_block() const
 {
     return first_block_;
+}
+
+shared_ptr<Block> Function::get_last_block() const
+{
+    return last_block_;
 }
 
 shared_ptr<Block> Function::get_entry_block() const
@@ -89,6 +99,11 @@ FunctionList* FunctionList::sharedFunctionList()
 void FunctionList::add_function(shared_ptr<Function> fun)
 {
     fun_list_.push_back(fun);
+}
+
+FunListT FunctionList::get_function_list() const 
+{
+    return fun_list_;
 }
 
 void FunctionList::mark_functions(const SymbolVec &osl)
@@ -151,7 +166,7 @@ void FunctionList::resolve_entryless_function()
 // ===== helper functions=====
 ostream &operator<<(ostream &os, const Function &f)
 {
-    os << f.name_ << endl;
+    os << dec << f.id_ << "\t" << f.name_ << endl;
     if (f.name_ == "HELL")
         return os;
     os << *(f.first_block_->get_first_instr());

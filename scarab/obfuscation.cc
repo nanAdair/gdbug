@@ -20,6 +20,7 @@
 
 #include "obfuscation.h"
 #include "block.h"
+#include "function.h"
 #include "instruction.h"
 #include "log.h"
 #include "disasm.h"
@@ -31,6 +32,7 @@
 using namespace std;
 
 shared_ptr<Block> get_reorder_target(const set<shared_ptr<Block> > &s);
+void repair_block_content(shared_ptr<Block> source);
 
 void ROPObfuscation::obfuscate(PatchVec &upm_vec)
 {
@@ -167,7 +169,7 @@ shared_ptr<Block> ROPObfuscation::cut_block(shared_ptr<Block> source)
     return middle;
 }
 
-void ROPObfuscation::repair_block_content(shared_ptr<Block> source)
+void repair_block_content(shared_ptr<Block> source)
 {
     shared_ptr<INSTRUCTION> start = source->get_first_instr();
     shared_ptr<INSTRUCTION> end = INSTRLIST->get_next_instr(source->get_last_instr());
@@ -255,4 +257,157 @@ void JunkObfuscation::obfuscate(PatchVec &upm_vec)
         to_insert->set_first_instr(dump_instr);
     }
     report(RL_THREE, "insert junk instruction obfuscation end");
+}
+
+void StackObfuscation::obfuscate(PatchVec &upm_vec)
+{
+    report(RL_THREE, "move stack for some offset obfuscation begin");
+    FunListT function_list = FUNLIST->get_function_list();    
+    FunIterT it;
+    for (it = function_list.begin(); it != function_list.end(); it++) {
+        // manually set for debug, select insertion_sort function
+        if ((*it)->get_function_id() == 7)
+            _add_stack_offset(*it);
+    }
+    report(RL_THREE, "move stack for some offset obfuscation end");
+}
+
+void StackObfuscation::_add_stack_offset(shared_ptr<Function> func)
+{
+    shared_ptr<Block> head_block;
+    head_block = _find_head_block(func);
+    if (!head_block)
+        report(RL_ONE, "head block not found another situation for stack move");
+    report(RL_FOUR, "find the target prologue block %d", head_block->get_block_id());
+    _add_function_prologue(head_block);
+
+    shared_ptr<Block> tail_block;
+    tail_block = _find_tail_block(func);
+    if (!tail_block)
+        report(RL_ONE, "tail block not found another situation for stack move");
+    report(RL_FOUR, "find the target prologue block %d", tail_block->get_block_id());
+    _add_function_ending(tail_block);
+}
+
+void StackObfuscation::_add_function_prologue(shared_ptr<Block> head_block)
+{
+    shared_ptr<INSTRUCTION> cur_instr, last_instr;
+    cur_instr = head_block->get_first_instr();
+    last_instr = head_block->get_last_instr();
+    while (cur_instr != last_instr) {
+        // find instruction 'push %ebp'
+        if (cur_instr->get_opcode() == 0x55) 
+            break;
+        cur_instr = INSTRLIST->get_next_instr(cur_instr);
+    }
+
+    Disasm disasm;
+    //TODO: change call_buffer
+    unsigned char call_buffer[] = {0xb8, 0x20, 0, 0, 0}; // call random(), mov 0x20, %eax for now
+    unsigned char sub_buffer[] = {0x2b, 0xe0};
+    unsigned char mov_buffer1[] = {0x8b, 0xe0};
+    unsigned char mov_buffer2[] = {0x8b, 0xe8};
+    INSTRUCTION *call_instr = new INSTRUCTION();
+    INT8 res = disasm.disassembler(reinterpret_cast<INT8*>(call_buffer), sizeof(call_buffer) / sizeof(unsigned char), 0, 0, call_instr);
+    INSTRUCTION *sub_instr = new INSTRUCTION();
+    res = disasm.disassembler(reinterpret_cast<INT8*>(sub_buffer), sizeof(sub_buffer) / sizeof(unsigned char), 0, 0, sub_instr);
+    INSTRUCTION *mov_instr1 = new INSTRUCTION();
+    res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer1), sizeof(mov_buffer1) / sizeof(unsigned char), 0, 0, mov_instr1);
+    INSTRUCTION *mov_instr2 = new INSTRUCTION();
+    res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer2), sizeof(mov_buffer2) / sizeof(unsigned char), 0, 0, mov_instr2);
+
+    shared_ptr<INSTRUCTION> call(call_instr); // mov 0x20, %eax
+    shared_ptr<INSTRUCTION> sub(sub_instr);   // sub %eax, %esp
+    shared_ptr<INSTRUCTION> mov1(mov_instr1); // mov %eax, %esp
+    shared_ptr<INSTRUCTION> mov2(mov_instr2); // mov %eax, %ebp
+
+    INSTRLIST->add_instr_after(cur_instr, call);
+    INSTRLIST->add_instr_after(call, sub);
+    INSTRLIST->add_instr_after(sub, mov1);
+    
+    repair_block_content(head_block);
+}
+
+void StackObfuscation::_add_function_ending(shared_ptr<Block> tail_block)
+{
+    shared_ptr<INSTRUCTION> cur_instr, first_instr;
+    first_instr = INSTRLIST->get_prev_instr(tail_block->get_first_instr());
+    cur_instr = tail_block->get_last_instr();
+    while (cur_instr != first_instr) {
+        // find instruction 'pop %ebp' or 'leave'
+        if (cur_instr->get_opcode() == 0x5d || cur_instr->get_opcode() == 0xc9) 
+            break;
+        cur_instr = INSTRLIST->get_prev_instr(cur_instr);
+    }
+    cur_instr = INSTRLIST->get_prev_instr(cur_instr);
+
+    //unsigned char add_buffer[] = {0x03, 0x6d, 0}; // add (%ebp), %ebp
+    unsigned char mov_buffer[] = {0x8b, 0x55, 0}; // mov (%ebp), %edx
+    unsigned char add_buffer[] = {0x03, 0xea}; // add %ebp, %edx
+    INSTRUCTION *mov_instr = new INSTRUCTION();
+    INSTRUCTION *add_instr = new INSTRUCTION();
+
+    Disasm disasm;
+    INT8 res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
+    res = disasm.disassembler(reinterpret_cast<INT8*>(add_buffer), sizeof(add_buffer) / sizeof(unsigned char), 0, 0, add_instr);
+
+    shared_ptr<INSTRUCTION> mov(mov_instr); // mov (%ebp), %ebp
+    shared_ptr<INSTRUCTION> add(add_instr); // add (%ebp), %ebp
+
+
+    INSTRLIST->add_instr_after(cur_instr, mov);
+    INSTRLIST->add_instr_after(mov, add);
+    repair_block_content(tail_block);
+}
+
+shared_ptr<Block> StackObfuscation::_find_head_block(shared_ptr<Function> func)
+{
+    shared_ptr<Block> cur_block, last_block, head_block;
+    cur_block = func->get_first_block();
+    last_block = BLOCKLIST->get_next_block(func->get_last_block());
+    while (cur_block != last_block) {
+        bool find_target = false;
+        if (find_target)
+            break;
+        shared_ptr<INSTRUCTION> cur_instr, last_instr;
+        cur_instr = cur_block->get_first_instr();
+        last_instr = cur_block->get_last_instr();
+        while (!find_target && cur_instr != last_instr) {
+            // find instruction 'push %ebp'
+            if (cur_instr->get_opcode() == 0x55) {
+                find_target = true;
+                head_block = cur_block;
+                break;
+            }
+            cur_instr = INSTRLIST->get_next_instr(cur_instr);
+        }
+        cur_block = BLOCKLIST->get_next_block(cur_block);
+    }
+    return head_block;
+}
+
+shared_ptr<Block> StackObfuscation::_find_tail_block(shared_ptr<Function> func)
+{
+    shared_ptr<Block> cur_block, first_block, tail_block;
+    cur_block = func->get_last_block();
+    first_block = BLOCKLIST->get_prev_block(func->get_first_block());
+    while (cur_block != first_block) {
+        bool find_target = false;
+        if (find_target)
+            break;
+        shared_ptr<INSTRUCTION> cur_instr, first_instr;
+        first_instr = INSTRLIST->get_prev_instr(cur_block->get_first_instr());
+        cur_instr = cur_block->get_last_instr();
+        while (!find_target && cur_instr != first_instr) {
+            // find instruction 'pop %ebp' or 'leave'
+            if (cur_instr->get_opcode() == 0x5d || cur_instr->get_opcode() == 0xc9) {
+                find_target = true;
+                tail_block = cur_block;
+                break;
+            }
+            cur_instr = INSTRLIST->get_prev_instr(cur_instr);
+        }
+        cur_block = BLOCKLIST->get_prev_block(cur_block);
+    }
+    return tail_block;
 }

@@ -38,7 +38,9 @@ public:
     Function(UINT32, string&, shared_ptr<Block>, shared_ptr<Block>);
     //~Function();
 
+    UINT32 get_function_id() const;
     shared_ptr<Block> get_first_block() const;
+    shared_ptr<Block> get_last_block() const;
     shared_ptr<Block> get_entry_block() const;
     shared_ptr<Block> get_exit_block() const;
     void set_last_block(shared_ptr<Block>);
@@ -66,6 +68,8 @@ public:
     static FunctionList *sharedFunctionList();
     FunctionList();
     ~FunctionList();
+
+    FunListT get_function_list() const;
 
     void add_function(shared_ptr<Function> fun);
 

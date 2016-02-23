@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "block.h"
+#include "function.h"
 #include "file.h"
 #include "section.h"
 #include "symbol.h"
@@ -62,18 +63,20 @@ int main(int argc, char *argv[])
     PatchVec upm_vec;
     obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
 
+    cout << *FUNLIST;
     // add obfuscation here
     report(RL_THREE, "Obfuscation Begin");
     vector<Obfuscation*> methods;
-    methods.push_back(new ROPObfuscation);
-    methods.push_back(new JunkObfuscation);
+    methods.push_back(new StackObfuscation);
+    //methods.push_back(new ROPObfuscation);
+    //methods.push_back(new JunkObfuscation);
     for (int i = 0; i < methods.size(); i++)
         methods[i]->obfuscate(upm_vec);
     report(RL_THREE, "Obfuscation End");
 
     finalizeLayout(obj_sec_vec, upm_vec);
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
-    //cout << *BLOCKLIST;
+    cout << *BLOCKLIST;
     string res("output");
     writeOut(obj_sec_vec, res);
 }
