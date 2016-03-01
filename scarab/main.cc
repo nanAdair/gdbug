@@ -30,12 +30,15 @@
 #include "upm.h"
 #include "log.h"
 #include "obfuscation.h"
+#include "disasm.h"
+
 using namespace std;
 
 void binaryAbstraction(SectionVec&, SymbolVec&, RelocationVec&, int argc, char *argv[]);
 void patchSectionContent(SectionVec&, const SymbolVec&, int argc, char *argv[]);
 void writeOut(const SectionVec &obj_sec_vec, string name);
 void finalizeLayout(SectionVec&, PatchVec&);
+void testInstruction2Binary();
 
 int main(int argc, char *argv[])
 {
@@ -54,6 +57,7 @@ int main(int argc, char *argv[])
     //for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
         //(*itr)->instruction2Binary();
     //}
+    testInstruction2Binary();
     cout << "END" << endl;;
     // =======
     //cout << *INSTRLIST;
@@ -67,7 +71,7 @@ int main(int argc, char *argv[])
     // add obfuscation here
     report(RL_THREE, "Obfuscation Begin");
     vector<Obfuscation*> methods;
-    methods.push_back(new StackObfuscation);
+    //methods.push_back(new StackObfuscation);
     //cout << *BLOCKLIST;
     //methods.push_back(new ROPObfuscation);
     //methods.push_back(new JunkObfuscation);
@@ -79,6 +83,32 @@ int main(int argc, char *argv[])
     patchSectionContent(obj_sec_vec, obj_sym_vec, argc, argv);
     string res("output");
     writeOut(obj_sec_vec, res);
+}
+
+void testInstruction2Binary()
+{
+    Disasm disasm;
+    unsigned char mov_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax binary: 0x8b4500
+    INSTRUCTION *mov_instr = new SCInstr();
+    int res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
+    shared_ptr<SCInstr> mov(mov_instr); // mov (%ebp), %eax
+    cout << "before change: " << endl;
+    cout << *mov;
+    mov->set_dest_operand(EDX); // change to mov (%ebp), %edx binary: 0x8b5500
+    mov->instruction2Binary();
+    cout << "after change: " << endl;
+    cout << *mov;
+
+    unsigned char mov_buffer2[] = {0x8b, 0x45, 0x08}; // mov 8(%ebp), %eax binary: 0x8b4508
+    INSTRUCTION *mov_instr2 = new SCInstr();
+    res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer2), sizeof(mov_buffer2) / sizeof(unsigned char), 0, 0, mov_instr2);
+    shared_ptr<SCInstr> mov2(mov_instr2); // mov 8(%ebp), %eax
+    cout << "before change: " << endl;
+    cout << *mov2;
+    mov2->modify_ebp_operand(EAX); // change to mov 8(%ebp, %eax, 1), %eax binary: 0x8b442808
+    mov2->instruction2Binary();
+    cout << "after change: " << endl;
+    cout << *mov2;
 }
 
 /*-----------------------------------------------------------------------------
