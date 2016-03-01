@@ -47,6 +47,16 @@ void ROPObfuscation::obfuscate(PatchVec &upm_vec)
     //repair_block_relationship(to_cut);
 
     make_gadgets(to_cut, to_separate, upm_vec);
+
+    // insert dump instr in the middle gadget
+    shared_ptr<INSTRUCTION> first_instr = to_separate->get_first_instr();
+    shared_ptr<INSTRUCTION> dump_instr = INSTRLIST->get_dump_instr();
+    dump_instr->set_sec_type(first_instr->get_sec_type());
+
+    INSTRLIST->add_instr_before(first_instr, dump_instr);
+    to_separate->set_first_instr(dump_instr);
+
+    // repair three blocks info
     shared_ptr<Block> head = to_cut;
     int i = 0;
     while (i < 3) {
@@ -69,7 +79,8 @@ void ROPObfuscation::obfuscate(PatchVec &upm_vec)
     BLOCKLIST->remove_block(to_separate);
     BLOCKLIST->add_block(to_insert, to_separate);
     reorder_blocks.insert(to_cut);
-    reorder_blocks.insert(to_separate);
+    //reorder_blocks.insert(to_separate);
+    reorder_blocks.insert(to_insert);
     to_cut->set_junk_flag(true);
     to_separate->set_junk_flag(true);
     if (to_cut_in_set) {
@@ -82,10 +93,11 @@ void ROPObfuscation::obfuscate(PatchVec &upm_vec)
 
 shared_ptr<Block> get_reorder_target(const set<shared_ptr<Block> > &s)
 {
+    //int r;
     int r = rand() % s.size();
     //TODO: remove this
     //r = 10;
-    //r = 6;
+    //r = 5;
     set<shared_ptr<Block> >::const_iterator it(s.begin());
     advance(it, r);
 
@@ -188,8 +200,8 @@ void ROPObfuscation::make_gadgets(shared_ptr<Block> head, shared_ptr<Block> midd
 {
     _insert_instrs(head);
     _insert_instrs(middle);
-    _create_upm(head, upm_vec);
-    _create_upm(middle, upm_vec);
+    //_create_upm(head, upm_vec);
+    //_create_upm(middle, upm_vec);
 }
 
 void ROPObfuscation::_insert_instrs(shared_ptr<Block> b)
@@ -205,8 +217,9 @@ void ROPObfuscation::_insert_instrs(shared_ptr<Block> b)
     shared_ptr<INSTRUCTION> last_instr = b->get_last_instr();
     shared_ptr<INSTRUCTION> push(push_instr);
     shared_ptr<INSTRUCTION> ret(ret_instr);
-    INSTRLIST->add_instr_after(last_instr, push);
-    INSTRLIST->add_instr_after(push, ret);
+    INSTRLIST->add_instr_after(last_instr, ret);
+    //INSTRLIST->add_instr_after(last_instr, push);
+    //INSTRLIST->add_instr_after(push, ret);
     b->set_last_instr(ret);
 }
 
@@ -245,16 +258,16 @@ void JunkObfuscation::obfuscate(PatchVec &upm_vec)
     set<shared_ptr<Block> > junk_insert_targets = BLOCKLIST->junk_insert_candidates();
     report(RL_FOUR, "insertion targets are %d ", junk_insert_targets.size());
     for (int i = 0; i < num; i++) {
-        shared_ptr<INSTRUCTION> dump_instr = INSTRLIST->get_dump_instr();
         report(RL_FOUR, "get junk instr");
         shared_ptr<Block> to_insert = get_reorder_target(junk_insert_targets);
-        report(RL_FOUR, "insert junk bytes after block %d", to_insert->get_block_id());
-        shared_ptr<INSTRUCTION> last_instr = to_insert->get_last_instr();
-        dump_instr->set_sec_type(last_instr->get_sec_type());
+        shared_ptr<Block> to_insert_before = BLOCKLIST->get_next_block(to_insert);
+        report(RL_FOUR, "insert junk bytes before block %d", to_insert_before->get_block_id());
+        shared_ptr<INSTRUCTION> first_instr = to_insert_before->get_first_instr();
+        shared_ptr<INSTRUCTION> dump_instr = INSTRLIST->get_dump_instr();
+        dump_instr->set_sec_type(first_instr->get_sec_type());
 
-        INSTRLIST->add_instr_after(last_instr, dump_instr);
-        to_insert = BLOCKLIST->get_next_block(to_insert);
-        to_insert->set_first_instr(dump_instr);
+        INSTRLIST->add_instr_before(first_instr, dump_instr);
+        to_insert_before->set_first_instr(dump_instr);
     }
     report(RL_THREE, "insert junk instruction obfuscation end");
 }
@@ -266,10 +279,74 @@ void StackObfuscation::obfuscate(PatchVec &upm_vec)
     FunIterT it;
     for (it = function_list.begin(); it != function_list.end(); it++) {
         // manually set for debug, select insertion_sort function
-        if ((*it)->get_function_id() == 7)
+        if ((*it)->get_function_id() == 7) {
             _add_stack_offset(*it);
+            _amend_stack(*it);
+        }
     }
     report(RL_THREE, "move stack for some offset obfuscation end");
+}
+
+void StackObfuscation::_amend_stack(shared_ptr<Function> func)
+{
+    shared_ptr<INSTRUCTION> first_instr, last_instr;
+    first_instr = func->get_first_block()->get_first_instr();
+    last_instr = func->get_last_block()->get_last_instr();
+
+    shared_ptr<INSTRUCTION> cur_instr = first_instr;
+    while (cur_instr != last_instr) {
+        if (cur_instr->addr_above_ebp_in_oprand()) {
+            shared_ptr<INSTRUCTION> to_add = _get_prepared_instr();
+            int reg = _find_useful_reg(cur_instr); // find reg not used to add
+            //cout << "found useful reg is " << reg << endl;
+            //cout << "before change " << *to_add;
+            to_add->set_dest_operand(reg); // mov (%ebp), %eax, replace %eax using reg
+            to_add->instruction2Binary(); // renew the binary
+            //cout << "after change " << *to_add;
+            cout << "before change " << *cur_instr;
+            cur_instr->modify_ebp_operand(reg); // %ebp related instr add indirect offset
+            cur_instr->instruction2Binary(); // renew the binary
+            cout << "after change " << *cur_instr;
+            INSTRLIST->add_instr_before(cur_instr, to_add);
+            repair_block_content(cur_instr->get_block());
+        }
+        cur_instr = INSTRLIST->get_next_instr(cur_instr);
+    }
+}
+
+int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
+{
+    int res = -1;
+    set<int> used;
+    shared_ptr<SCInstr> cur_instr = instr;
+    int i = 0;
+    while (i < 10) {
+        cur_instr->accumulate_used_reg(used);
+        if (!cur_instr->isPCChangingClass()) {
+            int dest_reg = cur_instr->get_reg_from_dest();
+            if (used.find(dest_reg) == used.end()) {
+                res = dest_reg;
+                break;
+            }
+        }
+        if (!cur_instr->isPCChangingClass())
+            cur_instr = INSTRLIST->get_next_instr(cur_instr);
+        else
+            cur_instr = cur_instr->get_jump_target();
+        i++;
+    }
+    return res;
+}
+
+shared_ptr<SCInstr> StackObfuscation::_get_prepared_instr()
+{
+    Disasm disasm;
+    unsigned char mov_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
+    INSTRUCTION *mov_instr = new SCInstr();
+    int res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
+    shared_ptr<SCInstr> prepare_mov(mov_instr); // mov (%ebp), %eax
+
+    return prepare_mov;
 }
 
 void StackObfuscation::_add_stack_offset(shared_ptr<Function> func)
@@ -285,8 +362,9 @@ void StackObfuscation::_add_stack_offset(shared_ptr<Function> func)
     tail_block = _find_tail_block(func);
     if (!tail_block)
         report(RL_ONE, "tail block not found another situation for stack move");
-    report(RL_FOUR, "find the target prologue block %d", tail_block->get_block_id());
+    report(RL_FOUR, "find the target epilogue block %d", tail_block->get_block_id());
     _add_function_ending(tail_block);
+
 }
 
 void StackObfuscation::_add_function_prologue(shared_ptr<Block> head_block)
@@ -305,21 +383,17 @@ void StackObfuscation::_add_function_prologue(shared_ptr<Block> head_block)
     //TODO: change call_buffer
     unsigned char call_buffer[] = {0xb8, 0x20, 0, 0, 0}; // call random(), mov 0x20, %eax for now
     unsigned char sub_buffer[] = {0x2b, 0xe0};
-    unsigned char mov_buffer1[] = {0x8b, 0xe0};
-    unsigned char mov_buffer2[] = {0x8b, 0xe8};
+    unsigned char mov_buffer1[] = {0x89, 0x04, 0x24};
     INSTRUCTION *call_instr = new INSTRUCTION();
     INT8 res = disasm.disassembler(reinterpret_cast<INT8*>(call_buffer), sizeof(call_buffer) / sizeof(unsigned char), 0, 0, call_instr);
     INSTRUCTION *sub_instr = new INSTRUCTION();
     res = disasm.disassembler(reinterpret_cast<INT8*>(sub_buffer), sizeof(sub_buffer) / sizeof(unsigned char), 0, 0, sub_instr);
     INSTRUCTION *mov_instr1 = new INSTRUCTION();
     res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer1), sizeof(mov_buffer1) / sizeof(unsigned char), 0, 0, mov_instr1);
-    INSTRUCTION *mov_instr2 = new INSTRUCTION();
-    res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer2), sizeof(mov_buffer2) / sizeof(unsigned char), 0, 0, mov_instr2);
 
     shared_ptr<INSTRUCTION> call(call_instr); // mov 0x20, %eax
     shared_ptr<INSTRUCTION> sub(sub_instr);   // sub %eax, %esp
-    shared_ptr<INSTRUCTION> mov1(mov_instr1); // mov %eax, %esp
-    shared_ptr<INSTRUCTION> mov2(mov_instr2); // mov %eax, %ebp
+    shared_ptr<INSTRUCTION> mov1(mov_instr1); // mov %eax, (%esp)
 
     INSTRLIST->add_instr_after(cur_instr, call);
     INSTRLIST->add_instr_after(call, sub);

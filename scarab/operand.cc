@@ -1,6 +1,7 @@
 #include "operand.h"
 
 #include <fstream>
+#include <set>
 using namespace std;
 
 Operand::Operand(): segment(0),operand(0),
@@ -74,6 +75,34 @@ INT32 Operand::getOperand() {
 
 void Operand::setOperand(INT32 displacement) {
     operand = displacement;
+}
+
+bool Operand::addr_above_ebp() {
+    bool res = false;
+    //if (operand == EBP || base == EBP || index == EBP)
+    int temp = (INT8)(displacement);
+    if (operand == EBP && temp > 0)
+        res = true;
+    return res;
+}
+
+void Operand::accumulate_reg(set<int> &used) 
+{
+    if (operand != 0xffffffff)
+        used.insert(operand);
+    else {
+        used.insert(index);
+        used.insert(base);
+    }
+}
+
+// change from 8(%ebp) to 8(%ebp, %eax, 1)
+void Operand::changed_to_sib(int reg)
+{
+    base = operand;
+    index = reg;
+    scale = 0;
+    operand = 0xffffffff;
 }
 
 void Operand::printOperandDetail(){

@@ -3,6 +3,7 @@
 
 #include "type.h"
 #include "dis-table.h"
+#include <set>
 
 class Operand{
 
@@ -21,6 +22,9 @@ class Operand{
     INT32 getOperand();
     void setOperand(INT32 displacemnt);
     void printOperandDetail();
+    bool addr_above_ebp();
+    void accumulate_reg(set<int>&);
+    void changed_to_sib(int);
 
     /* segment */
     INT8 segment;

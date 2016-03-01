@@ -25,6 +25,8 @@ using std::list;
 using std::map;
 #include <string>
 using std::string;
+#include <set>
+using std::set;
 #include <memory>
 using std::shared_ptr;
 using std::make_shared;
@@ -64,12 +66,16 @@ public:
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
 
+    void set_dest_operand(int);
     void set_block(shared_ptr<Block> bbl);
+    shared_ptr<SCInstr> get_jump_target();
     void set_jump_target(shared_ptr<SCInstr> instr);
     shared_ptr<Block> get_block();
+    int get_reg_from_dest();
     //Operand* getDest();
 
     // ==== methods ====
+    bool isCmpClass();
     bool isPCChangingClass();
     bool isReturnClass();
     bool isCallClass();
@@ -84,7 +90,12 @@ public:
 
     bool isDataInstruction();
 
+    bool addr_above_ebp_in_oprand();
+    void modify_ebp_operand(int);
+
     UINT32 get_target_address();
+
+    void accumulate_used_reg(set<int> &);
 
     unsigned char* instruction2Binary();
     void toASMInstruction(ASMINSTRUCTION* asmInstruction);
@@ -222,6 +233,7 @@ public:
     shared_ptr<SCInstr> get_prev_instr(shared_ptr<SCInstr>);
     shared_ptr<SCInstr> get_next_instr(shared_ptr<SCInstr>);
     void add_instr_after(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
+    void add_instr_before(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
     void add_instrs_from_block(shared_ptr<SCInstr>, shared_ptr<Block>);
     void remove_instrs(shared_ptr<SCInstr>, shared_ptr<SCInstr>);
 

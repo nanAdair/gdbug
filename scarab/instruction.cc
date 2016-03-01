@@ -173,9 +173,23 @@ bool SCInstr::has_flag(IFLAG flag)
     return (bool)((this->i_flags) & flag);
 }
 
+void SCInstr::set_dest_operand(int reg)
+{
+    if (!dest) {
+        report(RL_ONE, "dest is null");
+        exit(0);
+    }
+    dest->setOperand(reg);
+}
+
 void SCInstr::set_block(shared_ptr<Block> bbl)
 {
     i_block = bbl;
+}
+
+shared_ptr<SCInstr> SCInstr::get_jump_target()
+{
+    return jump_target_;
 }
 
 void SCInstr::set_jump_target(shared_ptr<SCInstr> instr)
@@ -187,7 +201,20 @@ shared_ptr<Block> SCInstr::get_block() {
     return this->i_block;
 }
 
+int SCInstr::get_reg_from_dest() 
+{
+    if (dest == NULL) {
+        report(RL_ONE, "instr dest is null");
+        exit(0);
+    }
+    return dest->getOperand();
+}
+
 // ==== methods ====
+bool SCInstr::isCmpClass() {
+    return (type == NORMAL_INSTRUCTION && instr_class == CLASS_CMP);
+}
+
 bool SCInstr::isPCChangingClass() {
     return (type == FLOW_INSTRUCTION);
 }
@@ -243,6 +270,50 @@ bool SCInstr::isSubClass() {
 bool SCInstr::isDataInstruction() {
     // currently no data instr
     return false;
+}
+
+bool SCInstr::addr_above_ebp_in_oprand() {
+    bool flag = false;
+    if (dest && dest->addr_above_ebp())
+        flag = true;
+    if (src1 && src1->addr_above_ebp())
+        flag = true;
+    if (src2 && src2->addr_above_ebp())
+        flag = true;
+    if (src3 && src3->addr_above_ebp())
+        flag = true;
+    return flag;
+}
+
+
+void SCInstr::modify_ebp_operand(int reg)
+{
+    Operand *to_modify;
+    if (dest && dest->addr_above_ebp())
+        to_modify = dest;
+    if (src1 && src1->addr_above_ebp())
+        to_modify = src1;
+    if (src2 && src2->addr_above_ebp())
+        to_modify = src2;
+    if (src3 && src3->addr_above_ebp())
+        to_modify = src3;
+    to_modify->changed_to_sib(reg);
+}
+
+void SCInstr::accumulate_used_reg(set<int> &used)
+{
+    if (this->isMovClass()) {
+        if (this->src1) 
+            this->src1->accumulate_reg(used);
+        if (this->src2)
+            this->src2->accumulate_reg(used);
+    }
+    if (this->isCmpClass()) {
+        if (this->dest)
+            this->dest->accumulate_reg(used);
+        if (this->src1)
+            this->src1->accumulate_reg(used);
+    }
 }
 
 void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
@@ -617,6 +688,16 @@ shared_ptr<SCInstr> InstrList::get_next_instr(shared_ptr<SCInstr> ins)
         return res;
     res = *it;
     return res;
+}
+
+void InstrList::add_instr_before(shared_ptr<SCInstr> source, shared_ptr<SCInstr> to_add)
+{
+    InstrIterT it;
+    for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
+        if (*it == source)
+            break;
+    }
+    instr_list_.insert(it, to_add);
 }
 
 void InstrList::add_instr_after(shared_ptr<SCInstr> source, shared_ptr<SCInstr> to_add)
@@ -1009,9 +1090,10 @@ void InstrList::construct_cfg(const SymbolVec &obj_sym_vec)
 shared_ptr<INSTRUCTION> InstrList::get_dump_instr()
 {
     INSTRUCTION *instr = new SCInstr();
-    instr->size = 1;
+    //UINT8 data[] = {0x83, 0x55, 0x1};
+    UINT8 data[] = {0x8b, 0x45};
+    instr->size = sizeof(data) / sizeof(UINT8);
     instr->binary = new UINT8[instr->size];
-    UINT8 data[] = {0xff};
     memcpy(reinterpret_cast<INT8*>(instr->binary), data, instr->size);
 
     shared_ptr<INSTRUCTION> res(instr);
@@ -1045,6 +1127,17 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
 //>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     os << string(ins.assembly);
     os << endl;
+    os << "Opcode: " << ins.opcode << endl;
+    if (ins.dest) {
+    os << "-----" << endl;
+        (ins.dest)->printOperandDetail();
+    os << "-----" << endl;
+    }
+    if (ins.src1) {
+    os << "-----" << endl;
+        (ins.src1)->printOperandDetail();
+    os << "-----" << endl;
+    }
     return os;
 }
 
