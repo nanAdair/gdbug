@@ -2396,7 +2396,7 @@ void Semantic::encodeInstr(ASMINSTRUCTION *instr, UINT8 modrm){
 	addMachineCode(1, (UINT32)(instr->opcode_ >> (8 * i)));
 
     if (instr->ModRM_ || instr->auxiliaryOpcode_ != -1){
-	addMachineCode(1, modrm);
+	addMachineCode(1, modrm_);
 
 	if (sib_exist_)
 	    addMachineCode(1, sib_);

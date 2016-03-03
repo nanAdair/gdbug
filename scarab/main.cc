@@ -42,6 +42,9 @@ void testInstruction2Binary();
 
 int main(int argc, char *argv[])
 {
+    testInstruction2Binary();
+
+    exit(0);
     SectionVec obj_sec_vec;
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
@@ -55,9 +58,9 @@ int main(int argc, char *argv[])
     cout << "BEGIN" << endl;
     //InstrListT instrList = INSTRLIST->get_instr_list();
     //for (InstrListT::iterator itr = instrList.begin(); itr != instrList.end(); itr++){
-        //(*itr)->instruction2Binary();
+	//(*itr)->instruction2Binary();
     //}
-    testInstruction2Binary();
+
     cout << "END" << endl;;
     // =======
     //cout << *INSTRLIST;
@@ -76,7 +79,7 @@ int main(int argc, char *argv[])
     //methods.push_back(new ROPObfuscation);
     //methods.push_back(new JunkObfuscation);
     for (int i = 0; i < methods.size(); i++)
-        methods[i]->obfuscate(upm_vec);
+	methods[i]->obfuscate(upm_vec);
     report(RL_THREE, "Obfuscation End");
 
     finalizeLayout(obj_sec_vec, upm_vec);
@@ -93,22 +96,22 @@ void testInstruction2Binary()
     int res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
     shared_ptr<SCInstr> mov(mov_instr); // mov (%ebp), %eax
     cout << "before change: " << endl;
-    cout << *mov;
+    //cout << *mov;
     mov->set_dest_operand(EDX); // change to mov (%ebp), %edx binary: 0x8b5500
     mov->instruction2Binary();
     cout << "after change: " << endl;
-    cout << *mov;
+    //cout << *mov;
 
     unsigned char mov_buffer2[] = {0x8b, 0x45, 0x08}; // mov 8(%ebp), %eax binary: 0x8b4508
     INSTRUCTION *mov_instr2 = new SCInstr();
     res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer2), sizeof(mov_buffer2) / sizeof(unsigned char), 0, 0, mov_instr2);
     shared_ptr<SCInstr> mov2(mov_instr2); // mov 8(%ebp), %eax
     cout << "before change: " << endl;
-    cout << *mov2;
+    //cout << *mov2;
     mov2->modify_ebp_operand(EAX); // change to mov 8(%ebp, %eax, 1), %eax binary: 0x8b442808
     mov2->instruction2Binary();
     cout << "after change: " << endl;
-    cout << *mov2;
+    //cout << *mov2;
 }
 
 /*-----------------------------------------------------------------------------
@@ -133,18 +136,18 @@ void binaryAbstraction(SectionVec &obj_sec_vec, SymbolVec &obj_sym_vec, Relocati
     string ld_file(argv[argc-1]);
     vector<string> so_files;
     for (int i = 0; i < argc-3; i++) {
-        string dynfile_name(argv[i+2]);
-        report(RL_FOUR, "handle so file");
-        so_files.push_back(dynfile_name.substr(dynfile_name.find_last_of("/")+1));
+	string dynfile_name(argv[i+2]);
+	report(RL_FOUR, "handle so file");
+	so_files.push_back(dynfile_name.substr(dynfile_name.find_last_of("/")+1));
 
-        FileDyn dynfile(dynfile_name);
+	FileDyn dynfile(dynfile_name);
 
-        SectionVec so_sec_vec;
-        so_sec_vec.init(dynfile);
-        VersionVec ver_vec(so_sec_vec);
-        SymbolDynVec cur_dynsym_vec(dynfile, so_sec_vec, ver_vec);
+	SectionVec so_sec_vec;
+	so_sec_vec.init(dynfile);
+	VersionVec ver_vec(so_sec_vec);
+	SymbolDynVec cur_dynsym_vec(dynfile, so_sec_vec, ver_vec);
 
-        dyn_sym_vec.add_from_SDVec(obj_sym_vec, cur_dynsym_vec);
+	dyn_sym_vec.add_from_SDVec(obj_sym_vec, cur_dynsym_vec);
     }
 
     obj_sec_vec.fill_sections_content(ld_file, so_files, dyn_sym_vec);
@@ -160,14 +163,14 @@ void finalizeLayout(SectionVec &obj_sec_vec, PatchVec &upm_vec)
     INSTRLIST->rebuild_from_bbl();
     int change = 0;
     do {
-        report(RL_THREE, "finalize sections adddress");
-        INSTRLIST->update_sections_size(obj_sec_vec);
-        obj_sec_vec.allocate_address();
-        INSTRLIST->update_instr_address(obj_sec_vec);
+	report(RL_THREE, "finalize sections adddress");
+	INSTRLIST->update_sections_size(obj_sec_vec);
+	obj_sec_vec.allocate_address();
+	INSTRLIST->update_instr_address(obj_sec_vec);
 
-        change = INSTRLIST->update_pc_relative_jumps();
-        change += upm_vec.apply();
-        cout << "change: " << change << endl;
+	change = INSTRLIST->update_pc_relative_jumps();
+	change += upm_vec.apply();
+	cout << "change: " << change << endl;
     } while (change);
 
     INSTRLIST->update_sections_data(obj_sec_vec);
@@ -181,8 +184,8 @@ void patchSectionContent(SectionVec &obj_sec_vec, const SymbolVec &obj_sym_vec, 
     report(RL_THREE, "Patch Section Final Content Begin");
     vector<string> so_files;
     for (int i = 0; i < argc-3; i++) {
-        string file_name = string(argv[i+2]);
-        so_files.push_back(file_name.substr(file_name.find_last_of("/")+1));
+	string file_name = string(argv[i+2]);
+	so_files.push_back(file_name.substr(file_name.find_last_of("/")+1));
     }
 
     obj_sec_vec.renew_sections_content(so_files, obj_sym_vec);

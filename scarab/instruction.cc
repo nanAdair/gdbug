@@ -138,7 +138,7 @@ INT32 SCInstr::get_opcode() const
     return opcode;
 }
 
-INT32 SCInstr::get_sec_type() const 
+INT32 SCInstr::get_sec_type() const
 {
     return secType;
 }
@@ -176,10 +176,15 @@ bool SCInstr::has_flag(IFLAG flag)
 void SCInstr::set_dest_operand(int reg)
 {
     if (!dest) {
-        report(RL_ONE, "dest is null");
-        exit(0);
+	report(RL_ONE, "dest is null");
+	exit(0);
     }
+
     dest->setOperand(reg);
+
+    if (this->ModRM){
+	this->regop = reg;
+    }
 }
 
 void SCInstr::set_block(shared_ptr<Block> bbl)
@@ -201,11 +206,11 @@ shared_ptr<Block> SCInstr::get_block() {
     return this->i_block;
 }
 
-int SCInstr::get_reg_from_dest() 
+int SCInstr::get_reg_from_dest()
 {
     if (dest == NULL) {
-        report(RL_ONE, "instr dest is null");
-        exit(0);
+	report(RL_ONE, "instr dest is null");
+	exit(0);
     }
     return dest->getOperand();
 }
@@ -233,16 +238,16 @@ bool SCInstr::isJmpClass() {
 
 bool SCInstr::isConditionalJmpClass() {
     if (type == FLOW_INSTRUCTION) {
-        if (instr_class<=CLASS_JG || instr_class==CLASS_JEXCZ)
-            return true;
+	if (instr_class<=CLASS_JG || instr_class==CLASS_JEXCZ)
+	    return true;
     }
     return false;
 }
 
 bool SCInstr::isLoopClass() {
     if (type == FLOW_INSTRUCTION) {
-        if (instr_class==CLASS_LOOPDNE || instr_class==CLASS_LOOPDE || instr_class==CLASS_LOOPD)
-            return true;
+	if (instr_class==CLASS_LOOPDNE || instr_class==CLASS_LOOPDE || instr_class==CLASS_LOOPD)
+	    return true;
     }
     return false;
 }
@@ -275,13 +280,13 @@ bool SCInstr::isDataInstruction() {
 bool SCInstr::addr_above_ebp_in_oprand() {
     bool flag = false;
     if (dest && dest->addr_above_ebp())
-        flag = true;
+	flag = true;
     if (src1 && src1->addr_above_ebp())
-        flag = true;
+	flag = true;
     if (src2 && src2->addr_above_ebp())
-        flag = true;
+	flag = true;
     if (src3 && src3->addr_above_ebp())
-        flag = true;
+	flag = true;
     return flag;
 }
 
@@ -290,29 +295,29 @@ void SCInstr::modify_ebp_operand(int reg)
 {
     Operand *to_modify;
     if (dest && dest->addr_above_ebp())
-        to_modify = dest;
+	to_modify = dest;
     if (src1 && src1->addr_above_ebp())
-        to_modify = src1;
+	to_modify = src1;
     if (src2 && src2->addr_above_ebp())
-        to_modify = src2;
+	to_modify = src2;
     if (src3 && src3->addr_above_ebp())
-        to_modify = src3;
+	to_modify = src3;
     to_modify->changed_to_sib(reg);
 }
 
 void SCInstr::accumulate_used_reg(set<int> &used)
 {
     if (this->isMovClass()) {
-        if (this->src1) 
-            this->src1->accumulate_reg(used);
-        if (this->src2)
-            this->src2->accumulate_reg(used);
+	if (this->src1)
+	    this->src1->accumulate_reg(used);
+	if (this->src2)
+	    this->src2->accumulate_reg(used);
     }
     if (this->isCmpClass()) {
-        if (this->dest)
-            this->dest->accumulate_reg(used);
-        if (this->src1)
-            this->src1->accumulate_reg(used);
+	if (this->dest)
+	    this->dest->accumulate_reg(used);
+	if (this->src1)
+	    this->src1->accumulate_reg(used);
     }
 }
 
@@ -346,7 +351,7 @@ void SCInstr::toASMInstruction(ASMINSTRUCTION* asmInstruction){
 ASMOPERAND* SCInstr::operand2ASMOperand(Operand *operand){
 //<<<<<<< HEAD
     //if (operand == NULL){
-        //return NULL;
+	//return NULL;
 //=======
     if (operand == NULL || operand->isDefault){
 	return NULL;
@@ -384,13 +389,13 @@ unsigned char* SCInstr::instruction2Binary(){
     machineCode[0] = '\0';
 
     for (int i = 0; i < (int)asmInstruction->size_; i++){
-        singleInstrMachineCode = int2str(&asmInstruction->machineCode_[i], sizeof(UINT8), 1, 0, false);
-        strcat(machineCode, singleInstrMachineCode);
-        free(singleInstrMachineCode);
+	singleInstrMachineCode = int2str(&asmInstruction->machineCode_[i], sizeof(UINT8), 1, 0, false);
+	strcat(machineCode, singleInstrMachineCode);
+	free(singleInstrMachineCode);
     }
 
-    //Disasm disasm;
-    //disasm.disassembleMachineCode(machineCode, int2str(&asmInstruction->address_, sizeof(UINT32), 1, 0, false), 0);
+    Disasm disasm;
+    disasm.disassembleMachineCode(machineCode, int2str(&asmInstruction->address_, sizeof(UINT32), 1, 0, false), 0);
 
     string op1 = byte_to_str(binary, size);
     //cout << *this;
@@ -399,11 +404,11 @@ unsigned char* SCInstr::instruction2Binary(){
     string op2 = byte_to_str(binary, size);
     //cout << *this;
     //if (op1 != op2) {
-        //cout << op1 << "\t";
-        //cout << op2 << "\t";
-        //cout << "\t" << *this;
+	//cout << op1 << "\t";
+	//cout << op2 << "\t";
+	//cout << "\t" << *this;
     //}
-    //printf("%s\n", machineCode);
+    printf("%s\n", machineCode);
     //printInstrDetail();
 
     // don't forget to delete
@@ -415,104 +420,104 @@ void SCInstr::printInstrDetail(){
 
     cout << "Instruction type: ";
     switch (this->type){
-        case UNDEFINED_INSTRUCTION:
-            cout << "UNDEFINED_INSTRUCTION" << endl;
-            break;
-        case NORMAL_INSTRUCTION:
-            cout << "NORMAL_INSTRUCTION" << endl;
-            break;
-        case STACK_OPERATE_INSTRUCTION:
-            cout << "STACK_OPERATE_INSTRUCTION" << endl;
-            break;
-        case FLOW_INSTRUCTION:
-            cout << "FLOW_INSTRUCTION" << endl;
-            break;
-        case IRREPLACEABLE_INSTRUCTION:
-            cout << "IRREPLACEABLE_INSTRUCTION" << endl;
-            break;
-        case FLOAT_INSTRUCTION:
-            cout << "FLOAT_INSTRUCTION" << endl;
-            break;
-        case PREFIX_INSTRUCTION:
-            cout << "PREFIX_INSTRUCTION" << endl;
-            break;
-        case SSE1_INSTRUCTION:
-            cout << "SSE1_INSTRUCTION" << endl;
-            break;
-        case SSE2_INSTRUCTION:
-            cout << "SSE2_INSTRUCTION" << endl;
-            break;
-        case SSE3_INSTRUCTION:
-            cout << "SSE3_INSTRUCTION" << endl;
-            break;
-        case SSSE3_INSTRUCTION:
-            cout << "SSSE3_INSTRUCTION" << endl;
-            break;
-        case SSE41_INSTRUCTION:
-            cout << "SSE41_INSTRUCTION" << endl;
-            break;
-        case SSE42_INSTRUCTION:
-            cout << "SSE42_INSTRUCTION" << endl;
-            break;
-        case MMX_INSTRUCTION:
-            cout << "MMX_INSTRUCTION" << endl;
-            break;
-        case VMX_INSTRUCTION:
-            cout << "VMX_INSTRUCTION" << endl;
-            break;
-        case SMX_INSTRUCTION:
-            cout << "SMX_INSTRUCTION" << endl;
-            break;
-        case NEED_FURTHER_PARSED:
-            cout << "NEED_FURTHER_PARSED" << endl;
-            break;
-        case SPECIAL_MNEMONIC:
-            cout << "SPECIAL_MNEMONIC" << endl;
-            break;
-        default:
-            cout << "UNKNOWN INSTRUCTION!!!!!" << endl;
-            break;
+	case UNDEFINED_INSTRUCTION:
+	    cout << "UNDEFINED_INSTRUCTION" << endl;
+	    break;
+	case NORMAL_INSTRUCTION:
+	    cout << "NORMAL_INSTRUCTION" << endl;
+	    break;
+	case STACK_OPERATE_INSTRUCTION:
+	    cout << "STACK_OPERATE_INSTRUCTION" << endl;
+	    break;
+	case FLOW_INSTRUCTION:
+	    cout << "FLOW_INSTRUCTION" << endl;
+	    break;
+	case IRREPLACEABLE_INSTRUCTION:
+	    cout << "IRREPLACEABLE_INSTRUCTION" << endl;
+	    break;
+	case FLOAT_INSTRUCTION:
+	    cout << "FLOAT_INSTRUCTION" << endl;
+	    break;
+	case PREFIX_INSTRUCTION:
+	    cout << "PREFIX_INSTRUCTION" << endl;
+	    break;
+	case SSE1_INSTRUCTION:
+	    cout << "SSE1_INSTRUCTION" << endl;
+	    break;
+	case SSE2_INSTRUCTION:
+	    cout << "SSE2_INSTRUCTION" << endl;
+	    break;
+	case SSE3_INSTRUCTION:
+	    cout << "SSE3_INSTRUCTION" << endl;
+	    break;
+	case SSSE3_INSTRUCTION:
+	    cout << "SSSE3_INSTRUCTION" << endl;
+	    break;
+	case SSE41_INSTRUCTION:
+	    cout << "SSE41_INSTRUCTION" << endl;
+	    break;
+	case SSE42_INSTRUCTION:
+	    cout << "SSE42_INSTRUCTION" << endl;
+	    break;
+	case MMX_INSTRUCTION:
+	    cout << "MMX_INSTRUCTION" << endl;
+	    break;
+	case VMX_INSTRUCTION:
+	    cout << "VMX_INSTRUCTION" << endl;
+	    break;
+	case SMX_INSTRUCTION:
+	    cout << "SMX_INSTRUCTION" << endl;
+	    break;
+	case NEED_FURTHER_PARSED:
+	    cout << "NEED_FURTHER_PARSED" << endl;
+	    break;
+	case SPECIAL_MNEMONIC:
+	    cout << "SPECIAL_MNEMONIC" << endl;
+	    break;
+	default:
+	    cout << "UNKNOWN INSTRUCTION!!!!!" << endl;
+	    break;
     }
 
     cout << "Lock And Repeat: ";
     switch ((UINT8)this->lockAndRepeat){
-        case PREFIX_LOCK:
-            cout << "PREFIX_LOCK" << endl;
-            break;
-        case PREFIX_REPN:
-            cout << "PREFIX_REPN" << endl;
-            break;
-        case PREFIX_REP:
-            cout << "PREFIX_REP" << endl;
-            break;
-        default:
-            cout << (INT32)lockAndRepeat << endl;
-            break;
+	case PREFIX_LOCK:
+	    cout << "PREFIX_LOCK" << endl;
+	    break;
+	case PREFIX_REPN:
+	    cout << "PREFIX_REPN" << endl;
+	    break;
+	case PREFIX_REP:
+	    cout << "PREFIX_REP" << endl;
+	    break;
+	default:
+	    cout << (INT32)lockAndRepeat << endl;
+	    break;
     }
 
     cout << "Segment override: ";
     switch (this->segmentOverride){
-        case ES:
-            cout << "ES" << endl;
-            break;
-        case CS:
-            cout << "ES" << endl;
-            break;
-        case SS:
-            cout << "ES" << endl;
-            break;
-        case DS:
-            cout << "ES" << endl;
-            break;
-        case FS:
-            cout << "ES" << endl;
-            break;
-        case GS:
-            cout << "ES" << endl;
-            break;
-        default:
-            cout << (INT32)this->segmentOverride << endl;
-            break;
+	case ES:
+	    cout << "ES" << endl;
+	    break;
+	case CS:
+	    cout << "ES" << endl;
+	    break;
+	case SS:
+	    cout << "ES" << endl;
+	    break;
+	case DS:
+	    cout << "ES" << endl;
+	    break;
+	case FS:
+	    cout << "ES" << endl;
+	    break;
+	case GS:
+	    cout << "ES" << endl;
+	    break;
+	default:
+	    cout << (INT32)this->segmentOverride << endl;
+	    break;
     }
 
     cout << "Operand size override: " << (INT32)this->OperandSizeOverride << endl;
@@ -522,31 +527,31 @@ void SCInstr::printInstrDetail(){
     cout << "Opcode: " << int2str((void*)&this->opcode, sizeof(UINT32), 1, 0, false) << endl;
 
     if (this->ModRM){
-        cout << "MOD: " << int2str((void*)&this->mod, sizeof(UINT8), 1, 0, false) << endl;
-        cout << "RM: " << int2str((void*)&this->rm, sizeof(UINT8), 1, 0, false) << endl;
-        cout << "REGOP: " << int2str((void*)&this->regop, sizeof(UINT8), 1, 0, false) << endl;
+	cout << "MOD: " << int2str((void*)&this->mod, sizeof(UINT8), 1, 0, false) << endl;
+	cout << "RM: " << int2str((void*)&this->rm, sizeof(UINT8), 1, 0, false) << endl;
+	cout << "REGOP: " << int2str((void*)&this->regop, sizeof(UINT8), 1, 0, false) << endl;
     }
 
     cout << endl;
     if (this->dest){
-        cout << "Dest:" << endl;
-        this->dest->printOperandDetail();
-        cout << endl;
+	cout << "Dest:" << endl;
+	this->dest->printOperandDetail();
+	cout << endl;
     }
     if (this->src1){
-        cout << "Src1:" << endl;
-        this->src1->printOperandDetail();
-        cout << endl;
+	cout << "Src1:" << endl;
+	this->src1->printOperandDetail();
+	cout << endl;
     }
     if (this->src2){
-        cout << "Src2:" << endl;
-        this->src2->printOperandDetail();
-        cout << endl;
+	cout << "Src2:" << endl;
+	this->src2->printOperandDetail();
+	cout << endl;
     }
     if (this->src3){
-        cout << "Src3:" << endl;
-        this->src3->printOperandDetail();
-        cout << endl;
+	cout << "Src3:" << endl;
+	this->src3->printOperandDetail();
+	cout << endl;
     }
 
     cout << "NEW EIP: " << int2str((void*)&this->new_eip, sizeof(UINT32), 1, 0, false) << endl;
@@ -558,7 +563,7 @@ InstrList* InstrList::shared_instr_list_ = NULL;
 InstrList* InstrList::sharedInstrList()
 {
     if (shared_instr_list_ == NULL)
-        shared_instr_list_ = new InstrList();
+	shared_instr_list_ = new InstrList();
     return shared_instr_list_;
 }
 
@@ -576,58 +581,58 @@ void InstrList::disassemble2(const SectionVec &obj_sec_vec)
     INT8 ret = -1;
 
     for (UINT32 i = 1; i < number; i++) {
-        shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
-        UINT32 flags = cur_sec->get_section_flags();
-        if (flags & SHF_EXECINSTR) {
-            UINT8 *data = cur_sec->get_section_data();
-            UINT32 size = MAX_INSTRUCTION_SIZE;
-            UINT32 address = cur_sec->get_section_address();
-            UINT32 data_size = cur_sec->get_section_size();
-            UINT32 start = 0;
+	shared_ptr<Section> cur_sec = obj_sec_vec.get_section_by_index(i);
+	UINT32 flags = cur_sec->get_section_flags();
+	if (flags & SHF_EXECINSTR) {
+	    UINT8 *data = cur_sec->get_section_data();
+	    UINT32 size = MAX_INSTRUCTION_SIZE;
+	    UINT32 address = cur_sec->get_section_address();
+	    UINT32 data_size = cur_sec->get_section_size();
+	    UINT32 start = 0;
 
-            while (1) {
-                if (start >= data_size)
-                    break;
-                INSTRUCTION *instr = new INSTRUCTION();
-                if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
-                    size = data_size - start;
-                }
-                memcpy(buffer, data + start, size);
-                //printf("Machine Code: %s\n", int2str(&buffer, sizeof(UINT32), 1, 0, false));
-                ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
-                if (ret == NOT_ENOUGH_CODE){
-                    //printf("NOT ENOUGH CODE\n");
-                    start++;
-                    address++;
-                    continue;
-                    //break;
-                }
-                if (start + ret > data_size){
-                    break;
-                }
-                //printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
+	    while (1) {
+		if (start >= data_size)
+		    break;
+		INSTRUCTION *instr = new INSTRUCTION();
+		if (start + (INT32)MAX_INSTRUCTION_SIZE > data_size) {
+		    size = data_size - start;
+		}
+		memcpy(buffer, data + start, size);
+		//printf("Machine Code: %s\n", int2str(&buffer, sizeof(UINT32), 1, 0, false));
+		ret = disasm.disassembler((INT8*)buffer, size, address, 0, instr);
+		if (ret == NOT_ENOUGH_CODE){
+		    //printf("NOT ENOUGH CODE\n");
+		    start++;
+		    address++;
+		    continue;
+		    //break;
+		}
+		if (start + ret > data_size){
+		    break;
+		}
+		//printf("%s   %s\n", instr->ret_machineCode, instr->assembly);
 
-                string sec_name = cur_sec->get_section_name();
-                if (sec_name == ".init")
-                    instr->secType = SECTION_INIT;
-                else if (sec_name == ".fini")
-                    instr->secType = SECTION_FINI;
-                else if (sec_name == ".text")
-                    instr->secType = SECTION_TEXT;
-                else if (sec_name == ".plt")
-                    instr->secType = SECTION_PLT;
-                else
-                    instr->secType = SECTION_OTHER;
+		string sec_name = cur_sec->get_section_name();
+		if (sec_name == ".init")
+		    instr->secType = SECTION_INIT;
+		else if (sec_name == ".fini")
+		    instr->secType = SECTION_FINI;
+		else if (sec_name == ".text")
+		    instr->secType = SECTION_TEXT;
+		else if (sec_name == ".plt")
+		    instr->secType = SECTION_PLT;
+		else
+		    instr->secType = SECTION_OTHER;
 
-                shared_ptr<INSTRUCTION> cur_instr(instr);
-                instr_list_.push_back(cur_instr);
-                addr_to_instr_map_.insert(pair<UINT32, shared_ptr<INSTRUCTION> >(cur_instr->address, cur_instr));
+		shared_ptr<INSTRUCTION> cur_instr(instr);
+		instr_list_.push_back(cur_instr);
+		addr_to_instr_map_.insert(pair<UINT32, shared_ptr<INSTRUCTION> >(cur_instr->address, cur_instr));
 
-                address += ret;
-                start += ret;
-            }
-        }
-        //>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
+		address += ret;
+		start += ret;
+	    }
+	}
+	//>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     }
 
     begin_addr_ = instr_list_.front()->get_instruction_address();
@@ -641,12 +646,12 @@ shared_ptr<SCInstr> InstrList::get_instr_by_address(UINT32 addr) const
     shared_ptr<SCInstr> res;
     UINT32 start_addr = 0x8048000;
     while (addr >= begin_addr_ && addr < end_addr_) {
-        map<UINT32, shared_ptr<SCInstr> >::const_iterator it = addr_to_instr_map_.find(addr);
-        if (it != addr_to_instr_map_.end()) {
-            res = it->second;
-            break;
-        }
-        addr -= 1;
+	map<UINT32, shared_ptr<SCInstr> >::const_iterator it = addr_to_instr_map_.find(addr);
+	if (it != addr_to_instr_map_.end()) {
+	    res = it->second;
+	    break;
+	}
+	addr -= 1;
     }
     return res;
 }
@@ -656,7 +661,7 @@ shared_ptr<SCInstr> InstrList::get_instr_by_exact_address(UINT32 addr) const
     shared_ptr<SCInstr> res;
     map<UINT32, shared_ptr<SCInstr> >::const_iterator it = addr_to_instr_map_.find(addr);
     if (it != addr_to_instr_map_.end())
-        res = it->second;
+	res = it->second;
     return res;
 }
 
@@ -666,11 +671,11 @@ shared_ptr<SCInstr> InstrList::get_prev_instr(shared_ptr<SCInstr> ins)
     //InstrIterT it = find(instr_list_.begin(), instr_list_.end(), ins);
     InstrIterT it;
     for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        if (*it == ins)
-            break;
+	if (*it == ins)
+	    break;
     }
     if (it == instr_list_.begin() || it == instr_list_.end())
-        return res;
+	return res;
     res = *(--it);
     return res;
 }
@@ -681,11 +686,11 @@ shared_ptr<SCInstr> InstrList::get_next_instr(shared_ptr<SCInstr> ins)
     //InstrIterT it = find(instr_list_.begin(), instr_list_.end(), ins);
     InstrIterT it;
     for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        if (*it == ins)
-            break;
+	if (*it == ins)
+	    break;
     }
     if (it == instr_list_.end() || ++it == instr_list_.end())
-        return res;
+	return res;
     res = *it;
     return res;
 }
@@ -694,8 +699,8 @@ void InstrList::add_instr_before(shared_ptr<SCInstr> source, shared_ptr<SCInstr>
 {
     InstrIterT it;
     for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        if (*it == source)
-            break;
+	if (*it == source)
+	    break;
     }
     instr_list_.insert(it, to_add);
 }
@@ -704,8 +709,8 @@ void InstrList::add_instr_after(shared_ptr<SCInstr> source, shared_ptr<SCInstr> 
 {
     InstrIterT it;
     for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        if (*it == source)
-            break;
+	if (*it == source)
+	    break;
     }
     instr_list_.insert(++it, to_add);
 }
@@ -717,7 +722,7 @@ void InstrList::remove_instrs(shared_ptr<SCInstr> start, shared_ptr<SCInstr> end
     //instr_list_.erase(it_start, ++it_end);
 }
 
-void InstrList::rebuild_from_bbl() 
+void InstrList::rebuild_from_bbl()
 {
     InstrIterT it_start = instr_list_.begin();
     InstrIterT it_end = instr_list_.end();
@@ -725,15 +730,15 @@ void InstrList::rebuild_from_bbl()
     BlockIterT it;
     BlockListT bbl = BLOCKLIST->get_block_list();
     for (it = bbl.begin(); it != bbl.end(); it++) {
-        if (it == bbl.begin())
-            continue;
-        shared_ptr<INSTRUCTION> cur_instr = (*it)->get_first_instr();
-        shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
-        while (cur_instr != last_instr) {
-            instr_list_.push_back(cur_instr);
-            cur_instr = INSTRLIST->get_next_instr(cur_instr);
-        }
-        instr_list_.push_back(cur_instr);
+	if (it == bbl.begin())
+	    continue;
+	shared_ptr<INSTRUCTION> cur_instr = (*it)->get_first_instr();
+	shared_ptr<INSTRUCTION> last_instr = (*it)->get_last_instr();
+	while (cur_instr != last_instr) {
+	    instr_list_.push_back(cur_instr);
+	    cur_instr = INSTRLIST->get_next_instr(cur_instr);
+	}
+	instr_list_.push_back(cur_instr);
     }
     it_end++;
     instr_list_.erase(it_start, it_end);
@@ -749,31 +754,31 @@ void InstrList::update_sections_size(SectionVec &obj_sec_vec) const
     shared_ptr<Section> sec;
 
     for(; it != instr_list_.end(); it++) {
-        cur_sec = (*it)->secType;
-        if (cur_sec != last_sec) {
-            switch(last_sec) {
-                case SECTION_INIT:
-                    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-                    break;
-                case SECTION_TEXT:
-                    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-                    break;
-                case SECTION_FINI:
-                    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-                    break;
-                case SECTION_PLT:
-                    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-                    break;
-                default:
-                    report(RL_ONE, "can't handle instr sec type for now");
-                    exit(0);
-            }
+	cur_sec = (*it)->secType;
+	if (cur_sec != last_sec) {
+	    switch(last_sec) {
+		case SECTION_INIT:
+		    sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		    break;
+		case SECTION_TEXT:
+		    sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		    break;
+		case SECTION_FINI:
+		    sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		    break;
+		case SECTION_PLT:
+		    sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		    break;
+		default:
+		    report(RL_ONE, "can't handle instr sec type for now");
+		    exit(0);
+	    }
 
-            sec->set_section_size(datasize);
-            datasize = 0;
-            last_sec = cur_sec;
-        }
-        datasize += (*it)->size;
+	    sec->set_section_size(datasize);
+	    datasize = 0;
+	    last_sec = cur_sec;
+	}
+	datasize += (*it)->size;
     }
 }
 
@@ -828,33 +833,33 @@ void InstrList::update_instr_address(SectionVec &obj_sec_vec)
 
     for(; it != instr_list_.end(); it++) {
 //<<<<<<< HEAD
-        //cur_sec = (*it)->secType;
-        //if (cur_sec != last_sec) {
-            //switch(cur_sec) {
-                //case SECTION_INIT:
-                    //sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
-                    //break;
-                //case SECTION_TEXT:
-                    //sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
-                    //break;
-                //case SECTION_FINI:
-                    //sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
-                    //break;
-                //case SECTION_PLT:
-                    //sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
-                    //break;
-                //default:
-                    //report(RL_ONE, "can't handle instr sec type for now");
-                    //exit(0);
-            //}
+	//cur_sec = (*it)->secType;
+	//if (cur_sec != last_sec) {
+	    //switch(cur_sec) {
+		//case SECTION_INIT:
+		    //sec = obj_sec_vec.get_section_by_name(INIT_SECTION_NAME);
+		    //break;
+		//case SECTION_TEXT:
+		    //sec = obj_sec_vec.get_section_by_name(TEXT_SECTION_NAME);
+		    //break;
+		//case SECTION_FINI:
+		    //sec = obj_sec_vec.get_section_by_name(FINI_SECTION_NAME);
+		    //break;
+		//case SECTION_PLT:
+		    //sec = obj_sec_vec.get_section_by_name(PLT_SECTION_NAME);
+		    //break;
+		//default:
+		    //report(RL_ONE, "can't handle instr sec type for now");
+		    //exit(0);
+	    //}
 
-            //last_sec = cur_sec;
-            //offset = 0;
-        //}
+	    //last_sec = cur_sec;
+	    //offset = 0;
+	//}
 
-        //(*it)->address = sec->get_section_address() + offset;
-        //(*it)->last_address = sec->get_section_address() + offset;
-        //offset += (*it)->size;
+	//(*it)->address = sec->get_section_address() + offset;
+	//(*it)->last_address = sec->get_section_address() + offset;
+	//offset += (*it)->size;
 //=======
 	cur_sec = (*it)->secType;
 	if (cur_sec != last_sec) {
@@ -894,12 +899,12 @@ void InstrList::resolve_function_exit_block()
     report(RL_FOUR, "resolve ret block to exit block");
     InstrIterT it;
     for (it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        if ((*it)->isReturnClass()) {
-            shared_ptr<Block> from, to;
-            from = (*it)->get_block();
-            to = INSTR_FUNCTION(*it)->get_exit_block();
-            EDGELIST->add_bbl_edge(from, to, ET_EXIT);
-        }
+	if ((*it)->isReturnClass()) {
+	    shared_ptr<Block> from, to;
+	    from = (*it)->get_block();
+	    to = INSTR_FUNCTION(*it)->get_exit_block();
+	    EDGELIST->add_bbl_edge(from, to, ET_EXIT);
+	}
     }
 }
 
@@ -907,12 +912,12 @@ UINT32 SCInstr::get_target_address()
 {
     UINT32 res = 0;
     if (!isConditionalJmpClass() && !isCallClass() && !isJmpClass())
-        return res;
+	return res;
     if (dest->type != OPERAND_FLOW)
-        return res;
+	return res;
     // absolute call/jmp
     if (opcode == 0x91 || opcode == 0xea)
-        return dest->getOperand();
+	return dest->getOperand();
 
     // relative
     INT32 rel = dest->getOperand();
@@ -927,61 +932,61 @@ INT32 InstrList::update_pc_relative_jumps()
     // TODO: use jump_target_ to record target instr for now
     // cause target is not the first instruction of target block
     for (InstrIterT it = instr_list_.begin(); it != instr_list_.end(); it++) {
-        //cout << **it;
-        //cout << "test" << endl;
-        if (!(*it)->isConditionalJmpClass() && !(*it)->isCallClass() && !(*it)->isJmpClass())
-            continue;
-        if ((*it)->dest->type != OPERAND_FLOW)
-            continue;
-        if ((*it)->isConditionalJmpClass()) {
-            //cout << **it;
-            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
-            INT32 displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
-            if (displacement != (*it)->get_dest()->getOperand()) {
-                change++;
-                (*it)->dest->setOperand(displacement);
-                (*it)->instruction2Binary();
-                // TODO: how to update instruction binary
-                // (*it)->update_instruction_binary(displacement);
-            }
-            continue;
-        }
-        if ((*it)->isJmpClass()) {
-            //cout << **it;
-            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
-            INT32 displacement;
-            if ((*it)->get_opcode() != 0xea) {
-                displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
-            }
-            else
-                displacement = target_addr;
-            if (displacement != (*it)->get_dest()->getOperand()) {
-                change++;
-                (*it)->dest->setOperand(displacement);
-                (*it)->instruction2Binary();
-                // TODO: how to update instruction binary
-                // (*it)->update_instruction_binary(displacement);
-            }
-            continue;
-        }
-        if ((*it)->isCallClass()) {
-            //cout << **it;
-            UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
-            INT32 displacement;
-            if ((*it)->get_opcode() != 0x91) {
-                displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
-            }
-            else
-                displacement = target_addr;
-            if (displacement != (*it)->get_dest()->getOperand()) {
-                change++;
-                (*it)->dest->setOperand(displacement);
-                (*it)->instruction2Binary();
-                // TODO: how to update instruction binary
-                // (*it)->update_instruction_binary(displacement);
-            }
-            continue;
-        }
+	//cout << **it;
+	//cout << "test" << endl;
+	if (!(*it)->isConditionalJmpClass() && !(*it)->isCallClass() && !(*it)->isJmpClass())
+	    continue;
+	if ((*it)->dest->type != OPERAND_FLOW)
+	    continue;
+	if ((*it)->isConditionalJmpClass()) {
+	    //cout << **it;
+	    UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+	    INT32 displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+	    if (displacement != (*it)->get_dest()->getOperand()) {
+		change++;
+		(*it)->dest->setOperand(displacement);
+		(*it)->instruction2Binary();
+		// TODO: how to update instruction binary
+		// (*it)->update_instruction_binary(displacement);
+	    }
+	    continue;
+	}
+	if ((*it)->isJmpClass()) {
+	    //cout << **it;
+	    UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+	    INT32 displacement;
+	    if ((*it)->get_opcode() != 0xea) {
+		displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+	    }
+	    else
+		displacement = target_addr;
+	    if (displacement != (*it)->get_dest()->getOperand()) {
+		change++;
+		(*it)->dest->setOperand(displacement);
+		(*it)->instruction2Binary();
+		// TODO: how to update instruction binary
+		// (*it)->update_instruction_binary(displacement);
+	    }
+	    continue;
+	}
+	if ((*it)->isCallClass()) {
+	    //cout << **it;
+	    UINT32 target_addr = (*it)->get_jump_target()->get_instruction_address();
+	    INT32 displacement;
+	    if ((*it)->get_opcode() != 0x91) {
+		displacement = target_addr - ((*it)->get_instruction_address() + (*it)->get_instruction_size());
+	    }
+	    else
+		displacement = target_addr;
+	    if (displacement != (*it)->get_dest()->getOperand()) {
+		change++;
+		(*it)->dest->setOperand(displacement);
+		(*it)->instruction2Binary();
+		// TODO: how to update instruction binary
+		// (*it)->update_instruction_binary(displacement);
+	    }
+	    continue;
+	}
     }
     return change;
 }
@@ -993,9 +998,9 @@ void InstrList::resolve_targets()
 	shared_ptr<Block> from = (*it)->get_block();
 	shared_ptr<Block> to = BLOCKLIST->get_next_block(from);
     //if (from)
-        //cout << *from;
+	//cout << *from;
     //if (to)
-        //cout << *to;
+	//cout << *to;
 	// 1: Normal instr
 	if (!(*it)->isPCChangingClass()) {
 	    if ((*it)->has_flag(BBL_END) &&
@@ -1108,7 +1113,7 @@ string byte_to_str(UINT8 *data, int length)
     stringstream ss;
     ss << hex;
     for (int i = 0; i < length; i++)
-        ss << std::setw(2) << std::setfill('0') << (int)data[i];
+	ss << std::setw(2) << std::setfill('0') << (int)data[i];
     return ss.str();
 }
 
@@ -1130,12 +1135,12 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
     os << "Opcode: " << ins.opcode << endl;
     if (ins.dest) {
     os << "-----" << endl;
-        (ins.dest)->printOperandDetail();
+	(ins.dest)->printOperandDetail();
     os << "-----" << endl;
     }
     if (ins.src1) {
     os << "-----" << endl;
-        (ins.src1)->printOperandDetail();
+	(ins.src1)->printOperandDetail();
     os << "-----" << endl;
     }
     return os;
@@ -1146,7 +1151,7 @@ ostream& operator<<(ostream &os, const InstrList &instr_list)
     //list<shared_ptr<INSTRUCTION> >::const_iterator it;
     InstrListT::const_iterator it;
     for (it = instr_list.instr_list_.begin(); it != instr_list.instr_list_.end(); it++)
-        os << **it;
+	os << **it;
     os << "begin address is " << instr_list.begin_addr_ << endl;
     os << "end address is " << instr_list.end_addr_ << endl;
 

@@ -82,17 +82,17 @@ bool Operand::addr_above_ebp() {
     //if (operand == EBP || base == EBP || index == EBP)
     int temp = (INT8)(displacement);
     if (operand == EBP && temp > 0)
-        res = true;
+	res = true;
     return res;
 }
 
-void Operand::accumulate_reg(set<int> &used) 
+void Operand::accumulate_reg(set<int> &used)
 {
     if (operand != 0xffffffff)
-        used.insert(operand);
+	used.insert(operand);
     else {
-        used.insert(index);
-        used.insert(base);
+	used.insert(index);
+	used.insert(base);
     }
 }
 
