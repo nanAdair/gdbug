@@ -401,6 +401,8 @@ unsigned char* SCInstr::instruction2Binary(){
     //cout << *this;
     free(binary);
     binary = reinterpret_cast<UINT8*>(string2hex(machineCode));
+    size = strlen(machineCode) / 2;
+    //cout << "Instruction size: " << strlen(machineCode) / 2 << endl;
     string op2 = byte_to_str(binary, size);
     //cout << *this;
     //if (op1 != op2) {

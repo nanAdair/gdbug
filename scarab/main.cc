@@ -42,9 +42,9 @@ void testInstruction2Binary();
 
 int main(int argc, char *argv[])
 {
-    testInstruction2Binary();
+    //testInstruction2Binary();
 
-    exit(0);
+    //exit(0);
     SectionVec obj_sec_vec;
     SymbolVec obj_sym_vec;
     RelocationVec obj_rel_vec;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     // add obfuscation here
     report(RL_THREE, "Obfuscation Begin");
     vector<Obfuscation*> methods;
-    //methods.push_back(new StackObfuscation);
+    methods.push_back(new StackObfuscation);
     //cout << *BLOCKLIST;
     //methods.push_back(new ROPObfuscation);
     //methods.push_back(new JunkObfuscation);
