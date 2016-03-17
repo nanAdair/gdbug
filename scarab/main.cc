@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     PatchVec upm_vec;
     obj_rel_vec.construct_upm(obj_sec_vec, upm_vec);
 
-    //cout << *FUNLIST;
+    cout << *FUNLIST;
     // add obfuscation here
     report(RL_THREE, "Obfuscation Begin");
     vector<Obfuscation*> methods;

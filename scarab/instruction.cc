@@ -1134,17 +1134,17 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
 //>>>>>>> f3e8f3fc5ccb6d4e49ca59581fb1514bb9d3d64b
     os << string(ins.assembly);
     os << endl;
-    os << "Opcode: " << ins.opcode << endl;
-    if (ins.dest) {
-    os << "-----" << endl;
-	(ins.dest)->printOperandDetail();
-    os << "-----" << endl;
-    }
-    if (ins.src1) {
-    os << "-----" << endl;
-	(ins.src1)->printOperandDetail();
-    os << "-----" << endl;
-    }
+    //os << "Opcode: " << ins.opcode << endl;
+    //if (ins.dest) {
+    //os << "-----" << endl;
+	//(ins.dest)->printOperandDetail();
+    //os << "-----" << endl;
+    //}
+    //if (ins.src1) {
+    //os << "-----" << endl;
+	//(ins.src1)->printOperandDetail();
+    //os << "-----" << endl;
+    //}
     return os;
 }
 

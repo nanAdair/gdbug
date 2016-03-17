@@ -32,7 +32,8 @@
 using namespace std;
 
 shared_ptr<Block> get_reorder_target(const set<shared_ptr<Block> > &s);
-void repair_block_content(shared_ptr<Block> source);
+void repair_block_content(shared_ptr<Block> source, shared_ptr<INSTRUCTION> new_first=0);
+//void repair_block_content(shared_ptr<Block> source);
 
 void ROPObfuscation::obfuscate(PatchVec &upm_vec)
 {
@@ -181,7 +182,7 @@ shared_ptr<Block> ROPObfuscation::cut_block(shared_ptr<Block> source)
     return middle;
 }
 
-void repair_block_content(shared_ptr<Block> source)
+void repair_block_content(shared_ptr<Block> source, shared_ptr<INSTRUCTION> new_first)
 {
     shared_ptr<INSTRUCTION> start = source->get_first_instr();
     shared_ptr<INSTRUCTION> end = INSTRLIST->get_next_instr(source->get_last_instr());
@@ -191,6 +192,12 @@ void repair_block_content(shared_ptr<Block> source)
         start->set_block(source);
         start->set_sec_type(sec_type);
         start = INSTRLIST->get_next_instr(start);
+        i++;
+    }
+    if (new_first) {
+        new_first->set_block(source);
+        new_first->set_sec_type(sec_type);
+        source->set_first_instr(new_first);
         i++;
     }
     source->set_size(i);
@@ -279,9 +286,10 @@ void StackObfuscation::obfuscate(PatchVec &upm_vec)
     FunIterT it;
     for (it = function_list.begin(); it != function_list.end(); it++) {
         // manually set for debug, select insertion_sort function
-        if ((*it)->get_function_id() == 7) {
+        if ((*it)->get_function_id() == 11) {
             _add_stack_offset(*it);
             _amend_stack(*it);
+            _insert_redundant_instrs(*it);
         }
     }
     report(RL_THREE, "move stack for some offset obfuscation end");
@@ -295,22 +303,61 @@ void StackObfuscation::_amend_stack(shared_ptr<Function> func)
 
     shared_ptr<INSTRUCTION> cur_instr = first_instr;
     while (cur_instr != last_instr) {
+        //else 
+            //cout << "false\t";
         if (cur_instr->addr_above_ebp_in_oprand()) {
+            cout << "------------" << endl;
+            cout << *cur_instr;
             shared_ptr<INSTRUCTION> to_add = _get_prepared_instr();
             int reg = _find_useful_reg(cur_instr); // find reg not used to add
-            //cout << "found useful reg is " << reg << endl;
-            //cout << "before change " << *to_add;
+            cout << "found useful reg is " << reg << endl;
             to_add->set_dest_operand(reg); // mov (%ebp), %eax, replace %eax using reg
             to_add->instruction2Binary(); // renew the binary
-            //cout << "after change " << *to_add;
             cout << "before change " << *cur_instr;
             cur_instr->modify_ebp_operand(reg); // %ebp related instr add indirect offset
             cur_instr->instruction2Binary(); // renew the binary
             cout << "after change " << *cur_instr;
             INSTRLIST->add_instr_before(cur_instr, to_add);
-            repair_block_content(cur_instr->get_block());
+            shared_ptr<Block> cur_block = cur_instr->get_block();
+            if (cur_instr == cur_block->get_first_instr())
+                repair_block_content(cur_block, to_add);
+                //cur_block->set_first_instr(to_add);
+            repair_block_content(cur_block);
         }
         cur_instr = INSTRLIST->get_next_instr(cur_instr);
+    }
+}
+
+void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
+{
+    int number = 0;
+    shared_ptr<INSTRUCTION> first_instr, last_instr;
+    first_instr = func->get_first_block()->get_first_instr();
+    last_instr = func->get_last_block()->get_last_instr();
+
+    shared_ptr<INSTRUCTION> cur_instr = first_instr;
+    while (cur_instr != last_instr) {
+        number++;
+        cur_instr = INSTRLIST->get_next_instr(cur_instr);
+    }
+
+    cout << dec << number << endl;
+    InstrListT instrs = INSTRLIST->get_instr_list();
+    InstrIterT head = instrs.begin();
+    while (*head != first_instr) 
+        head++;
+
+    //cout << **head;
+    int new_instrs_number = 10;
+    int i = 0;
+    while (i < new_instrs_number) {
+        int r = rand() % number;
+        InstrIterT it = head;
+        advance(it, r);
+
+        //TODO: add instr
+
+        i++;
     }
 }
 
@@ -322,18 +369,23 @@ int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
     int i = 0;
     while (i < 10) {
         cur_instr->accumulate_used_reg(used);
-        if (!cur_instr->isPCChangingClass()) {
+        if (!cur_instr->isPCChangingClass() && !cur_instr->isPushClass() && !cur_instr->isPopClass()) {
             int dest_reg = cur_instr->get_reg_from_dest();
+            //if (dest_reg == EBP || dest_reg == ESP)
+                //continue;
             if (used.find(dest_reg) == used.end()) {
                 res = dest_reg;
                 break;
             }
         }
-        if (!cur_instr->isPCChangingClass())
+        if (cur_instr->isCallClass())
+            return EAX;
+        if (!cur_instr->isPCChangingClass()) 
             cur_instr = INSTRLIST->get_next_instr(cur_instr);
         else
             cur_instr = cur_instr->get_jump_target();
         i++;
+        cout << i << endl;
     }
     return res;
 }
@@ -417,7 +469,8 @@ void StackObfuscation::_add_function_ending(shared_ptr<Block> tail_block)
 
     //unsigned char add_buffer[] = {0x03, 0x6d, 0}; // add (%ebp), %ebp
     unsigned char mov_buffer[] = {0x8b, 0x55, 0}; // mov (%ebp), %edx
-    unsigned char add_buffer[] = {0x03, 0xea}; // add %ebp, %edx
+    //unsigned char add_buffer[] = {0x03, 0xea}; // add %ebp, %edx
+    unsigned char add_buffer[] = {0x03, 0xe2}; // add %esp, %edx
     INSTRUCTION *mov_instr = new INSTRUCTION();
     INSTRUCTION *add_instr = new INSTRUCTION();
 
@@ -425,8 +478,8 @@ void StackObfuscation::_add_function_ending(shared_ptr<Block> tail_block)
     INT8 res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
     res = disasm.disassembler(reinterpret_cast<INT8*>(add_buffer), sizeof(add_buffer) / sizeof(unsigned char), 0, 0, add_instr);
 
-    shared_ptr<INSTRUCTION> mov(mov_instr); // mov (%ebp), %ebp
-    shared_ptr<INSTRUCTION> add(add_instr); // add (%ebp), %ebp
+    shared_ptr<INSTRUCTION> mov(mov_instr); // mov (%ebp), %edx
+    shared_ptr<INSTRUCTION> add(add_instr); // add %esp, %edx
 
 
     INSTRLIST->add_instr_after(cur_instr, mov);

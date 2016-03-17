@@ -63,7 +63,7 @@ private:
     shared_ptr<Block> _find_tail_block(shared_ptr<Function>);
     void _insert_function_prologue(shared_ptr<Block>);
     void _amend_stack(shared_ptr<Function>);
-    void _insert_redundant_instrs();
+    void _insert_redundant_instrs(shared_ptr<Function>);
     shared_ptr<SCInstr> _get_prepared_instr();
     int _find_useful_reg(shared_ptr<SCInstr>);
 };
