@@ -267,7 +267,7 @@ bool SCInstr::isLoopClass() {
 }
 
 bool SCInstr::isMovClass() {
-    return (type==NORMAL_INSTRUCTION && instr_class==CLASS_MOV);
+    return (type==NORMAL_INSTRUCTION && (instr_class==CLASS_MOV || instr_class==CLASS_MOVS || instr_class==CLASS_MOVBE));
 }
 
 bool SCInstr::isNOPClass() {
@@ -284,6 +284,10 @@ bool SCInstr::isPushClass() {
 
 bool SCInstr::isSubClass() {
     return (type==NORMAL_INSTRUCTION && instr_class==CLASS_SUB);
+}
+
+bool SCInstr::isNormalNotMoveClass() {
+    return (type==NORMAL_INSTRUCTION && instr_class != CLASS_MOV && instr_class != CLASS_MOVS && instr_class != CLASS_MOVBE);
 }
 
 bool SCInstr::isDataInstruction() {
@@ -327,7 +331,8 @@ void SCInstr::accumulate_used_reg(set<int> &used)
 	if (this->src2)
 	    this->src2->accumulate_reg(used);
     }
-    if (this->isCmpClass()) {
+    //if (this->isCmpClass()) {
+    if (this->isNormalNotMoveClass()) {
 	if (this->dest)
 	    this->dest->accumulate_reg(used);
 	if (this->src1)

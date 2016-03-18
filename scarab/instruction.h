@@ -88,6 +88,7 @@ public:
     bool isPopClass();
     bool isPushClass();
     bool isSubClass();
+    bool isNormalNotMoveClass();
 
     bool isDataInstruction();
 

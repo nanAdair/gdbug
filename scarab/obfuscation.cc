@@ -311,6 +311,8 @@ void StackObfuscation::_amend_stack(shared_ptr<Function> func)
             shared_ptr<INSTRUCTION> to_add = _get_prepared_instr();
             int reg = _find_useful_reg(cur_instr); // find reg not used to add
             cout << "found useful reg is " << reg << endl;
+            if (reg == -1)
+                reg = EDX;
             to_add->set_dest_operand(reg); // mov (%ebp), %eax, replace %eax using reg
             to_add->instruction2Binary(); // renew the binary
             cout << "before change " << *cur_instr;
@@ -321,7 +323,6 @@ void StackObfuscation::_amend_stack(shared_ptr<Function> func)
             shared_ptr<Block> cur_block = cur_instr->get_block();
             if (cur_instr == cur_block->get_first_instr())
                 repair_block_content(cur_block, to_add);
-                //cur_block->set_first_instr(to_add);
             else
                 repair_block_content(cur_block);
         }
@@ -349,23 +350,41 @@ void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
         head++;
 
     //cout << **head;
-    int new_instrs_number = 5;
+    //int new_instrs_number = 10;
+    int new_instrs_number = 100;
     int i = 0;
     while (i < new_instrs_number) {
         int r = rand() % number;
         InstrIterT it = head;
         advance(it, r);
 
+        cout << i << " " << r << endl;
         //TODO: add instr
         shared_ptr<INSTRUCTION> to_add = _get_redundant_instr(*it, 3);
+        if (!to_add) {
+            i++;
+            continue;
+        }
+
+        unsigned char push_buffer[] = {0x50}; // push %eax
+        unsigned char pop_buffer[] = {0x58}; // pop %eax
+        Disasm disasm;
+        INSTRUCTION *push_instr_raw = new SCInstr();
+        INSTRUCTION *pop_instr_raw = new SCInstr();
+        disasm.disassembler(reinterpret_cast<INT8*>(push_buffer), sizeof(push_buffer) / sizeof(unsigned char), 0, 0, push_instr_raw);
+        disasm.disassembler(reinterpret_cast<INT8*>(pop_buffer), sizeof(pop_buffer) / sizeof(unsigned char), 0, 0, pop_instr_raw);
+        shared_ptr<SCInstr> push_instr(push_instr_raw); // mov (%ebp), %eax
+        shared_ptr<SCInstr> pop_instr(pop_instr_raw); // mov (%ebp), %eax
 
         INSTRLIST->add_instr_before(*it, to_add);
+        INSTRLIST->add_instr_before(to_add, push_instr);
+        INSTRLIST->add_instr_after(to_add, pop_instr);
         shared_ptr<Block> cur_block = (*it)->get_block();
         if ((*it) == cur_block->get_first_instr())
-            repair_block_content(cur_block, to_add);
-        else
+            repair_block_content(cur_block, push_instr);
+        //else
             repair_block_content(cur_block);
-        cout << "insertion instr choice " << endl;
+        cout <<  " insertion instr choice " << endl;
         cout << **it;
         cout << *to_add;
         i++;
@@ -396,8 +415,11 @@ shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> c
     }
 
     shared_ptr<SCInstr> res_instr(res_instr_raw); // mov (%ebp), %eax
-    int reg = _find_useful_reg(cur_instr); // find reg not used to add
+    //int reg = _find_useful_reg(cur_instr); // find reg not used to add
+    int reg = 0; // find reg not used to add
     cout << "found useful reg is " << reg << endl;
+    if (reg == -1)
+        return 0;
     int limit;
     int offset;
     if (choice == 1 || choice == 2) { // for above read and write generate [0x5, 0x1c]
@@ -413,11 +435,15 @@ shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> c
         displacement = 0 - displacement;
     cout << "displacement is " << displacement << endl;
     if (choice == 1 || choice == 3) {
-        res_instr->set_dest_operand(reg);
+        // TODO: use eax for now
+        res_instr->set_dest_operand(EAX);
+        //res_instr->set_dest_operand(reg);
         res_instr->set_src1_operand(EBP, displacement);
     }
     else {
-        res_instr->set_src1_operand(reg);
+        // TODO: use eax for now
+        res_instr->set_dest_operand(EAX);
+        //res_instr->set_src1_operand(reg);
         res_instr->set_dest_operand(EBP, displacement);
     }
     res_instr->instruction2Binary(); // renew the binary
@@ -444,11 +470,10 @@ int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
     int i = 0;
     while (i < 10) {
         cur_instr->accumulate_used_reg(used);
-        if (!cur_instr->isPCChangingClass() && !cur_instr->isPushClass() && !cur_instr->isPopClass()) {
+        //if (!cur_instr->isPCChangingClass() && !cur_instr->isPushClass() && !cur_instr->isPopClass()) {
+        if (cur_instr->isMovClass()) { 
             int dest_reg = cur_instr->get_reg_from_dest();
-            //if (dest_reg == EBP || dest_reg == ESP)
-                //continue;
-            if (used.find(dest_reg) == used.end()) {
+            if (used.find(dest_reg) == used.end() && !(dest_reg == EBP || dest_reg == ESP)) {
                 res = dest_reg;
                 break;
             }
@@ -460,7 +485,7 @@ int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
         else
             cur_instr = cur_instr->get_jump_target();
         i++;
-        //cout << i << endl;
+        cout << i << endl;
     }
     return res;
 }
