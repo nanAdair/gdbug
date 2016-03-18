@@ -322,7 +322,8 @@ void StackObfuscation::_amend_stack(shared_ptr<Function> func)
             if (cur_instr == cur_block->get_first_instr())
                 repair_block_content(cur_block, to_add);
                 //cur_block->set_first_instr(to_add);
-            repair_block_content(cur_block);
+            else
+                repair_block_content(cur_block);
         }
         cur_instr = INSTRLIST->get_next_instr(cur_instr);
     }
@@ -348,7 +349,7 @@ void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
         head++;
 
     //cout << **head;
-    int new_instrs_number = 10;
+    int new_instrs_number = 5;
     int i = 0;
     while (i < new_instrs_number) {
         int r = rand() % number;
@@ -356,9 +357,83 @@ void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
         advance(it, r);
 
         //TODO: add instr
+        shared_ptr<INSTRUCTION> to_add = _get_redundant_instr(*it, 3);
 
+        INSTRLIST->add_instr_before(*it, to_add);
+        shared_ptr<Block> cur_block = (*it)->get_block();
+        if ((*it) == cur_block->get_first_instr())
+            repair_block_content(cur_block, to_add);
+        else
+            repair_block_content(cur_block);
+        cout << "insertion instr choice " << endl;
+        cout << **it;
+        cout << *to_add;
         i++;
     }
+}
+
+shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> cur_instr, int choice)
+{
+    unsigned char above_read_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
+    unsigned char above_write_buffer[] = {0x89, 0x45, 0x0}; // mov %eax, (%ebp)
+    unsigned char below_read_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
+
+    Disasm disasm;
+    INSTRUCTION *res_instr_raw = new SCInstr();
+    switch (choice) {
+        case 1:
+            disasm.disassembler(reinterpret_cast<INT8*>(above_read_buffer), sizeof(above_read_buffer) / sizeof(unsigned char), 0, 0, res_instr_raw);
+            break;
+        case 2:
+            disasm.disassembler(reinterpret_cast<INT8*>(above_write_buffer), sizeof(above_write_buffer) / sizeof(unsigned char), 0, 0, res_instr_raw);
+            break;
+        case 3:
+            disasm.disassembler(reinterpret_cast<INT8*>(below_read_buffer), sizeof(below_read_buffer) / sizeof(unsigned char), 0, 0, res_instr_raw);
+            break;
+        default:
+            report(RL_ONE, "choice of random insertion instruction is wrong");
+            exit(0);
+    }
+
+    shared_ptr<SCInstr> res_instr(res_instr_raw); // mov (%ebp), %eax
+    int reg = _find_useful_reg(cur_instr); // find reg not used to add
+    cout << "found useful reg is " << reg << endl;
+    int limit;
+    int offset;
+    if (choice == 1 || choice == 2) { // for above read and write generate [0x5, 0x1c]
+        limit = 23;
+        offset = 5;
+    }
+    else                            { // for below read generate [1, 0x2a]
+        limit = 0x2a;
+        offset = 1;
+    }
+    int displacement = rand() % limit + offset;
+    if (choice == 3)
+        displacement = 0 - displacement;
+    cout << "displacement is " << displacement << endl;
+    if (choice == 1 || choice == 3) {
+        res_instr->set_dest_operand(reg);
+        res_instr->set_src1_operand(EBP, displacement);
+    }
+    else {
+        res_instr->set_src1_operand(reg);
+        res_instr->set_dest_operand(EBP, displacement);
+    }
+    res_instr->instruction2Binary(); // renew the binary
+
+    return res_instr;
+}
+
+shared_ptr<SCInstr> StackObfuscation::_get_prepared_instr()
+{
+    Disasm disasm;
+    unsigned char mov_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
+    INSTRUCTION *mov_instr = new SCInstr();
+    int res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
+    shared_ptr<SCInstr> prepare_mov(mov_instr); // mov (%ebp), %eax
+
+    return prepare_mov;
 }
 
 int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
@@ -385,20 +460,9 @@ int StackObfuscation::_find_useful_reg(shared_ptr<SCInstr> instr)
         else
             cur_instr = cur_instr->get_jump_target();
         i++;
-        cout << i << endl;
+        //cout << i << endl;
     }
     return res;
-}
-
-shared_ptr<SCInstr> StackObfuscation::_get_prepared_instr()
-{
-    Disasm disasm;
-    unsigned char mov_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
-    INSTRUCTION *mov_instr = new SCInstr();
-    int res = disasm.disassembler(reinterpret_cast<INT8*>(mov_buffer), sizeof(mov_buffer) / sizeof(unsigned char), 0, 0, mov_instr);
-    shared_ptr<SCInstr> prepare_mov(mov_instr); // mov (%ebp), %eax
-
-    return prepare_mov;
 }
 
 void StackObfuscation::_add_stack_offset(shared_ptr<Function> func)

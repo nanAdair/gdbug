@@ -73,8 +73,9 @@ INT32 Operand::getOperand() {
     return this->operand;
 }
 
-void Operand::setOperand(INT32 displacement) {
-    operand = displacement;
+void Operand::setOperand(INT32 reg, INT32 new_displacement) {
+    operand = reg;
+    displacement = new_displacement;
 }
 
 bool Operand::addr_above_ebp() {

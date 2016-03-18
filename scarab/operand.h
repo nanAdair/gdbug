@@ -20,7 +20,7 @@ class Operand{
 	    int, int, OPERAND_SIZE, int);
 
     INT32 getOperand();
-    void setOperand(INT32 displacemnt);
+    void setOperand(INT32 reg, INT32 displacement=0);
     void printOperandDetail();
     bool addr_above_ebp();
     void accumulate_reg(set<int>&);

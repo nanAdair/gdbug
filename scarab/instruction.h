@@ -66,7 +66,8 @@ public:
     bool has_flag(IFLAG flag);
     void remove_flag(IFLAG flag);
 
-    void set_dest_operand(int);
+    void set_dest_operand(int, int displacement=0);
+    void set_src1_operand(int, int displacement=0);
     void set_block(shared_ptr<Block> bbl);
     shared_ptr<SCInstr> get_jump_target();
     void set_jump_target(shared_ptr<SCInstr> instr);

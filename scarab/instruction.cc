@@ -173,14 +173,28 @@ bool SCInstr::has_flag(IFLAG flag)
     return (bool)((this->i_flags) & flag);
 }
 
-void SCInstr::set_dest_operand(int reg)
+void SCInstr::set_dest_operand(int reg, int displacement)
 {
     if (!dest) {
 	report(RL_ONE, "dest is null");
 	exit(0);
     }
 
-    dest->setOperand(reg);
+    dest->setOperand(reg, displacement);
+
+    if (this->ModRM){
+	this->regop = reg;
+    }
+}
+
+void SCInstr::set_src1_operand(int reg, int displacement)
+{
+    if (!src1) {
+	report(RL_ONE, "src1 is null");
+	exit(0);
+    }
+
+    src1->setOperand(reg, displacement);
 
     if (this->ModRM){
 	this->regop = reg;
@@ -1137,12 +1151,12 @@ ostream& operator<<(ostream &os, const INSTRUCTION &ins)
     //os << "Opcode: " << ins.opcode << endl;
     //if (ins.dest) {
     //os << "-----" << endl;
-	//(ins.dest)->printOperandDetail();
+    //(ins.dest)->printOperandDetail();
     //os << "-----" << endl;
     //}
     //if (ins.src1) {
     //os << "-----" << endl;
-	//(ins.src1)->printOperandDetail();
+    //(ins.src1)->printOperandDetail();
     //os << "-----" << endl;
     //}
     return os;
