@@ -351,21 +351,27 @@ void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
 
     //cout << **head;
     //int new_instrs_number = 10;
-    int new_instrs_number = 100;
+    int new_instrs_number = 400;
     int i = 0;
     while (i < new_instrs_number) {
         int r = rand() % number;
         InstrIterT it = head;
         advance(it, r);
 
-        cout << i << " " << r << endl;
+        cout << dec << i << " " << r << endl;
+        int type;
+        if (i < 300)
+            type = 3;
+        else 
+            type = 4;
         //TODO: add instr
-        shared_ptr<INSTRUCTION> to_add = _get_redundant_instr(*it, 3);
+        shared_ptr<INSTRUCTION> to_add = _get_redundant_instr(*it, type);
         if (!to_add) {
             i++;
             continue;
         }
 
+        if (type == 3) {
         unsigned char push_buffer[] = {0x50}; // push %eax
         unsigned char pop_buffer[] = {0x58}; // pop %eax
         Disasm disasm;
@@ -384,10 +390,20 @@ void StackObfuscation::_insert_redundant_instrs(shared_ptr<Function> func)
             repair_block_content(cur_block, push_instr);
         //else
             repair_block_content(cur_block);
+        }
+        else {
+        INSTRLIST->add_instr_before(*it, to_add);
+        shared_ptr<Block> cur_block = (*it)->get_block();
+        if ((*it) == cur_block->get_first_instr())
+            repair_block_content(cur_block, to_add);
+        //else
+            repair_block_content(cur_block);
+        }
         cout <<  " insertion instr choice " << endl;
         cout << **it;
         cout << *to_add;
         i++;
+        number++;
     }
 }
 
@@ -396,6 +412,7 @@ shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> c
     unsigned char above_read_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
     unsigned char above_write_buffer[] = {0x89, 0x45, 0x0}; // mov %eax, (%ebp)
     unsigned char below_read_buffer[] = {0x8b, 0x45, 0x0}; // mov (%ebp), %eax
+    unsigned char below_write_buffer[] = {0x89, 0x45, 0x0}; // mov %eax, (%ebp)
 
     Disasm disasm;
     INSTRUCTION *res_instr_raw = new SCInstr();
@@ -408,6 +425,9 @@ shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> c
             break;
         case 3:
             disasm.disassembler(reinterpret_cast<INT8*>(below_read_buffer), sizeof(below_read_buffer) / sizeof(unsigned char), 0, 0, res_instr_raw);
+            break;
+        case 4:
+            disasm.disassembler(reinterpret_cast<INT8*>(below_write_buffer), sizeof(below_write_buffer) / sizeof(unsigned char), 0, 0, res_instr_raw);
             break;
         default:
             report(RL_ONE, "choice of random insertion instruction is wrong");
@@ -426,12 +446,16 @@ shared_ptr<SCInstr> StackObfuscation::_get_redundant_instr(shared_ptr<SCInstr> c
         limit = 23;
         offset = 5;
     }
-    else                            { // for below read generate [1, 0x2a]
-        limit = 0x2a;
+    else if (choice == 3) { // for below read generate [1, 0x2a]
+        limit = 0x7c;
         offset = 1;
     }
+    else { // for below write generate [-0x68, -0x53]
+        limit = 0x15;
+        offset = 0x53;
+    }
     int displacement = rand() % limit + offset;
-    if (choice == 3)
+    if (choice == 3 || choice == 4)
         displacement = 0 - displacement;
     cout << "displacement is " << displacement << endl;
     if (choice == 1 || choice == 3) {
